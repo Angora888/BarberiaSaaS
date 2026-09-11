@@ -166,20 +166,17 @@ var app = builder.Build();
 // SWAGGER
 // ============================================================
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
+    options.SwaggerEndpoint(
+        "/swagger/v1/swagger.json",
+        "BarberiaSaaS API v1");
 
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint(
-            "/swagger/v1/swagger.json",
-            "BarberiaSaaS API v1");
-
-        options.DocumentTitle =
-            "BarberiaSaaS API";
-    });
-}
+    options.DocumentTitle =
+        "BarberiaSaaS API";
+});
 
 
 // ============================================================
