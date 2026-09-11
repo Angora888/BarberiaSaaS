@@ -1512,6 +1512,42 @@ function Agenda() {
     return `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
   };
 
+  const abrirWhatsApp = (
+    url
+  ) => {
+    const esIOS =
+      /iPad|iPhone|iPod/.test(
+        navigator.userAgent
+      );
+
+    const esSafari =
+      /^((?!chrome|android).)*safari/i.test(
+        navigator.userAgent
+      );
+
+    /*
+     * En iPhone + Safari navegamos en la misma pestaña.
+     * Así iOS abre WhatsApp directamente y, al tocar
+     * "Volver a Safari", regresa a la misma pantalla
+     * de Agenda en lugar de dejar una pestaña blanca.
+     */
+    if (
+      esIOS &&
+      esSafari
+    ) {
+      window.location.href =
+        url;
+
+      return;
+    }
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
   const enviarRecordatorioWhatsApp =
     () => {
       if (!citaSeleccionada) {
@@ -1534,10 +1570,8 @@ function Agenda() {
 
       setErrorDetalle("");
 
-      window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer"
+      abrirWhatsApp(
+        url
       );
     };
 
@@ -1563,10 +1597,8 @@ function Agenda() {
 
       setErrorDetalle("");
 
-      window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer"
+      abrirWhatsApp(
+        url
       );
     };
 
