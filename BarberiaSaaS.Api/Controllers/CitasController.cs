@@ -88,6 +88,7 @@ namespace BarberiaSaaS.Api.Controllers
                         x.Id,
                         x.FechaInicio,
                         x.FechaFin,
+                        x.DuracionMinutos,
                         x.Precio,
                         x.Estado,
                         x.Notas,
@@ -110,8 +111,7 @@ namespace BarberiaSaaS.Api.Controllers
                         Servicio = new
                         {
                             x.Servicio.Id,
-                            x.Servicio.Nombre,
-                            x.Servicio.DuracionMinutos
+                            x.Servicio.Nombre
                         },
 
                         Sucursal = new
@@ -146,6 +146,7 @@ namespace BarberiaSaaS.Api.Controllers
                         x.Id,
                         x.FechaInicio,
                         x.FechaFin,
+                        x.DuracionMinutos,
                         x.Precio,
                         x.Estado,
                         x.Notas,
@@ -169,8 +170,7 @@ namespace BarberiaSaaS.Api.Controllers
                         Servicio = new
                         {
                             x.Servicio.Id,
-                            x.Servicio.Nombre,
-                            x.Servicio.DuracionMinutos
+                            x.Servicio.Nombre
                         },
 
                         Sucursal = new
@@ -203,6 +203,15 @@ namespace BarberiaSaaS.Api.Controllers
         {
             var tenantId =
                 _tenantContext.TenantId;
+
+            if (request.DuracionMinutos <= 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "La duración de la cita debe ser mayor a cero."
+                });
+            }
 
             var cliente =
                 await _context.Clientes
@@ -316,7 +325,7 @@ namespace BarberiaSaaS.Api.Controllers
 
             var fechaFinLocal =
                 fechaInicioLocal.AddMinutes(
-                    servicio.DuracionMinutos);
+                    request.DuracionMinutos);
 
             // ========================================================
             // UTC PARA POSTGRESQL
@@ -373,6 +382,9 @@ namespace BarberiaSaaS.Api.Controllers
                     FechaInicio =
                         fechaInicioUtc,
 
+                    DuracionMinutos =
+                        request.DuracionMinutos,
+
                     FechaFin =
                         fechaFinUtc,
 
@@ -399,6 +411,8 @@ namespace BarberiaSaaS.Api.Controllers
                     "Cita creada correctamente.",
 
                 cita.Id,
+
+                cita.DuracionMinutos,
 
                 fechaInicioLocal,
 
@@ -505,8 +519,6 @@ namespace BarberiaSaaS.Api.Controllers
 
             var cita =
                 await _context.Citas
-                    .Include(x =>
-                        x.Servicio)
                     .FirstOrDefaultAsync(x =>
                         x.Id == id &&
                         x.TenantId ==
@@ -541,6 +553,15 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            if (cita.DuracionMinutos <= 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "La cita no tiene una duración válida."
+                });
+            }
+
             var inicioLocal =
                 DateTime.SpecifyKind(
                     request.NuevaFechaInicio,
@@ -548,8 +569,7 @@ namespace BarberiaSaaS.Api.Controllers
 
             var finLocal =
                 inicioLocal.AddMinutes(
-                    cita.Servicio
-                        .DuracionMinutos);
+                    cita.DuracionMinutos);
 
             var inicioUtc =
                 await _timeZoneService
@@ -597,6 +617,8 @@ namespace BarberiaSaaS.Api.Controllers
 
                 cita.Id,
 
+                cita.DuracionMinutos,
+
                 fechaInicioLocal =
                     inicioLocal,
 
@@ -612,6 +634,10 @@ namespace BarberiaSaaS.Api.Controllers
                 cita.Estado
             });
         }
+
+        // ============================================================
+        // ACCIONES RÁPIDAS
+        // ============================================================
 
         [HttpPut("{id:int}/confirmar")]
         public async Task<IActionResult> Confirmar(
@@ -718,7 +744,8 @@ namespace BarberiaSaaS.Api.Controllers
             var horaFin =
                 fechaFinLocal.TimeOfDay;
 
-            // No permitir que el servicio cruce de día.
+            // Por ahora las citas deben comenzar y terminar
+            // dentro del mismo día laboral.
             if (fechaInicioLocal.Date !=
                 fechaFinLocal.Date)
             {

@@ -25,6 +25,12 @@ function Agenda() {
   const [fechaSeleccionada, setFechaSeleccionada] =
     useState(obtenerFechaHoy());
 
+  const [modoAgenda, setModoAgenda] =
+    useState("semana");
+
+  const [profesionalFiltro, setProfesionalFiltro] =
+    useState("todos");
+
   const [citas, setCitas] =
     useState([]);
 
@@ -97,6 +103,8 @@ function Agenda() {
       profesionalId: "",
       sucursalId: "",
       fecha: obtenerFechaHoy(),
+      duracionHoras: "1",
+      duracionMinutos: "0",
       horaInicio: "",
       notas: ""
     });
@@ -111,7 +119,7 @@ function Agenda() {
 
   useEffect(() => {
     cargarCitas();
-  }, [fechaSeleccionada]);
+  }, [fechaSeleccionada, modoAgenda]);
 
   const cargarDatosBase = async () => {
     try {
@@ -175,15 +183,26 @@ function Agenda() {
   // CARGAR CITAS
   // ============================================================
 
-  const cargarCitas = async () => {
+  const cargarCitas = async (
+    fechaReferencia = fechaSeleccionada,
+    modoReferencia = modoAgenda
+  ) => {
     try {
       setError("");
 
+      const rango =
+        modoReferencia === "semana"
+          ? obtenerRangoSemana(fechaReferencia)
+          : {
+              inicio: fechaReferencia,
+              fin: fechaReferencia
+            };
+
       const desde =
-        `${fechaSeleccionada}T00:00:00`;
+        `${rango.inicio}T00:00:00`;
 
       const hasta =
-        `${fechaSeleccionada}T23:59:59`;
+        `${rango.fin}T23:59:59`;
 
       const response =
         await api.get(
@@ -223,6 +242,24 @@ function Agenda() {
     }, [
       servicios,
       formulario.servicioId
+    ]);
+
+  // ============================================================
+  // DURACIÓN DE LA CITA
+  // ============================================================
+
+  const duracionTotalMinutos =
+    useMemo(() => {
+      const horas =
+        Number(formulario.duracionHoras) || 0;
+
+      const minutos =
+        Number(formulario.duracionMinutos) || 0;
+
+      return (horas * 60) + minutos;
+    }, [
+      formulario.duracionHoras,
+      formulario.duracionMinutos
     ]);
 
   // ============================================================
@@ -324,11 +361,13 @@ function Agenda() {
       return;
     }
 
-    // Si cambia profesional o fecha,
+    // Si cambia profesional, fecha o duración,
     // hay que consultar nuevamente.
     if (
       name === "profesionalId" ||
-      name === "fecha"
+      name === "fecha" ||
+      name === "duracionHoras" ||
+      name === "duracionMinutos"
     ) {
       setFormulario(
         (anterior) => ({
@@ -388,6 +427,16 @@ function Agenda() {
         return;
       }
 
+      if (
+        duracionTotalMinutos <= 0
+      ) {
+        setErrorModal(
+          "Selecciona una duración mayor a cero."
+        );
+
+        return;
+      }
+
       try {
         setConsultandoDisponibilidad(
           true
@@ -413,7 +462,10 @@ function Agenda() {
               ),
 
             fecha:
-              `${formulario.fecha}T00:00:00`
+              `${formulario.fecha}T00:00:00`,
+
+            duracionMinutos:
+              duracionTotalMinutos
           }
         );
 
@@ -440,7 +492,10 @@ function Agenda() {
                 ),
 
               fecha:
-                `${formulario.fecha}T00:00:00`
+                `${formulario.fecha}T00:00:00`,
+
+              duracionMinutos:
+                duracionTotalMinutos
             }
           );
 
@@ -602,6 +657,16 @@ function Agenda() {
     }
 
     if (
+      duracionTotalMinutos <= 0
+    ) {
+      setErrorModal(
+        "Selecciona una duración mayor a cero."
+      );
+
+      return;
+    }
+
+    if (
       !formulario.horaInicio
     ) {
       setErrorModal(
@@ -649,6 +714,9 @@ function Agenda() {
           fechaInicio:
             `${formulario.fecha}T${formulario.horaInicio}:00`,
 
+          duracionMinutos:
+            duracionTotalMinutos,
+
           notas:
             formulario.notas ||
             null
@@ -664,7 +732,10 @@ function Agenda() {
         fechaNuevaCita
       );
 
-      await cargarCitas();
+      await cargarCitas(
+        fechaNuevaCita,
+        modoAgenda
+      );
     } catch (error) {
       console.error(
         "Error creando cita:",
@@ -708,6 +779,8 @@ function Agenda() {
       fecha:
         fechaSeleccionada,
 
+      duracionHoras: "1",
+      duracionMinutos: "0",
       horaInicio: "",
 
       notas: ""
@@ -716,6 +789,38 @@ function Agenda() {
     setMostrarNuevaCita(
       true
     );
+  };
+
+  const abrirNuevaCitaParaFecha = (
+    fecha
+  ) => {
+    setFechaSeleccionada(
+      fecha
+    );
+
+    setError("");
+    setErrorModal("");
+    setHorariosDisponibles([]);
+
+    setFormulario({
+      clienteId: "",
+      servicioId: "",
+      profesionalId:
+        profesionalFiltro !== "todos"
+          ? profesionalFiltro
+          : "",
+      sucursalId:
+        sucursales.length === 1
+          ? sucursales[0].id.toString()
+          : "",
+      fecha,
+      duracionHoras: "1",
+      duracionMinutos: "0",
+      horaInicio: "",
+      notas: ""
+    });
+
+    setMostrarNuevaCita(true);
   };
 
   const abrirNuevaCitaDesdeAgenda = (
@@ -746,6 +851,8 @@ function Agenda() {
       sucursalId,
       fecha:
         fechaSeleccionada,
+      duracionHoras: "1",
+      duracionMinutos: "0",
       horaInicio,
       notas: ""
     });
@@ -1053,6 +1160,8 @@ function Agenda() {
       fecha:
         fechaSeleccionada,
 
+      duracionHoras: "1",
+      duracionMinutos: "0",
       horaInicio: "",
       notas: ""
     });
@@ -1128,19 +1237,24 @@ function Agenda() {
   };
 
   // ============================================================
-  // NAVEGACIÓN FECHAS
+  // NAVEGACIÓN FECHAS / SEMANAS
   // ============================================================
 
-  const cambiarDia =
+  const cambiarPeriodo =
     (cantidad) => {
       const fecha =
         crearFechaLocal(
           fechaSeleccionada
         );
 
+      const salto =
+        modoAgenda === "semana"
+          ? cantidad * 7
+          : cantidad;
+
       fecha.setDate(
         fecha.getDate() +
-        cantidad
+        salto
       );
 
       setFechaSeleccionada(
@@ -1157,11 +1271,100 @@ function Agenda() {
   };
 
   // ============================================================
-  // TÍTULO FECHA
+  // RANGO Y TÍTULO
   // ============================================================
 
-  const tituloFecha =
+  const rangoSemana =
     useMemo(() => {
+      return obtenerRangoSemana(
+        fechaSeleccionada
+      );
+    }, [fechaSeleccionada]);
+
+  const diasSemana =
+    useMemo(() => {
+      return obtenerDiasSemana(
+        fechaSeleccionada
+      );
+    }, [fechaSeleccionada]);
+
+  const tituloPeriodo =
+    useMemo(() => {
+      if (
+        modoAgenda === "semana"
+      ) {
+        const inicio =
+          crearFechaLocal(
+            rangoSemana.inicio
+          );
+
+        const fin =
+          crearFechaLocal(
+            rangoSemana.fin
+          );
+
+        const mismoMes =
+          inicio.getMonth() ===
+            fin.getMonth() &&
+          inicio.getFullYear() ===
+            fin.getFullYear();
+
+        const mismoAnio =
+          inicio.getFullYear() ===
+          fin.getFullYear();
+
+        if (mismoMes) {
+          return `${inicio.getDate()} - ${fin.getDate()} de ${
+            new Intl.DateTimeFormat(
+              "es-CR",
+              {
+                month: "long"
+              }
+            ).format(inicio)
+          } de ${inicio.getFullYear()}`;
+        }
+
+        if (mismoAnio) {
+          return `${
+            new Intl.DateTimeFormat(
+              "es-CR",
+              {
+                day: "numeric",
+                month: "short"
+              }
+            ).format(inicio)
+          } - ${
+            new Intl.DateTimeFormat(
+              "es-CR",
+              {
+                day: "numeric",
+                month: "short"
+              }
+            ).format(fin)
+          } de ${inicio.getFullYear()}`;
+        }
+
+        return `${
+          new Intl.DateTimeFormat(
+            "es-CR",
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
+            }
+          ).format(inicio)
+        } - ${
+          new Intl.DateTimeFormat(
+            "es-CR",
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
+            }
+          ).format(fin)
+        }`;
+      }
+
       const fecha =
         crearFechaLocal(
           fechaSeleccionada
@@ -1176,7 +1379,11 @@ function Agenda() {
           year: "numeric"
         }
       ).format(fecha);
-    }, [fechaSeleccionada]);
+    }, [
+      fechaSeleccionada,
+      modoAgenda,
+      rangoSemana
+    ]);
 
   // ============================================================
   // HORAS DISPONIBLES
@@ -1373,13 +1580,24 @@ function Agenda() {
           (profesional) =>
             profesional.activo !== false
         )
+        .filter(
+          (profesional) =>
+            profesionalFiltro === "todos" ||
+            profesional.id ===
+              Number(
+                profesionalFiltro
+              )
+        )
         .sort((a, b) =>
           `${a.nombre || ""} ${a.apellidos || ""}`.localeCompare(
             `${b.nombre || ""} ${b.apellidos || ""}`,
             "es"
           )
         );
-    }, [profesionales]);
+    }, [
+      profesionales,
+      profesionalFiltro
+    ]);
 
   const configuracionAgenda =
     useMemo(() => {
@@ -1480,6 +1698,94 @@ function Agenda() {
       profesionalesAgenda
     ]);
 
+  const citasSemanaPorDia =
+    useMemo(() => {
+      const mapa =
+        new Map();
+
+      diasSemana.forEach(
+        (dia) => {
+          mapa.set(
+            dia.fecha,
+            []
+          );
+        }
+      );
+
+      citas.forEach(
+        (cita) => {
+          const profesionalId =
+            cita.profesional?.id ||
+            cita.profesionalId;
+
+          if (
+            profesionalFiltro !== "todos" &&
+            Number(
+              profesionalId
+            ) !==
+              Number(
+                profesionalFiltro
+              )
+          ) {
+            return;
+          }
+
+          const fechaLocal =
+            obtenerFechaLocalCita(
+              cita,
+              zonaHoraria
+            );
+
+          if (
+            !fechaLocal ||
+            !mapa.has(
+              fechaLocal
+            )
+          ) {
+            return;
+          }
+
+          mapa.get(
+            fechaLocal
+          ).push(
+            cita
+          );
+        }
+      );
+
+      mapa.forEach(
+        (citasDia) => {
+          citasDia.sort(
+            (a, b) => {
+              const minutosA =
+                obtenerMinutosCita(
+                  a,
+                  zonaHoraria
+                ) ?? 0;
+
+              const minutosB =
+                obtenerMinutosCita(
+                  b,
+                  zonaHoraria
+                ) ?? 0;
+
+              return (
+                minutosA -
+                minutosB
+              );
+            }
+          );
+        }
+      );
+
+      return mapa;
+    }, [
+      citas,
+      diasSemana,
+      profesionalFiltro,
+      zonaHoraria
+    ]);
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -1510,36 +1816,76 @@ function Agenda() {
             <button
               type="button"
               className={
-                vistaAgenda === "visual"
+                modoAgenda === "semana"
                   ? "agenda-view-button active"
                   : "agenda-view-button"
               }
               onClick={() =>
-                setVistaAgenda("visual")
+                setModoAgenda("semana")
               }
-              title="Vista visual"
+              title="Vista semanal"
             >
-              <FaThLarge />
-              <span>Visual</span>
+              <FaCalendarAlt />
+              <span>Semana</span>
             </button>
 
             <button
               type="button"
               className={
-                vistaAgenda === "lista"
+                modoAgenda === "dia"
                   ? "agenda-view-button active"
                   : "agenda-view-button"
               }
               onClick={() =>
-                setVistaAgenda("lista")
+                setModoAgenda("dia")
               }
-              title="Vista de lista"
+              title="Vista diaria"
             >
-              <FaList />
-              <span>Lista</span>
+              <FaThLarge />
+              <span>Día</span>
             </button>
 
           </div>
+
+          {modoAgenda === "dia" && (
+
+            <div className="agenda-view-toggle">
+
+              <button
+                type="button"
+                className={
+                  vistaAgenda === "visual"
+                    ? "agenda-view-button active"
+                    : "agenda-view-button"
+                }
+                onClick={() =>
+                  setVistaAgenda("visual")
+                }
+                title="Vista visual"
+              >
+                <FaThLarge />
+                <span>Visual</span>
+              </button>
+
+              <button
+                type="button"
+                className={
+                  vistaAgenda === "lista"
+                    ? "agenda-view-button active"
+                    : "agenda-view-button"
+                }
+                onClick={() =>
+                  setVistaAgenda("lista")
+                }
+                title="Vista de lista"
+              >
+                <FaList />
+                <span>Lista</span>
+              </button>
+
+            </div>
+
+          )}
 
           <button
             className="btn btn-primary"
@@ -1584,7 +1930,7 @@ function Agenda() {
             type="button"
             className="agenda-navigation-button"
             onClick={() =>
-              cambiarDia(-1)
+              cambiarPeriodo(-1)
             }
           >
             <FaChevronLeft />
@@ -1604,7 +1950,7 @@ function Agenda() {
             type="button"
             className="agenda-navigation-button"
             onClick={() =>
-              cambiarDia(1)
+              cambiarPeriodo(1)
             }
           >
             <FaChevronRight />
@@ -1618,11 +1964,49 @@ function Agenda() {
 
           <strong>
             {capitalizar(
-              tituloFecha
+              tituloPeriodo
             )}
           </strong>
 
         </div>
+
+        <select
+          className="form-select agenda-professional-filter"
+          value={profesionalFiltro}
+          onChange={(e) =>
+            setProfesionalFiltro(
+              e.target.value
+            )
+          }
+          aria-label="Filtrar por profesional"
+        >
+          <option value="todos">
+            Todos los profesionales
+          </option>
+
+          {profesionales
+            .filter(
+              (profesional) =>
+                profesional.activo !== false
+            )
+            .sort((a, b) =>
+              `${a.nombre || ""} ${a.apellidos || ""}`.localeCompare(
+                `${b.nombre || ""} ${b.apellidos || ""}`,
+                "es"
+              )
+            )
+            .map(
+              (profesional) => (
+                <option
+                  key={profesional.id}
+                  value={profesional.id}
+                >
+                  {profesional.nombre}{" "}
+                  {profesional.apellidos}
+                </option>
+              )
+            )}
+        </select>
 
         <input
           type="date"
@@ -1643,9 +2027,11 @@ function Agenda() {
 
       <div
         className={
-          vistaAgenda === "visual"
-            ? "agenda-content agenda-content-visual"
-            : "agenda-content"
+          modoAgenda === "semana"
+            ? "agenda-content agenda-content-week"
+            : vistaAgenda === "visual"
+              ? "agenda-content agenda-content-visual"
+              : "agenda-content"
         }
       >
 
@@ -1653,6 +2039,166 @@ function Agenda() {
 
           <div className="agenda-empty">
             Cargando agenda...
+          </div>
+
+        ) : modoAgenda === "semana" ? (
+
+          <div className="week-agenda-wrapper">
+
+            <div className="week-agenda">
+
+              {diasSemana.map(
+                (dia) => {
+
+                  const citasDia =
+                    citasSemanaPorDia.get(
+                      dia.fecha
+                    ) || [];
+
+                  const esHoy =
+                    dia.fecha ===
+                    obtenerFechaHoy();
+
+                  return (
+
+                    <section
+                      key={dia.fecha}
+                      className={
+                        esHoy
+                          ? "week-day-column today"
+                          : "week-day-column"
+                      }
+                    >
+
+                      <div className="week-day-header">
+
+                        <button
+                          type="button"
+                          className="week-day-title"
+                          onClick={() => {
+                            setFechaSeleccionada(
+                              dia.fecha
+                            );
+                            setModoAgenda(
+                              "dia"
+                            );
+                          }}
+                          title="Abrir este día"
+                        >
+                          <span>
+                            {dia.nombreCorto}
+                          </span>
+
+                          <strong>
+                            {dia.numeroDia}
+                          </strong>
+                        </button>
+
+                        <span className="week-day-count">
+                          {citasDia.length}
+                        </span>
+
+                      </div>
+
+                      <div className="week-day-body">
+
+                        <button
+                          type="button"
+                          className="week-add-appointment"
+                          onClick={() =>
+                            abrirNuevaCitaParaFecha(
+                              dia.fecha
+                            )
+                          }
+                        >
+                          <FaPlus />
+                          <span>Nueva cita</span>
+                        </button>
+
+                        {citasDia.length === 0 ? (
+
+                          <div className="week-day-empty">
+                            Sin citas
+                          </div>
+
+                        ) : (
+
+                          citasDia.map(
+                            (cita) => (
+
+                              <button
+                                key={cita.id}
+                                type="button"
+                                className={
+                                  `week-appointment ${obtenerClaseEstadoVisual(
+                                    cita.estado
+                                  )}`
+                                }
+                                onClick={() =>
+                                  abrirDetalleCita(
+                                    cita
+                                  )
+                                }
+                              >
+
+                                <div className="week-appointment-top">
+
+                                  <strong>
+                                    {obtenerHoraCita(
+                                      cita,
+                                      zonaHoraria
+                                    )}
+                                  </strong>
+
+                                  <span>
+                                    {formatearEstado(
+                                      cita.estado
+                                    )}
+                                  </span>
+
+                                </div>
+
+                                <div className="week-appointment-service">
+                                  {obtenerNombreServicio(
+                                    cita
+                                  )}
+                                </div>
+
+                                <div className="week-appointment-client">
+                                  <FaUser />
+                                  <span>
+                                    {obtenerNombreCliente(
+                                      cita
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="week-appointment-professional">
+                                  <FaUserTie />
+                                  <span>
+                                    {obtenerNombreProfesional(
+                                      cita
+                                    )}
+                                  </span>
+                                </div>
+
+                              </button>
+
+                            )
+                          )
+
+                        )}
+
+                      </div>
+
+                    </section>
+
+                  );
+                }
+              )}
+
+            </div>
+
           </div>
 
         ) : vistaAgenda === "visual" ? (
@@ -2321,8 +2867,6 @@ function Agenda() {
                             >
                               {servicio.nombre}
                               {" - "}
-                              {servicio.duracionMinutos} min
-                              {" - "}
                               {formatearMoneda(
                                 servicio.precio
                               )}
@@ -2407,6 +2951,73 @@ function Agenda() {
 
                   </div>
 
+                  {/* DURACIÓN */}
+
+                  <div className="col-md-6">
+
+                    <label className="form-label">
+                      Duración estimada *
+                    </label>
+
+                    <div className="row g-2">
+
+                      <div className="col-6">
+                        <div className="input-group">
+                          <select
+                            name="duracionHoras"
+                            className="form-select"
+                            value={formulario.duracionHoras}
+                            onChange={cambiarCampo}
+                          >
+                            {Array.from(
+                              { length: 13 },
+                              (_, indice) => indice
+                            ).map((hora) => (
+                              <option
+                                key={hora}
+                                value={hora}
+                              >
+                                {hora}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="input-group-text">
+                            h
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="col-6">
+                        <div className="input-group">
+                          <select
+                            name="duracionMinutos"
+                            className="form-select"
+                            value={formulario.duracionMinutos}
+                            onChange={cambiarCampo}
+                          >
+                            {[0, 15, 30, 45].map((minuto) => (
+                              <option
+                                key={minuto}
+                                value={minuto}
+                              >
+                                {minuto.toString().padStart(2, "0")}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="input-group-text">
+                            min
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="form-text">
+                      Duración seleccionada: {formatearDuracionMinutos(duracionTotalMinutos)}
+                    </div>
+
+                  </div>
+
                   {/* BOTÓN DISPONIBILIDAD */}
 
                   <div className="col-md-6 d-flex align-items-end">
@@ -2421,7 +3032,8 @@ function Agenda() {
                         consultandoDisponibilidad ||
                         !formulario.servicioId ||
                         !formulario.profesionalId ||
-                        !formulario.fecha
+                        !formulario.fecha ||
+                        duracionTotalMinutos <= 0
                       }
                     >
 
@@ -2458,11 +3070,11 @@ function Agenda() {
                         <div>
 
                           <span>
-                            Duración
+                            Duración estimada
                           </span>
 
                           <strong>
-                            {servicioSeleccionado.duracionMinutos} min
+                            {formatearDuracionMinutos(duracionTotalMinutos)}
                           </strong>
 
                         </div>
@@ -2719,9 +3331,9 @@ function Agenda() {
                     <small className="text-muted d-block mb-1">Servicio</small>
                     <strong>{obtenerNombreServicio(citaSeleccionada)}</strong>
 
-                    {citaSeleccionada.servicio?.duracionMinutos && (
+                    {citaSeleccionada.duracionMinutos > 0 && (
                       <div className="text-muted small mt-1">
-                        {citaSeleccionada.servicio.duracionMinutos} minutos
+                        Duración: {formatearDuracionMinutos(citaSeleccionada.duracionMinutos)}
                       </div>
                     )}
                   </div>
@@ -2870,6 +3482,203 @@ function Agenda() {
 // ============================================================
 // FUNCIONES AUXILIARES
 // ============================================================
+
+function obtenerRangoSemana(
+  fechaReferencia
+) {
+  const fecha =
+    crearFechaLocal(
+      fechaReferencia
+    );
+
+  const diaSemana =
+    fecha.getDay();
+
+  const desplazamientoLunes =
+    diaSemana === 0
+      ? -6
+      : 1 - diaSemana;
+
+  const inicio =
+    new Date(
+      fecha
+    );
+
+  inicio.setDate(
+    inicio.getDate() +
+    desplazamientoLunes
+  );
+
+  const fin =
+    new Date(
+      inicio
+    );
+
+  fin.setDate(
+    inicio.getDate() + 6
+  );
+
+  return {
+    inicio:
+      convertirFechaInput(
+        inicio
+      ),
+    fin:
+      convertirFechaInput(
+        fin
+      )
+  };
+}
+
+function obtenerDiasSemana(
+  fechaReferencia
+) {
+  const rango =
+    obtenerRangoSemana(
+      fechaReferencia
+    );
+
+  const inicio =
+    crearFechaLocal(
+      rango.inicio
+    );
+
+  return Array.from(
+    {
+      length: 7
+    },
+    (_, indice) => {
+      const fecha =
+        new Date(
+          inicio
+        );
+
+      fecha.setDate(
+        inicio.getDate() +
+        indice
+      );
+
+      return {
+        fecha:
+          convertirFechaInput(
+            fecha
+          ),
+        numeroDia:
+          fecha.getDate(),
+        nombreCorto:
+          capitalizar(
+            new Intl.DateTimeFormat(
+              "es-CR",
+              {
+                weekday: "short"
+              }
+            )
+              .format(
+                fecha
+              )
+              .replace(
+                ".",
+                ""
+              )
+          )
+      };
+    }
+  );
+}
+
+function obtenerFechaLocalCita(
+  cita,
+  zonaHoraria
+) {
+  if (
+    cita.fechaInicioLocal &&
+    typeof cita.fechaInicioLocal === "string" &&
+    cita.fechaInicioLocal.includes("T")
+  ) {
+    return cita.fechaInicioLocal.substring(
+      0,
+      10
+    );
+  }
+
+  if (!cita.fechaInicio) {
+    return "";
+  }
+
+  try {
+    let fechaUtc =
+      cita.fechaInicio;
+
+    if (
+      typeof fechaUtc === "string" &&
+      !fechaUtc.endsWith("Z") &&
+      !/[+-]\\d{2}:\\d{2}$/.test(
+        fechaUtc
+      )
+    ) {
+      fechaUtc =
+        `${fechaUtc}Z`;
+    }
+
+    const fecha =
+      new Date(
+        fechaUtc
+      );
+
+    if (
+      Number.isNaN(
+        fecha.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    const partes =
+      new Intl.DateTimeFormat(
+        "en-CA",
+        {
+          timeZone:
+            zonaHoraria ||
+            "America/Costa_Rica",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }
+      ).formatToParts(
+        fecha
+      );
+
+    const year =
+      partes.find(
+        (parte) =>
+          parte.type === "year"
+      )?.value;
+
+    const month =
+      partes.find(
+        (parte) =>
+          parte.type === "month"
+      )?.value;
+
+    const day =
+      partes.find(
+        (parte) =>
+          parte.type === "day"
+      )?.value;
+
+    if (
+      !year ||
+      !month ||
+      !day
+    ) {
+      return "";
+    }
+
+    return `${year}-${month}-${day}`;
+  } catch {
+    return "";
+  }
+}
 
 function obtenerFechaHoy() {
   const fecha =
@@ -3073,22 +3882,52 @@ function obtenerMinutosCita(
   }
 }
 
+function formatearDuracionMinutos(
+  totalMinutos
+) {
+  const total =
+    Number(totalMinutos);
+
+  if (
+    !Number.isFinite(total) ||
+    total <= 0
+  ) {
+    return "0 min";
+  }
+
+  const horas =
+    Math.floor(total / 60);
+
+  const minutos =
+    total % 60;
+
+  if (horas > 0 && minutos > 0) {
+    return `${horas} h ${minutos} min`;
+  }
+
+  if (horas > 0) {
+    return `${horas} h`;
+  }
+
+  return `${minutos} min`;
+}
+
 function obtenerDuracionCita(
   cita
 ) {
-  const duracionServicio =
+  const duracionCita =
     Number(
-      cita.servicio?.duracionMinutos ||
-      cita.duracionMinutos
+      cita.duracionMinutos ||
+      cita.servicio?.duracionMinutos
     );
 
   if (
     Number.isFinite(
-      duracionServicio
+      duracionCita
     ) &&
-    duracionServicio > 0
+    duracionCita > 0
   ) {
-    return duracionServicio;
+    return duracionCita;
   }
 
   const inicio =

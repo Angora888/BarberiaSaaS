@@ -38,7 +38,6 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Nombre,
                     x.Descripcion,
                     x.Precio,
-                    x.DuracionMinutos,
                     x.Activo
                 })
                 .ToListAsync();
@@ -61,7 +60,6 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Nombre,
                     x.Descripcion,
                     x.Precio,
-                    x.DuracionMinutos,
                     x.Activo
                 })
                 .FirstOrDefaultAsync();
@@ -97,14 +95,6 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            if (request.DuracionMinutos <= 0)
-            {
-                return BadRequest(new
-                {
-                    mensaje = "La duración debe ser mayor a cero."
-                });
-            }
-
             var tenantId = _tenantContext.TenantId;
 
             var servicio = new Servicio
@@ -113,7 +103,6 @@ namespace BarberiaSaaS.Api.Controllers
                 Nombre = request.Nombre.Trim(),
                 Descripcion = request.Descripcion?.Trim(),
                 Precio = request.Precio,
-                DuracionMinutos = request.DuracionMinutos,
                 Activo = true,
                 FechaCreacion = DateTime.UtcNow
             };
@@ -127,8 +116,7 @@ namespace BarberiaSaaS.Api.Controllers
                 mensaje = "Servicio creado correctamente.",
                 servicio.Id,
                 servicio.Nombre,
-                servicio.Precio,
-                servicio.DuracionMinutos
+                servicio.Precio
             });
         }
     }

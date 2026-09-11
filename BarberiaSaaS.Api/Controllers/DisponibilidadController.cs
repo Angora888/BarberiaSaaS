@@ -63,6 +63,15 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            if (request.DuracionMinutos <= 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "La duración de la cita debe ser mayor a cero."
+                });
+            }
+
             // ========================================================
             // VALIDAR PROFESIONAL
             // ========================================================
@@ -105,7 +114,6 @@ namespace BarberiaSaaS.Api.Controllers
                     {
                         x.Id,
                         x.Nombre,
-                        x.DuracionMinutos,
                         x.Precio
                     })
                     .FirstOrDefaultAsync();
@@ -116,15 +124,6 @@ namespace BarberiaSaaS.Api.Controllers
                 {
                     mensaje =
                         "Servicio no encontrado."
-                });
-            }
-
-            if (servicio.DuracionMinutos <= 0)
-            {
-                return BadRequest(new
-                {
-                    mensaje =
-                        "El servicio no tiene una duración válida."
                 });
             }
 
@@ -163,8 +162,6 @@ namespace BarberiaSaaS.Api.Controllers
 
             // ========================================================
             // HORARIOS LABORALES DEL PROFESIONAL
-            //
-            // Estos horarios son locales del negocio.
             // ========================================================
 
             var horarios =
@@ -209,8 +206,6 @@ namespace BarberiaSaaS.Api.Controllers
 
             // ========================================================
             // CITAS EXISTENTES
-            //
-            // Ignoramos citas canceladas.
             // ========================================================
 
             var citas =
@@ -293,17 +288,13 @@ namespace BarberiaSaaS.Api.Controllers
                 while (
                     candidatoLocal
                         .AddMinutes(
-                            servicio.DuracionMinutos)
+                            request.DuracionMinutos)
                     <= finHorarioLocal)
                 {
                     var candidatoFinLocal =
                         candidatoLocal
                             .AddMinutes(
-                                servicio.DuracionMinutos);
-
-                    // ====================================================
-                    // CONVERTIR CANDIDATO LOCAL A UTC
-                    // ====================================================
+                                request.DuracionMinutos);
 
                     var candidatoInicioUtc =
                         await _timeZoneService
@@ -317,10 +308,6 @@ namespace BarberiaSaaS.Api.Controllers
                                 tenantId,
                                 candidatoFinLocal);
 
-                    // ====================================================
-                    // REVISAR CHOQUE CON CITAS
-                    // ====================================================
-
                     var chocaConCita =
                         citas.Any(x =>
                             candidatoInicioUtc <
@@ -328,20 +315,12 @@ namespace BarberiaSaaS.Api.Controllers
                             candidatoFinUtc >
                                 x.FechaInicio);
 
-                    // ====================================================
-                    // REVISAR CHOQUE CON BLOQUEOS
-                    // ====================================================
-
                     var chocaConBloqueo =
                         bloqueos.Any(x =>
                             candidatoInicioUtc <
                                 x.FechaFin &&
                             candidatoFinUtc >
                                 x.FechaInicio);
-
-                    // ====================================================
-                    // SI ESTÁ LIBRE, AGREGARLO
-                    // ====================================================
 
                     if (
                         !chocaConCita &&
@@ -367,13 +346,12 @@ namespace BarberiaSaaS.Api.Controllers
                                 candidatoInicioUtc,
 
                             fechaFinUtc =
-                                candidatoFinUtc
+                                candidatoFinUtc,
+
+                            duracionMinutos =
+                                request.DuracionMinutos
                         });
                     }
-
-                    // ====================================================
-                    // SIGUIENTE SLOT
-                    // ====================================================
 
                     candidatoLocal =
                         candidatoLocal

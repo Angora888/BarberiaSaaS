@@ -182,9 +182,6 @@ namespace BarberiaSaaS.Api.Data
                 entity.Property(x => x.Precio)
                     .HasPrecision(12, 2);
 
-                entity.Property(x => x.DuracionMinutos)
-                    .IsRequired();
-
                 entity.HasIndex(x => new
                 {
                     x.TenantId,
@@ -251,6 +248,9 @@ namespace BarberiaSaaS.Api.Data
             modelBuilder.Entity<Cita>(entity =>
             {
                 entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.DuracionMinutos)
+                    .IsRequired();
 
                 entity.Property(x => x.Precio)
                     .HasPrecision(12, 2);

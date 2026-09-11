@@ -7,5 +7,7 @@
         public int ServicioId { get; set; }
 
         public DateTime Fecha { get; set; }
+
+        public int DuracionMinutos { get; set; }
     }
 }

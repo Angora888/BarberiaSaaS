@@ -12,8 +12,6 @@
 
         public decimal Precio { get; set; }
 
-        public int DuracionMinutos { get; set; }
-
         public bool Activo { get; set; } = true;
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

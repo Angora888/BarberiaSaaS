@@ -27,9 +27,10 @@ function Servicios() {
   const [busqueda, setBusqueda] =
     useState("");
 
-  const [mostrarFormulario,
-    setMostrarFormulario] =
-    useState(false);
+  const [
+    mostrarFormulario,
+    setMostrarFormulario
+  ] = useState(false);
 
   const [guardando, setGuardando] =
     useState(false);
@@ -38,8 +39,7 @@ function Servicios() {
     useState({
       nombre: "",
       descripcion: "",
-      precio: "",
-      duracionMinutos: ""
+      precio: ""
     });
 
   useEffect(() => {
@@ -120,8 +120,7 @@ function Servicios() {
     setFormulario({
       nombre: "",
       descripcion: "",
-      precio: "",
-      duracionMinutos: ""
+      precio: ""
     });
   };
 
@@ -152,30 +151,12 @@ function Servicios() {
     const precio =
       Number(formulario.precio);
 
-    const duracionMinutos =
-      Number(
-        formulario.duracionMinutos
-      );
-
     if (
       Number.isNaN(precio) ||
       precio < 0
     ) {
       setError(
         "El precio no es válido."
-      );
-
-      return;
-    }
-
-    if (
-      Number.isNaN(
-        duracionMinutos
-      ) ||
-      duracionMinutos <= 0
-    ) {
-      setError(
-        "La duración debe ser mayor a cero."
       );
 
       return;
@@ -195,9 +176,7 @@ function Servicios() {
             formulario.descripcion ||
             null,
 
-          precio,
-
-          duracionMinutos
+          precio
         }
       );
 
@@ -296,8 +275,6 @@ function Servicios() {
 
         </div>
 
-        {/* CARGANDO */}
-
         {cargando ? (
 
           <div className="empty-state">
@@ -370,18 +347,6 @@ function Servicios() {
                         servicio.precio
                       )}
                     </strong>
-
-                    <span>
-                      <FaClock
-                        className="me-1"
-                      />
-
-                      {
-                        servicio
-                          .duracionMinutos
-                      }{" "}
-                      min
-                    </span>
 
                   </div>
 
@@ -492,7 +457,7 @@ function Servicios() {
 
                   {/* PRECIO */}
 
-                  <div className="col-md-6">
+                  <div className="col-12">
 
                     <label className="form-label">
                       Precio *
@@ -513,41 +478,6 @@ function Servicios() {
                       placeholder="15000"
                       required
                     />
-
-                  </div>
-
-                  {/* DURACIÓN */}
-
-                  <div className="col-md-6">
-
-                    <label className="form-label">
-                      Duración *
-                    </label>
-
-                    <div className="input-group">
-
-                      <input
-                        type="number"
-                        name="duracionMinutos"
-                        className="form-control"
-                        value={
-                          formulario
-                            .duracionMinutos
-                        }
-                        onChange={
-                          cambiarCampo
-                        }
-                        min="1"
-                        step="1"
-                        placeholder="60"
-                        required
-                      />
-
-                      <span className="input-group-text">
-                        minutos
-                      </span>
-
-                    </div>
 
                   </div>
 

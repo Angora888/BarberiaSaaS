@@ -54,8 +54,7 @@ namespace BarberiaSaaS.Api.Controllers
                         {
                             ps.Servicio.Id,
                             ps.Servicio.Nombre,
-                            ps.Servicio.Precio,
-                            ps.Servicio.DuracionMinutos
+                            ps.Servicio.Precio
                         })
                         .ToList()
                 })
@@ -90,7 +89,8 @@ namespace BarberiaSaaS.Api.Controllers
                 {
                     return BadRequest(new
                     {
-                        mensaje = "La sucursal seleccionada no es válida."
+                        mensaje =
+                            "La sucursal seleccionada no es válida."
                     });
                 }
             }
@@ -123,11 +123,19 @@ namespace BarberiaSaaS.Api.Controllers
                 TenantId = tenantId,
                 SucursalId = request.SucursalId,
                 Nombre = request.Nombre.Trim(),
-                Apellidos = request.Apellidos?.Trim() ?? string.Empty,
-                Telefono = request.Telefono?.Trim(),
-                Email = request.Email?.Trim().ToLowerInvariant(),
-                Especialidad = request.Especialidad?.Trim(),
-                FotoUrl = request.FotoUrl?.Trim(),
+                Apellidos =
+                    request.Apellidos?.Trim() ??
+                    string.Empty,
+                Telefono =
+                    request.Telefono?.Trim(),
+                Email =
+                    request.Email?
+                        .Trim()
+                        .ToLowerInvariant(),
+                Especialidad =
+                    request.Especialidad?.Trim(),
+                FotoUrl =
+                    request.FotoUrl?.Trim(),
                 Activo = true,
                 FechaCreacion = DateTime.UtcNow
             };
@@ -147,7 +155,8 @@ namespace BarberiaSaaS.Api.Controllers
 
             return Ok(new
             {
-                mensaje = "Profesional creado correctamente.",
+                mensaje =
+                    "Profesional creado correctamente.",
                 profesional.Id,
                 profesional.Nombre,
                 profesional.Apellidos

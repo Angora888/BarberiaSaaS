@@ -12,6 +12,8 @@
 
         public DateTime FechaInicio { get; set; }
 
+        public int DuracionMinutos { get; set; }
+
         public string? Notas { get; set; }
     }
 }

@@ -1042,10 +1042,6 @@ function Profesionales() {
                                   {servicio.nombre}
                                 </strong>
 
-                                <span>
-                                  {servicio.duracionMinutos} min
-                                </span>
-
                               </div>
 
                             </label>

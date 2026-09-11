@@ -72,7 +72,11 @@
 
 .agenda-toolbar {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns:
+    auto
+    minmax(220px, 1fr)
+    minmax(190px, 240px)
+    auto;
   align-items: center;
   gap: 20px;
 
@@ -129,6 +133,11 @@
 
 .agenda-date-input {
   width: 165px;
+}
+
+.agenda-professional-filter {
+  min-width: 190px;
+  max-width: 240px;
 }
 
 /* ============================================================
@@ -530,6 +539,349 @@
 }
 
 /* ============================================================
+   AGENDA SEMANAL
+   ============================================================ */
+
+.agenda-content-week {
+  padding: 0;
+
+  overflow: hidden;
+}
+
+.week-agenda-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.week-agenda {
+  min-width: 1120px;
+
+  display: grid;
+  grid-template-columns:
+    repeat(7, minmax(150px, 1fr));
+
+  background: white;
+}
+
+.week-day-column {
+  min-width: 0;
+  min-height: 560px;
+
+  background: #fff;
+
+  border-right: 1px solid var(--border);
+}
+
+.week-day-column:last-child {
+  border-right: 0;
+}
+
+.week-day-column.today {
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(198, 40, 100, 0.035),
+      rgba(198, 40, 100, 0.012)
+    );
+}
+
+.week-day-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  padding: 12px;
+
+  background: #faf8f9;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.week-day-column.today .week-day-header {
+  background: var(--soft-pink);
+}
+
+.week-day-title {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  gap: 1px;
+
+  padding: 0;
+
+  background: transparent;
+
+  color: #5e575b;
+
+  border: 0;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.week-day-title:hover {
+  color: var(--primary);
+}
+
+.week-day-title span {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.week-day-title strong {
+  color: #393438;
+
+  font-size: 24px;
+  line-height: 1;
+}
+
+.week-day-column.today .week-day-title strong {
+  color: var(--primary);
+}
+
+.week-day-count {
+  min-width: 26px;
+  height: 26px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 7px;
+
+  background: white;
+
+  color: var(--text-muted);
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.week-day-body {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  padding: 10px;
+}
+
+.week-add-appointment {
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 8px 10px;
+
+  background: #fff;
+
+  color: var(--primary);
+
+  border: 1px dashed rgba(198, 40, 100, 0.35);
+  border-radius: 10px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.week-add-appointment:hover {
+  background: var(--soft-pink);
+
+  border-color: var(--primary);
+
+  transform: translateY(-1px);
+}
+
+.week-day-empty {
+  min-height: 84px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 14px;
+
+  color: #a0989d;
+
+  font-size: 11px;
+  text-align: center;
+}
+
+.week-appointment {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  gap: 5px;
+
+  padding: 10px;
+
+  overflow: hidden;
+
+  background: white;
+
+  color: #433e41;
+
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 11px;
+
+  text-align: left;
+
+  box-shadow:
+    0 3px 10px
+    rgba(0, 0, 0, 0.035);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.week-appointment:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 18px
+    rgba(0, 0, 0, 0.07);
+}
+
+.week-appointment-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 6px;
+}
+
+.week-appointment-top strong {
+  color: var(--primary);
+
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.week-appointment-top span {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: var(--text-muted);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-appointment-service {
+  overflow: hidden;
+
+  color: #3f393d;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-appointment-client,
+.week-appointment-professional {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #756e72;
+
+  font-size: 9px;
+}
+
+.week-appointment-client svg,
+.week-appointment-professional svg {
+  flex: 0 0 auto;
+
+  color: var(--primary);
+}
+
+.week-appointment-client span,
+.week-appointment-professional span {
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-appointment.visual-pending {
+  border-left-color: #c99825;
+}
+
+.week-appointment.visual-confirmed {
+  border-left-color: #4b78b6;
+}
+
+.week-appointment.visual-in-progress {
+  border-left-color: #795bb4;
+}
+
+.week-appointment.visual-completed {
+  border-left-color: #438b5c;
+}
+
+.week-appointment.visual-cancelled {
+  opacity: 0.58;
+
+  border-left-color: #b45858;
+
+  text-decoration: line-through;
+}
+
+.week-appointment.visual-absent {
+  opacity: 0.72;
+
+  border-left-color: #777;
+}
+
+/* ============================================================
    CITAS - LISTA
    ============================================================ */
 
@@ -826,8 +1178,10 @@
     justify-content: center;
   }
 
-  .agenda-date-input {
+  .agenda-date-input,
+  .agenda-professional-filter {
     width: 100%;
+    max-width: none;
   }
 
   .agenda-header-actions {
@@ -846,6 +1200,10 @@
 }
 
 @media (max-width: 700px) {
+  .week-agenda {
+    min-width: 980px;
+  }
+
   .appointment-card {
     grid-template-columns: 1fr;
   }

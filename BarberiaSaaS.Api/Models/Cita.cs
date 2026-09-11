@@ -16,6 +16,8 @@
 
         public DateTime FechaInicio { get; set; }
 
+        public int DuracionMinutos { get; set; }
+
         public DateTime FechaFin { get; set; }
 
         public decimal Precio { get; set; }
