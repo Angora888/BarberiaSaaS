@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FaBell,
   FaCalendarAlt,
   FaChevronLeft,
   FaChevronRight,
@@ -9,7 +10,8 @@ import {
   FaThLarge,
   FaTimes,
   FaUser,
-  FaUserTie
+  FaUserTie,
+  FaWhatsapp
 } from "react-icons/fa";
 
 import api from "../services/api";
@@ -19,7 +21,8 @@ import "./Agenda.css";
 function Agenda() {
   const {
     formatearMoneda,
-    zonaHoraria
+    zonaHoraria,
+    nombreNegocio
   } = useConfiguracion();
 
   const [fechaSeleccionada, setFechaSeleccionada] =
@@ -73,10 +76,17 @@ function Agenda() {
   const [errorModal, setErrorModal] =
     useState("");
 
-  const [citaSeleccionada, setCitaSeleccionada] = useState(null);
-  const [mostrarDetalleCita, setMostrarDetalleCita] = useState(false);
-  const [actualizandoEstado, setActualizandoEstado] = useState(false);
-  const [errorDetalle, setErrorDetalle] = useState("");
+  const [citaSeleccionada, setCitaSeleccionada] =
+    useState(null);
+
+  const [mostrarDetalleCita, setMostrarDetalleCita] =
+    useState(false);
+
+  const [actualizandoEstado, setActualizandoEstado] =
+    useState(false);
+
+  const [errorDetalle, setErrorDetalle] =
+    useState("");
 
   const [
     mostrarNuevaCita,
@@ -391,9 +401,6 @@ function Agenda() {
 
     setErrorModal("");
 
-    // Al cambiar servicio conservamos el profesional
-    // si ya estaba preseleccionado desde la agenda visual
-    // y realmente realiza el nuevo servicio.
     if (
       name === "servicioId"
     ) {
@@ -441,8 +448,6 @@ function Agenda() {
       return;
     }
 
-    // Si cambia variante, profesional, fecha o duración,
-    // hay que consultar nuevamente.
     if (
       name === "servicioVarianteId" ||
       name === "profesionalId" ||
@@ -561,14 +566,6 @@ function Agenda() {
           }
         );
 
-        /*
-         * IMPORTANTE:
-         * El endpoint del backend es:
-         *
-         * POST
-         * /api/Disponibilidad/consultar
-         */
-
         const response =
           await api.post(
             "/Disponibilidad/consultar",
@@ -598,12 +595,6 @@ function Agenda() {
 
         const datos =
           response.data;
-
-        /*
-         * Soportamos diferentes formas
-         * de respuesta para no depender
-         * de un nombre específico.
-         */
 
         let horarios = [];
 
@@ -812,14 +803,6 @@ function Agenda() {
             Number(
               formulario.sucursalId
             ),
-
-          /*
-           * Esta fecha es hora LOCAL
-           * del negocio.
-           *
-           * El backend se encarga de
-           * convertirla a UTC.
-           */
 
           fechaInicio:
             `${formulario.fecha}T${formulario.horaInicio}:00`,
@@ -1291,8 +1274,14 @@ function Agenda() {
       setCitaSeleccionada(cita);
       setMostrarDetalleCita(true);
 
-      const response = await api.get(`/Citas/${cita.id}`);
-      setCitaSeleccionada(response.data);
+      const response =
+        await api.get(
+          `/Citas/${cita.id}`
+        );
+
+      setCitaSeleccionada(
+        response.data
+      );
     } catch (error) {
       setErrorDetalle(
         error.response?.data?.mensaje ||
@@ -1302,15 +1291,21 @@ function Agenda() {
   };
 
   const cerrarDetalleCita = () => {
-    if (actualizandoEstado) return;
+    if (actualizandoEstado) {
+      return;
+    }
 
     setMostrarDetalleCita(false);
     setCitaSeleccionada(null);
     setErrorDetalle("");
   };
 
-  const cambiarEstadoCita = async (nuevoEstado) => {
-    if (!citaSeleccionada) return;
+  const cambiarEstadoCita = async (
+    nuevoEstado
+  ) => {
+    if (!citaSeleccionada) {
+      return false;
+    }
 
     if (
       nuevoEstado === "Cancelada" &&
@@ -1318,37 +1313,290 @@ function Agenda() {
         "¿Seguro que deseas cancelar esta cita? El horario volverá a quedar disponible."
       )
     ) {
-      return;
+      return false;
     }
 
     try {
       setActualizandoEstado(true);
       setErrorDetalle("");
 
-      const response = await api.put(
-        `/Citas/${citaSeleccionada.id}/estado`,
-        {
-          estado: nuevoEstado,
-          notas: citaSeleccionada.notas || null
-        }
+      const response =
+        await api.put(
+          `/Citas/${citaSeleccionada.id}/estado`,
+          {
+            estado: nuevoEstado,
+            notas:
+              citaSeleccionada.notas ||
+              null
+          }
+        );
+
+      setCitaSeleccionada(
+        (anterior) => ({
+          ...anterior,
+          estado:
+            response.data?.estado ||
+            nuevoEstado
+        })
       );
 
-      setCitaSeleccionada((anterior) => ({
-        ...anterior,
-        estado: response.data?.estado || nuevoEstado
-      }));
-
       await cargarCitas();
+
+      return true;
     } catch (error) {
       setErrorDetalle(
         error.response?.data?.mensaje ||
         error.response?.data?.title ||
         "No fue posible actualizar el estado de la cita."
       );
+
+      return false;
     } finally {
       setActualizandoEstado(false);
     }
   };
+
+  // ============================================================
+  // WHATSAPP
+  // ============================================================
+
+  const normalizarTelefonoWhatsApp = (
+    telefono
+  ) => {
+    if (!telefono) {
+      return "";
+    }
+
+    let digitos =
+      telefono
+        .toString()
+        .replace(/\D/g, "");
+
+    if (
+      digitos.startsWith("00")
+    ) {
+      digitos =
+        digitos.substring(2);
+    }
+
+    if (digitos.length === 8) {
+      digitos =
+        `506${digitos}`;
+    }
+
+    return digitos;
+  };
+
+  const obtenerFechaCitaWhatsApp = (
+    cita
+  ) => {
+    const fechaLocal =
+      obtenerFechaLocalCita(
+        cita,
+        zonaHoraria
+      );
+
+    if (!fechaLocal) {
+      return "";
+    }
+
+    try {
+      return new Intl.DateTimeFormat(
+        "es-CR",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        }
+      ).format(
+        crearFechaLocal(
+          fechaLocal
+        )
+      );
+    } catch {
+      return fechaLocal;
+    }
+  };
+
+  const construirMensajeWhatsApp = (
+    tipo,
+    cita
+  ) => {
+    const cliente =
+      cita.cliente?.nombre ||
+      obtenerNombreCliente(cita);
+
+    const fecha =
+      obtenerFechaCitaWhatsApp(
+        cita
+      );
+
+    const hora =
+      obtenerHoraCita(
+        cita,
+        zonaHoraria
+      );
+
+    const servicio =
+      obtenerNombreServicio(
+        cita
+      );
+
+    const profesional =
+      obtenerNombreProfesional(
+        cita
+      );
+
+    const sucursal =
+      cita.sucursal?.nombre ||
+      "Sucursal";
+
+    const negocio =
+      nombreNegocio ||
+      "nuestro negocio";
+
+    if (
+      tipo === "confirmacion"
+    ) {
+      return [
+        `Hola ${cliente} 😊`,
+        "",
+        `Tu cita en *${negocio}* ha sido confirmada.`,
+        "",
+        `📅 Fecha: ${capitalizar(fecha)}`,
+        `🕐 Hora: ${hora}`,
+        `✨ Servicio: ${servicio}`,
+        `👩‍💼 Profesional: ${profesional}`,
+        `📍 ${sucursal}`,
+        `💰 Precio: ${formatearMoneda(cita.precio)}`,
+        "",
+        "¡Te esperamos! 💕"
+      ].join("\n");
+    }
+
+    return [
+      `Hola ${cliente} 😊`,
+      "",
+      `Te recordamos tu cita en *${negocio}*.`,
+      "",
+      `📅 Fecha: ${capitalizar(fecha)}`,
+      `🕐 Hora: ${hora}`,
+      `✨ Servicio: ${servicio}`,
+      `👩‍💼 Profesional: ${profesional}`,
+      `📍 ${sucursal}`,
+      "",
+      "¡Te esperamos! 💕"
+    ].join("\n");
+  };
+
+  const construirUrlWhatsApp = (
+    tipo,
+    cita
+  ) => {
+    const telefono =
+      normalizarTelefonoWhatsApp(
+        cita.cliente?.telefono
+      );
+
+    if (!telefono) {
+      return "";
+    }
+
+    const mensaje =
+      construirMensajeWhatsApp(
+        tipo,
+        cita
+      );
+
+    return `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+  };
+
+  const enviarRecordatorioWhatsApp =
+    () => {
+      if (!citaSeleccionada) {
+        return;
+      }
+
+      const url =
+        construirUrlWhatsApp(
+          "recordatorio",
+          citaSeleccionada
+        );
+
+      if (!url) {
+        setErrorDetalle(
+          "Este cliente no tiene un número de teléfono registrado para enviar el recordatorio por WhatsApp."
+        );
+
+        return;
+      }
+
+      setErrorDetalle("");
+
+      window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    };
+
+  const confirmarYEnviarWhatsApp =
+    async () => {
+      if (!citaSeleccionada) {
+        return;
+      }
+
+      const url =
+        construirUrlWhatsApp(
+          "confirmacion",
+          citaSeleccionada
+        );
+
+      if (!url) {
+        setErrorDetalle(
+          "Este cliente no tiene un número de teléfono registrado para enviar la confirmación por WhatsApp."
+        );
+
+        return;
+      }
+
+      setErrorDetalle("");
+
+      /*
+       * En iPhone/Safari abrimos la ventana dentro del
+       * clic del usuario para evitar que el navegador
+       * bloquee WhatsApp después del await del API.
+       */
+      const ventanaWhatsApp =
+        window.open(
+          "",
+          "_blank"
+        );
+
+      if (
+        citaSeleccionada.estado !==
+        "Confirmada"
+      ) {
+        const actualizado =
+          await cambiarEstadoCita(
+            "Confirmada"
+          );
+
+        if (!actualizado) {
+          ventanaWhatsApp?.close();
+          return;
+        }
+      }
+
+      if (ventanaWhatsApp) {
+        ventanaWhatsApp.location.href =
+          url;
+      } else {
+        window.location.href =
+          url;
+      }
+    };
 
   // ============================================================
   // NAVEGACIÓN FECHAS / SEMANAS
@@ -2838,8 +3086,6 @@ function Agenda() {
 
               <div className="custom-modal-body">
 
-                {/* ERROR DENTRO DEL MODAL */}
-
                 {errorModal && (
 
                   <div className="alert alert-danger mb-4">
@@ -2851,8 +3097,6 @@ function Agenda() {
                 )}
 
                 <div className="row g-3">
-
-                  {/* CLIENTE */}
 
                   <div className="col-md-6">
 
@@ -2898,8 +3142,6 @@ function Agenda() {
 
                   </div>
 
-                  {/* SUCURSAL */}
-
                   <div className="col-md-6">
 
                     <label className="form-label">
@@ -2938,8 +3180,6 @@ function Agenda() {
                     </select>
 
                   </div>
-
-                  {/* SERVICIO */}
 
                   <div className="col-md-6">
 
@@ -3062,8 +3302,6 @@ function Agenda() {
 
                   )}
 
-                  {/* PROFESIONAL */}
-
                   <div className="col-md-6">
 
                     <label className="form-label">
@@ -3111,8 +3349,6 @@ function Agenda() {
 
                   </div>
 
-                  {/* FECHA */}
-
                   <div className="col-md-6">
 
                     <label className="form-label">
@@ -3133,8 +3369,6 @@ function Agenda() {
                     />
 
                   </div>
-
-                  {/* DURACIÓN */}
 
                   <div className="col-md-6">
 
@@ -3201,8 +3435,6 @@ function Agenda() {
 
                   </div>
 
-                  {/* BOTÓN DISPONIBILIDAD */}
-
                   <div className="col-md-6 d-flex align-items-end">
 
                     <button
@@ -3229,8 +3461,6 @@ function Agenda() {
                     </button>
 
                   </div>
-
-                  {/* INFO SERVICIO */}
 
                   {servicioSeleccionado && (
 
@@ -3283,8 +3513,6 @@ function Agenda() {
                     </div>
 
                   )}
-
-                  {/* HORARIOS */}
 
                   <div className="col-12">
 
@@ -3396,8 +3624,6 @@ function Agenda() {
 
                   </div>
 
-                  {/* NOTAS */}
-
                   <div className="col-12">
 
                     <label className="form-label">
@@ -3494,8 +3720,13 @@ function Agenda() {
               <div className="row g-3">
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Cliente</small>
-                    <strong>{obtenerNombreCliente(citaSeleccionada)}</strong>
+                    <small className="text-muted d-block mb-1">
+                      Cliente
+                    </small>
+
+                    <strong>
+                      {obtenerNombreCliente(citaSeleccionada)}
+                    </strong>
 
                     {citaSeleccionada.cliente?.telefono && (
                       <div className="text-muted small mt-1">
@@ -3513,12 +3744,20 @@ function Agenda() {
 
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Servicio</small>
-                    <strong>{obtenerNombreServicio(citaSeleccionada)}</strong>
+                    <small className="text-muted d-block mb-1">
+                      Servicio
+                    </small>
+
+                    <strong>
+                      {obtenerNombreServicio(citaSeleccionada)}
+                    </strong>
 
                     {citaSeleccionada.duracionMinutos > 0 && (
                       <div className="text-muted small mt-1">
-                        Duración: {formatearDuracionMinutos(citaSeleccionada.duracionMinutos)}
+                        Duración:{" "}
+                        {formatearDuracionMinutos(
+                          citaSeleccionada.duracionMinutos
+                        )}
                       </div>
                     )}
                   </div>
@@ -3526,14 +3765,22 @@ function Agenda() {
 
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Profesional</small>
-                    <strong>{obtenerNombreProfesional(citaSeleccionada)}</strong>
+                    <small className="text-muted d-block mb-1">
+                      Profesional
+                    </small>
+
+                    <strong>
+                      {obtenerNombreProfesional(citaSeleccionada)}
+                    </strong>
                   </div>
                 </div>
 
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Sucursal</small>
+                    <small className="text-muted d-block mb-1">
+                      Sucursal
+                    </small>
+
                     <strong>
                       {citaSeleccionada.sucursal?.nombre || "Sucursal"}
                     </strong>
@@ -3542,33 +3789,62 @@ function Agenda() {
 
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Hora</small>
+                    <small className="text-muted d-block mb-1">
+                      Hora
+                    </small>
+
                     <strong>
-                      {obtenerHoraCita(citaSeleccionada, zonaHoraria)}
+                      {obtenerHoraCita(
+                        citaSeleccionada,
+                        zonaHoraria
+                      )}
                     </strong>
                   </div>
                 </div>
 
                 <div className="col-md-6">
                   <div className="p-3 border rounded-3 h-100">
-                    <small className="text-muted d-block mb-1">Precio</small>
-                    <strong>{formatearMoneda(citaSeleccionada.precio)}</strong>
+                    <small className="text-muted d-block mb-1">
+                      Precio
+                    </small>
+
+                    <strong>
+                      {formatearMoneda(
+                        citaSeleccionada.precio
+                      )}
+                    </strong>
                   </div>
                 </div>
 
                 <div className="col-12">
                   <div className="p-3 border rounded-3">
-                    <small className="text-muted d-block mb-2">Estado actual</small>
-                    <span className={obtenerClaseEstado(citaSeleccionada.estado)}>
-                      {formatearEstado(citaSeleccionada.estado)}
+                    <small className="text-muted d-block mb-2">
+                      Estado actual
+                    </small>
+
+                    <span
+                      className={
+                        obtenerClaseEstado(
+                          citaSeleccionada.estado
+                        )
+                      }
+                    >
+                      {formatearEstado(
+                        citaSeleccionada.estado
+                      )}
                     </span>
                   </div>
                 </div>
 
                 <div className="col-12">
                   <div className="p-3 border rounded-3">
-                    <small className="text-muted d-block mb-1">Notas</small>
-                    <div>{citaSeleccionada.notas || "Sin notas."}</div>
+                    <small className="text-muted d-block mb-1">
+                      Notas
+                    </small>
+
+                    <div>
+                      {citaSeleccionada.notas || "Sin notas."}
+                    </div>
                   </div>
                 </div>
 
@@ -3581,8 +3857,15 @@ function Agenda() {
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "Pendiente"}
-                      onClick={() => cambiarEstadoCita("Pendiente")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "Pendiente"
+                      }
+                      onClick={() =>
+                        cambiarEstadoCita(
+                          "Pendiente"
+                        )
+                      }
                     >
                       Pendiente
                     </button>
@@ -3590,26 +3873,52 @@ function Agenda() {
                     <button
                       type="button"
                       className="btn btn-outline-primary"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "Confirmada"}
-                      onClick={() => cambiarEstadoCita("Confirmada")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "Cancelada" ||
+                        citaSeleccionada.estado === "Completada" ||
+                        citaSeleccionada.estado === "NoAsistio"
+                      }
+                      onClick={
+                        confirmarYEnviarWhatsApp
+                      }
                     >
-                      Confirmar
+                      <FaWhatsapp className="me-2" />
+
+                      {citaSeleccionada.estado === "Confirmada"
+                        ? "Enviar confirmación"
+                        : "Confirmar y WhatsApp"}
                     </button>
 
                     <button
                       type="button"
                       className="btn btn-outline-warning"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "EnProceso"}
-                      onClick={() => cambiarEstadoCita("EnProceso")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "Cancelada" ||
+                        citaSeleccionada.estado === "Completada" ||
+                        citaSeleccionada.estado === "NoAsistio"
+                      }
+                      onClick={
+                        enviarRecordatorioWhatsApp
+                      }
                     >
-                      En proceso
+                      <FaBell className="me-2" />
+                      Recordatorio
                     </button>
 
                     <button
                       type="button"
                       className="btn btn-outline-success"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "Completada"}
-                      onClick={() => cambiarEstadoCita("Completada")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "Completada"
+                      }
+                      onClick={() =>
+                        cambiarEstadoCita(
+                          "Completada"
+                        )
+                      }
                     >
                       Completada
                     </button>
@@ -3617,8 +3926,15 @@ function Agenda() {
                     <button
                       type="button"
                       className="btn btn-outline-dark"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "NoAsistio"}
-                      onClick={() => cambiarEstadoCita("NoAsistio")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "NoAsistio"
+                      }
+                      onClick={() =>
+                        cambiarEstadoCita(
+                          "NoAsistio"
+                        )
+                      }
                     >
                       No asistió
                     </button>
@@ -3626,11 +3942,26 @@ function Agenda() {
                     <button
                       type="button"
                       className="btn btn-outline-danger"
-                      disabled={actualizandoEstado || citaSeleccionada.estado === "Cancelada"}
-                      onClick={() => cambiarEstadoCita("Cancelada")}
+                      disabled={
+                        actualizandoEstado ||
+                        citaSeleccionada.estado === "Cancelada"
+                      }
+                      onClick={() =>
+                        cambiarEstadoCita(
+                          "Cancelada"
+                        )
+                      }
                     >
                       Cancelar cita
                     </button>
+                  </div>
+
+                  <div className="text-muted small mt-3">
+                    <FaWhatsapp className="me-1" />
+                    Confirmar cambia la cita a confirmada y abre
+                    WhatsApp con el mensaje listo para enviar.
+                    Recordatorio solo abre WhatsApp y no cambia el
+                    estado de la cita.
                   </div>
                 </div>
               </div>
@@ -3797,7 +4128,7 @@ function obtenerFechaLocalCita(
     if (
       typeof fechaUtc === "string" &&
       !fechaUtc.endsWith("Z") &&
-      !/[+-]\\d{2}:\\d{2}$/.test(
+      !/[+-]\d{2}:\d{2}$/.test(
         fechaUtc
       )
     ) {
@@ -4189,8 +4520,14 @@ function obtenerClaseEstadoVisual(
 }
 
 function formatearEstado(estado) {
-  if (estado === "NoAsistio") return "No asistió";
-  if (estado === "EnProceso") return "En proceso";
+  if (estado === "NoAsistio") {
+    return "No asistió";
+  }
+
+  if (estado === "EnProceso") {
+    return "En proceso";
+  }
+
   return estado || "Pendiente";
 }
 
@@ -4198,10 +4535,6 @@ function obtenerHoraCita(
   cita,
   zonaHoraria
 ) {
-  /*
-   * Si el backend ya devuelve la fecha local,
-   * podemos mostrar directamente su hora.
-   */
   if (
     cita.fechaInicioLocal &&
     typeof cita.fechaInicioLocal === "string" &&
@@ -4213,34 +4546,31 @@ function obtenerHoraCita(
     );
   }
 
-  /*
-   * fechaInicio viene almacenada en UTC.
-   * La convertimos a la zona horaria configurada
-   * para el tenant antes de mostrarla.
-   */
   if (!cita.fechaInicio) {
     return "--:--";
   }
 
   try {
-    let fechaUtc = cita.fechaInicio;
+    let fechaUtc =
+      cita.fechaInicio;
 
-    /*
-     * Si ASP.NET devuelve una fecha UTC sin la Z,
-     * la agregamos para evitar que JavaScript la
-     * interprete como hora local del navegador.
-     */
     if (
       typeof fechaUtc === "string" &&
       !fechaUtc.endsWith("Z") &&
-      !/[+-]\\d{2}:\\d{2}$/.test(fechaUtc)
+      !/[+-]\d{2}:\d{2}$/.test(fechaUtc)
     ) {
-      fechaUtc = `${fechaUtc}Z`;
+      fechaUtc =
+        `${fechaUtc}Z`;
     }
 
-    const fecha = new Date(fechaUtc);
+    const fecha =
+      new Date(fechaUtc);
 
-    if (Number.isNaN(fecha.getTime())) {
+    if (
+      Number.isNaN(
+        fecha.getTime()
+      )
+    ) {
       return "--:--";
     }
 

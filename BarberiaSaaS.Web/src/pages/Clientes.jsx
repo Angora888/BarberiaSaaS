@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
 import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
+import {
+  FaAddressBook,
   FaEdit,
   FaHistory,
   FaPlus,
@@ -17,6 +23,9 @@ function Clientes() {
     useState(true);
 
   const [error, setError] =
+    useState("");
+
+  const [mensaje, setMensaje] =
     useState("");
 
   const [busqueda, setBusqueda] =
@@ -54,6 +63,9 @@ function Clientes() {
     cargandoHistorial,
     setCargandoHistorial
   ] = useState(false);
+
+  const inputVcardRef =
+    useRef(null);
 
   useEffect(() => {
     cargarClientes();
@@ -125,6 +137,7 @@ function Clientes() {
       formularioVacio()
     );
     setError("");
+    setMensaje("");
     setMostrarFormulario(true);
   };
 
@@ -152,6 +165,7 @@ function Clientes() {
     });
 
     setError("");
+    setMensaje("");
     setMostrarFormulario(true);
   };
 
@@ -178,8 +192,320 @@ function Clientes() {
   const cerrarFormulario = () => {
     limpiarFormulario();
     setClienteEditando(null);
+    setMensaje("");
     setMostrarFormulario(false);
+
+    if (inputVcardRef.current) {
+      inputVcardRef.current.value = "";
+    }
   };
+
+  // ============================================================
+  // IMPORTAR CONTACTO DESDE VCARD (.VCF) - IPHONE
+  // ============================================================
+
+  const decodificarTextoVcard = (
+    valor
+  ) => {
+    if (!valor) {
+      return "";
+    }
+
+    return valor
+      .replace(/\\n/gi, "\n")
+      .replace(/\\,/g, ",")
+      .replace(/\\;/g, ";")
+      .replace(/\\\\/g, "\\")
+      .trim();
+  };
+
+  const unirLineasVcard = (
+    contenido
+  ) => {
+    const lineas =
+      contenido
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n");
+
+    const resultado = [];
+
+    for (
+      const linea of lineas
+    ) {
+      if (
+        (
+          linea.startsWith(" ") ||
+          linea.startsWith("\t")
+        ) &&
+        resultado.length > 0
+      ) {
+        resultado[
+          resultado.length - 1
+        ] += linea.substring(1);
+      } else {
+        resultado.push(linea);
+      }
+    }
+
+    return resultado;
+  };
+
+  const obtenerValorPropiedad = (
+    lineas,
+    propiedad
+  ) => {
+    const prefijo =
+      propiedad.toUpperCase();
+
+    const linea =
+      lineas.find(
+        (item) => {
+          const parteClave =
+            item
+              .split(":")[0]
+              ?.toUpperCase();
+
+          return (
+            parteClave === prefijo ||
+            parteClave?.startsWith(
+              `${prefijo};`
+            )
+          );
+        }
+      );
+
+    if (!linea) {
+      return "";
+    }
+
+    const posicion =
+      linea.indexOf(":");
+
+    if (posicion < 0) {
+      return "";
+    }
+
+    return decodificarTextoVcard(
+      linea.substring(
+        posicion + 1
+      )
+    );
+  };
+
+  const parsearNombreVcard = (
+    lineas
+  ) => {
+    const nombreEstructurado =
+      obtenerValorPropiedad(
+        lineas,
+        "N"
+      );
+
+    const nombreCompleto =
+      obtenerValorPropiedad(
+        lineas,
+        "FN"
+      );
+
+    if (nombreEstructurado) {
+      const partes =
+        nombreEstructurado
+          .split(";")
+          .map(
+            (parte) =>
+              decodificarTextoVcard(
+                parte
+              )
+          );
+
+      const apellidos =
+        [
+          partes[0]
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+      const nombre =
+        [
+          partes[1],
+          partes[2]
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+      if (
+        nombre ||
+        apellidos
+      ) {
+        return {
+          nombre:
+            nombre ||
+            nombreCompleto ||
+            "",
+          apellidos
+        };
+      }
+    }
+
+    if (nombreCompleto) {
+      const partes =
+        nombreCompleto
+          .trim()
+          .split(/\s+/);
+
+      return {
+        nombre:
+          partes.shift() || "",
+        apellidos:
+          partes.join(" ")
+      };
+    }
+
+    return {
+      nombre: "",
+      apellidos: ""
+    };
+  };
+
+  const importarVcard = async (
+    e
+  ) => {
+    const archivo =
+      e.target.files?.[0];
+
+    if (!archivo) {
+      return;
+    }
+
+    try {
+      setError("");
+      setMensaje("");
+
+      const contenido =
+        await archivo.text();
+
+      const lineas =
+        unirLineasVcard(
+          contenido
+        );
+
+      const inicio =
+        lineas.findIndex(
+          (linea) =>
+            linea
+              .trim()
+              .toUpperCase() ===
+            "BEGIN:VCARD"
+        );
+
+      const fin =
+        lineas.findIndex(
+          (linea, indice) =>
+            indice > inicio &&
+            linea
+              .trim()
+              .toUpperCase() ===
+            "END:VCARD"
+        );
+
+      if (
+        inicio < 0 ||
+        fin < 0
+      ) {
+        throw new Error(
+          "El archivo seleccionado no parece ser un contacto válido."
+        );
+      }
+
+      const lineasContacto =
+        lineas.slice(
+          inicio,
+          fin + 1
+        );
+
+      const {
+        nombre,
+        apellidos
+      } =
+        parsearNombreVcard(
+          lineasContacto
+        );
+
+      const telefono =
+        obtenerValorPropiedad(
+          lineasContacto,
+          "TEL"
+        );
+
+      const email =
+        obtenerValorPropiedad(
+          lineasContacto,
+          "EMAIL"
+        );
+
+      if (
+        !nombre &&
+        !telefono &&
+        !email
+      ) {
+        throw new Error(
+          "No fue posible encontrar nombre, teléfono o correo en el contacto."
+        );
+      }
+
+      setFormulario(
+        (anterior) => ({
+          ...anterior,
+
+          nombre:
+            nombre ||
+            anterior.nombre,
+
+          apellidos:
+            apellidos ||
+            anterior.apellidos,
+
+          telefono:
+            telefono ||
+            anterior.telefono,
+
+          email:
+            email ||
+            anterior.email
+        })
+      );
+
+      setMensaje(
+        "Contacto cargado. Revisa los datos antes de guardar."
+      );
+    } catch (error) {
+      setError(
+        error.message ||
+        "No fue posible importar el contacto."
+      );
+    } finally {
+      if (
+        inputVcardRef.current
+      ) {
+        inputVcardRef.current.value =
+          "";
+      }
+    }
+  };
+
+  const seleccionarVcard = () => {
+    setError("");
+    setMensaje("");
+
+    inputVcardRef.current?.click();
+  };
+
+  // ============================================================
+  // GUARDAR CLIENTE
+  // ============================================================
 
   const guardarCliente =
     async (e) => {
@@ -221,6 +547,7 @@ function Clientes() {
       try {
         setGuardando(true);
         setError("");
+        setMensaje("");
 
         if (clienteEditando) {
           await api.put(
@@ -537,6 +864,47 @@ function Clientes() {
               }
             >
               <div className="custom-modal-body">
+                {!clienteEditando && (
+                  <div className="mb-4">
+                    <input
+                      ref={
+                        inputVcardRef
+                      }
+                      type="file"
+                      accept=".vcf,text/vcard,text/x-vcard"
+                      className="d-none"
+                      onChange={
+                        importarVcard
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary w-100"
+                      onClick={
+                        seleccionarVcard
+                      }
+                    >
+                      <FaAddressBook className="me-2" />
+                      Importar contacto del iPhone
+                    </button>
+
+                    <div className="text-muted small mt-2">
+                      En Contactos del iPhone:
+                      abre el contacto, toca
+                      Compartir contacto, guarda
+                      el archivo en Archivos y
+                      luego selecciónalo aquí.
+                    </div>
+                  </div>
+                )}
+
+                {mensaje && (
+                  <div className="alert alert-success">
+                    {mensaje}
+                  </div>
+                )}
+
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label">
