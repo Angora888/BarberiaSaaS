@@ -1541,8 +1541,8 @@ function Agenda() {
       );
     };
 
-  const confirmarYEnviarWhatsApp =
-    async () => {
+  const enviarConfirmacionWhatsApp =
+    () => {
       if (!citaSeleccionada) {
         return;
       }
@@ -1563,39 +1563,11 @@ function Agenda() {
 
       setErrorDetalle("");
 
-      /*
-       * En iPhone/Safari abrimos la ventana dentro del
-       * clic del usuario para evitar que el navegador
-       * bloquee WhatsApp después del await del API.
-       */
-      const ventanaWhatsApp =
-        window.open(
-          "",
-          "_blank"
-        );
-
-      if (
-        citaSeleccionada.estado !==
-        "Confirmada"
-      ) {
-        const actualizado =
-          await cambiarEstadoCita(
-            "Confirmada"
-          );
-
-        if (!actualizado) {
-          ventanaWhatsApp?.close();
-          return;
-        }
-      }
-
-      if (ventanaWhatsApp) {
-        ventanaWhatsApp.location.href =
-          url;
-      } else {
-        window.location.href =
-          url;
-      }
+      window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+      );
     };
 
   // ============================================================
@@ -3875,19 +3847,32 @@ function Agenda() {
                       className="btn btn-outline-primary"
                       disabled={
                         actualizandoEstado ||
+                        citaSeleccionada.estado === "Confirmada"
+                      }
+                      onClick={() =>
+                        cambiarEstadoCita(
+                          "Confirmada"
+                        )
+                      }
+                    >
+                      Confirmar
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-success"
+                      disabled={
+                        actualizandoEstado ||
                         citaSeleccionada.estado === "Cancelada" ||
                         citaSeleccionada.estado === "Completada" ||
                         citaSeleccionada.estado === "NoAsistio"
                       }
                       onClick={
-                        confirmarYEnviarWhatsApp
+                        enviarConfirmacionWhatsApp
                       }
                     >
                       <FaWhatsapp className="me-2" />
-
-                      {citaSeleccionada.estado === "Confirmada"
-                        ? "Enviar confirmación"
-                        : "Confirmar y WhatsApp"}
+                      Enviar confirmación
                     </button>
 
                     <button
@@ -3958,10 +3943,10 @@ function Agenda() {
 
                   <div className="text-muted small mt-3">
                     <FaWhatsapp className="me-1" />
-                    Confirmar cambia la cita a confirmada y abre
-                    WhatsApp con el mensaje listo para enviar.
-                    Recordatorio solo abre WhatsApp y no cambia el
-                    estado de la cita.
+                    Confirmar solo cambia el estado de la cita.
+                    Enviar confirmación y Recordatorio abren WhatsApp
+                    con el mensaje listo para enviar y no modifican el
+                    estado.
                   </div>
                 </div>
               </div>
