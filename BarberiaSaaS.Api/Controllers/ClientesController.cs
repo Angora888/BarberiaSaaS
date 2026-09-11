@@ -150,6 +150,73 @@ namespace BarberiaSaaS.Api.Controllers
         }
 
         // ============================================================
+        // ACTUALIZAR CLIENTE
+        // ============================================================
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Actualizar(
+            int id,
+            ActualizarClienteDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El nombre del cliente es requerido."
+                });
+            }
+
+            var tenantId = _tenantContext.TenantId;
+
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    x.TenantId == tenantId);
+
+            if (cliente == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Cliente no encontrado."
+                });
+            }
+
+            cliente.Nombre =
+                request.Nombre.Trim();
+
+            cliente.Apellidos =
+                request.Apellidos?.Trim() ?? string.Empty;
+
+            cliente.Telefono =
+                request.Telefono?.Trim();
+
+            cliente.Email =
+                request.Email?
+                    .Trim()
+                    .ToLowerInvariant();
+
+            cliente.FechaNacimiento =
+                request.FechaNacimiento;
+
+            cliente.Notas =
+                request.Notas?.Trim();
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "Cliente actualizado correctamente.",
+                cliente.Id,
+                cliente.Nombre,
+                cliente.Apellidos,
+                cliente.Telefono,
+                cliente.Email,
+                cliente.FechaNacimiento,
+                cliente.Notas
+            });
+        }
+
+        // ============================================================
         // HISTORIAL DEL CLIENTE
         // ============================================================
 

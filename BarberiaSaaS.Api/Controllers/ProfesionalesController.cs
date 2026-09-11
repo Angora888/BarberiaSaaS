@@ -24,66 +24,85 @@ namespace BarberiaSaaS.Api.Controllers
             _tenantContext = tenantContext;
         }
 
+        // ============================================================
+        // LISTAR PROFESIONALES
+        // ============================================================
+
         [HttpGet]
         public async Task<IActionResult> GetProfesionales()
         {
-            var tenantId = _tenantContext.TenantId;
+            var tenantId =
+                _tenantContext.TenantId;
 
-            var profesionales = await _context.Profesionales
-                .Where(x => x.TenantId == tenantId)
-                .OrderBy(x => x.Nombre)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.Nombre,
-                    x.Apellidos,
-                    x.Telefono,
-                    x.Email,
-                    x.Especialidad,
-                    x.FotoUrl,
-                    x.Activo,
-                    x.SucursalId,
+            var profesionales =
+                await _context.Profesionales
+                    .Where(x =>
+                        x.TenantId == tenantId)
+                    .OrderBy(x =>
+                        x.Nombre)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.Nombre,
+                        x.Apellidos,
+                        x.Telefono,
+                        x.Email,
+                        x.Especialidad,
+                        x.FotoUrl,
+                        x.Activo,
+                        x.SucursalId,
 
-                    Sucursal =
-                        x.Sucursal != null
-                            ? x.Sucursal.Nombre
-                            : null,
+                        Sucursal =
+                            x.Sucursal != null
+                                ? x.Sucursal.Nombre
+                                : null,
 
-                    Servicios =
-                        x.Servicios.Select(ps => new
-                        {
-                            ps.Servicio.Id,
-                            ps.Servicio.Nombre,
-                            ps.Servicio.Precio
-                        })
-                        .ToList()
-                })
-                .ToListAsync();
+                        Servicios =
+                            x.Servicios
+                                .Select(ps => new
+                                {
+                                    ps.Servicio.Id,
+                                    ps.Servicio.Nombre,
+                                    ps.Servicio.Precio
+                                })
+                                .ToList()
+                    })
+                    .ToListAsync();
 
             return Ok(profesionales);
         }
+
+        // ============================================================
+        // CREAR PROFESIONAL
+        // ============================================================
 
         [HttpPost]
         public async Task<IActionResult> Crear(
             CrearProfesionalDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.Nombre))
+            if (string.IsNullOrWhiteSpace(
+                request.Nombre))
             {
                 return BadRequest(new
                 {
-                    mensaje = "El nombre del profesional es requerido."
+                    mensaje =
+                        "El nombre del profesional es requerido."
                 });
             }
 
-            var tenantId = _tenantContext.TenantId;
+            var tenantId =
+                _tenantContext.TenantId;
 
             if (request.SucursalId.HasValue)
             {
                 var sucursalValida =
-                    await _context.Sucursales.AnyAsync(x =>
-                        x.Id == request.SucursalId.Value &&
-                        x.TenantId == tenantId &&
-                        x.Activa);
+                    await _context.Sucursales
+                        .AnyAsync(x =>
+                            x.Id ==
+                                request.SucursalId.Value &&
+                            x.TenantId ==
+                                tenantId &&
+                            x.Activa);
 
                 if (!sucursalValida)
                 {
@@ -103,13 +122,18 @@ namespace BarberiaSaaS.Api.Controllers
             var serviciosValidos =
                 await _context.Servicios
                     .Where(x =>
-                        x.TenantId == tenantId &&
+                        x.TenantId ==
+                            tenantId &&
                         x.Activo &&
-                        servicioIds.Contains(x.Id))
-                    .Select(x => x.Id)
+                        servicioIds.Contains(
+                            x.Id))
+                    .Select(x =>
+                        x.Id)
                     .ToListAsync();
 
-            if (serviciosValidos.Count != servicioIds.Count)
+            if (
+                serviciosValidos.Count !=
+                servicioIds.Count)
             {
                 return BadRequest(new
                 {
@@ -118,38 +142,57 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            var profesional = new Profesional
-            {
-                TenantId = tenantId,
-                SucursalId = request.SucursalId,
-                Nombre = request.Nombre.Trim(),
-                Apellidos =
-                    request.Apellidos?.Trim() ??
-                    string.Empty,
-                Telefono =
-                    request.Telefono?.Trim(),
-                Email =
-                    request.Email?
-                        .Trim()
-                        .ToLowerInvariant(),
-                Especialidad =
-                    request.Especialidad?.Trim(),
-                FotoUrl =
-                    request.FotoUrl?.Trim(),
-                Activo = true,
-                FechaCreacion = DateTime.UtcNow
-            };
+            var profesional =
+                new Profesional
+                {
+                    TenantId =
+                        tenantId,
 
-            foreach (var servicioId in serviciosValidos)
+                    SucursalId =
+                        request.SucursalId,
+
+                    Nombre =
+                        request.Nombre.Trim(),
+
+                    Apellidos =
+                        request.Apellidos?.Trim() ??
+                        string.Empty,
+
+                    Telefono =
+                        request.Telefono?.Trim(),
+
+                    Email =
+                        request.Email?
+                            .Trim()
+                            .ToLowerInvariant(),
+
+                    Especialidad =
+                        request.Especialidad?.Trim(),
+
+                    FotoUrl =
+                        request.FotoUrl?.Trim(),
+
+                    Activo =
+                        true,
+
+                    FechaCreacion =
+                        DateTime.UtcNow
+                };
+
+            foreach (
+                var servicioId in
+                serviciosValidos)
             {
                 profesional.Servicios.Add(
                     new ProfesionalServicio
                     {
-                        ServicioId = servicioId
+                        ServicioId =
+                            servicioId
                     });
             }
 
-            _context.Profesionales.Add(profesional);
+            _context.Profesionales.Add(
+                profesional);
 
             await _context.SaveChangesAsync();
 
@@ -157,9 +200,179 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 mensaje =
                     "Profesional creado correctamente.",
+
                 profesional.Id,
                 profesional.Nombre,
                 profesional.Apellidos
+            });
+        }
+
+        // ============================================================
+        // ACTUALIZAR PROFESIONAL
+        // ============================================================
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Actualizar(
+            int id,
+            ActualizarProfesionalDto request)
+        {
+            if (string.IsNullOrWhiteSpace(
+                request.Nombre))
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "El nombre del profesional es requerido."
+                });
+            }
+
+            if (
+                request.ServicioIds == null ||
+                request.ServicioIds.Count == 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "Selecciona al menos un servicio."
+                });
+            }
+
+            var tenantId =
+                _tenantContext.TenantId;
+
+            var profesional =
+                await _context.Profesionales
+                    .Include(x =>
+                        x.Servicios)
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == id &&
+                        x.TenantId == tenantId);
+
+            if (profesional == null)
+            {
+                return NotFound(new
+                {
+                    mensaje =
+                        "Profesional no encontrado."
+                });
+            }
+
+            if (request.SucursalId.HasValue)
+            {
+                var sucursalValida =
+                    await _context.Sucursales
+                        .AnyAsync(x =>
+                            x.Id ==
+                                request.SucursalId.Value &&
+                            x.TenantId ==
+                                tenantId &&
+                            x.Activa);
+
+                if (!sucursalValida)
+                {
+                    return BadRequest(new
+                    {
+                        mensaje =
+                            "La sucursal seleccionada no es válida."
+                    });
+                }
+            }
+
+            var servicioIds =
+                request.ServicioIds
+                    .Distinct()
+                    .ToList();
+
+            var serviciosValidos =
+                await _context.Servicios
+                    .Where(x =>
+                        x.TenantId ==
+                            tenantId &&
+                        servicioIds.Contains(
+                            x.Id))
+                    .Select(x =>
+                        x.Id)
+                    .ToListAsync();
+
+            if (
+                serviciosValidos.Count !=
+                servicioIds.Count)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "Uno o más servicios seleccionados no pertenecen al negocio."
+                });
+            }
+
+            profesional.SucursalId =
+                request.SucursalId;
+
+            profesional.Nombre =
+                request.Nombre.Trim();
+
+            profesional.Apellidos =
+                request.Apellidos?.Trim() ??
+                string.Empty;
+
+            profesional.Telefono =
+                request.Telefono?.Trim();
+
+            profesional.Email =
+                request.Email?
+                    .Trim()
+                    .ToLowerInvariant();
+
+            profesional.Especialidad =
+                request.Especialidad?.Trim();
+
+            profesional.FotoUrl =
+                request.FotoUrl?.Trim();
+
+            profesional.Activo =
+                request.Activo;
+
+            _context.Set<ProfesionalServicio>()
+                .RemoveRange(
+                    profesional.Servicios);
+
+            profesional.Servicios =
+                new List<ProfesionalServicio>();
+
+            foreach (
+                var servicioId in
+                serviciosValidos)
+            {
+                profesional.Servicios.Add(
+                    new ProfesionalServicio
+                    {
+                        ProfesionalId =
+                            profesional.Id,
+
+                        ServicioId =
+                            servicioId
+                    });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje =
+                    "Profesional actualizado correctamente.",
+
+                profesional.Id,
+                profesional.Nombre,
+                profesional.Apellidos,
+                profesional.Telefono,
+                profesional.Email,
+                profesional.Especialidad,
+                profesional.FotoUrl,
+                profesional.SucursalId,
+                profesional.Activo,
+
+                ServicioIds =
+                    serviciosValidos
             });
         }
     }

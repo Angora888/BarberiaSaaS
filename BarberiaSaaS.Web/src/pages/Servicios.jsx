@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   FaClock,
+  FaEdit,
   FaPlus,
   FaSearch,
   FaTimes,
@@ -34,6 +35,11 @@ function Servicios() {
   ] = useState(false);
 
   const [
+    servicioEditando,
+    setServicioEditando
+  ] = useState(null);
+
+  const [
     mostrarVariantes,
     setMostrarVariantes
   ] = useState(false);
@@ -56,6 +62,7 @@ function Servicios() {
       nombre: "",
       descripcion: "",
       precio: "",
+      activo: true,
       variantes: []
     });
 
@@ -67,10 +74,6 @@ function Servicios() {
   useEffect(() => {
     cargarServicios();
   }, []);
-
-  // ============================================================
-  // CARGAR SERVICIOS
-  // ============================================================
 
   const cargarServicios = async () => {
     try {
@@ -91,16 +94,10 @@ function Servicios() {
     }
   };
 
-  // ============================================================
-  // BUSCADOR
-  // ============================================================
-
   const serviciosFiltrados =
     useMemo(() => {
       const texto =
-        busqueda
-          .trim()
-          .toLowerCase();
+        busqueda.trim().toLowerCase();
 
       if (!texto) {
         return servicios;
@@ -129,10 +126,6 @@ function Servicios() {
         }
       );
     }, [servicios, busqueda]);
-
-  // ============================================================
-  // HELPERS
-  // ============================================================
 
   const variantesActivas = (
     servicio
@@ -167,20 +160,66 @@ function Servicios() {
     );
   };
 
-  // ============================================================
-  // FORMULARIO NUEVO SERVICIO
-  // ============================================================
+  const limpiarFormulario = () => {
+    setFormulario({
+      nombre: "",
+      descripcion: "",
+      precio: "",
+      activo: true,
+      variantes: []
+    });
+  };
+
+  const abrirNuevoServicio = () => {
+    setServicioEditando(null);
+    limpiarFormulario();
+    setError("");
+    setMostrarFormulario(true);
+  };
+
+  const abrirEditarServicio = (
+    servicio
+  ) => {
+    setServicioEditando(servicio);
+
+    setFormulario({
+      nombre:
+        servicio.nombre || "",
+      descripcion:
+        servicio.descripcion || "",
+      precio:
+        servicio.precio
+          ?.toString() || "0",
+      activo:
+        servicio.activo !== false,
+      variantes: []
+    });
+
+    setError("");
+    setMostrarFormulario(true);
+  };
+
+  const cerrarFormulario = () => {
+    limpiarFormulario();
+    setServicioEditando(null);
+    setMostrarFormulario(false);
+  };
 
   const cambiarCampo = (e) => {
     const {
       name,
-      value
+      value,
+      type,
+      checked
     } = e.target;
 
     setFormulario(
       (anterior) => ({
         ...anterior,
-        [name]: value
+        [name]:
+          type === "checkbox"
+            ? checked
+            : value
       })
     );
   };
@@ -246,24 +285,6 @@ function Servicios() {
     );
   };
 
-  const limpiarFormulario = () => {
-    setFormulario({
-      nombre: "",
-      descripcion: "",
-      precio: "",
-      variantes: []
-    });
-  };
-
-  const cerrarFormulario = () => {
-    limpiarFormulario();
-    setMostrarFormulario(false);
-  };
-
-  // ============================================================
-  // CREAR SERVICIO + VARIANTES
-  // ============================================================
-
   const guardarServicio = async (
     e
   ) => {
@@ -275,118 +296,131 @@ function Servicios() {
       setError(
         "El nombre del servicio es requerido."
       );
-
       return;
     }
 
-    const variantesValidas =
-      formulario.variantes.filter(
-        (variante) =>
-          variante.nombre.trim()
-      );
-
-    for (
-      const variante of
-      variantesValidas
-    ) {
-      const precioVariante =
-        Number(variante.precio);
-
-      if (
-        Number.isNaN(
-          precioVariante
-        ) ||
-        precioVariante < 0
-      ) {
-        setError(
-          `El precio de la variante "${variante.nombre}" no es válido.`
-        );
-
-        return;
-      }
-    }
-
-    let precioServicio;
+    const precio =
+      Number(formulario.precio);
 
     if (
-      variantesValidas.length > 0
+      Number.isNaN(precio) ||
+      precio < 0
     ) {
-      precioServicio =
-        Math.min(
-          ...variantesValidas.map(
-            (variante) =>
-              Number(
-                variante.precio
-              )
-          )
-        );
-    } else {
-      precioServicio =
-        Number(formulario.precio);
-
-      if (
-        Number.isNaN(
-          precioServicio
-        ) ||
-        precioServicio < 0
-      ) {
-        setError(
-          "El precio del servicio no es válido."
-        );
-
-        return;
-      }
+      setError(
+        "El precio del servicio no es válido."
+      );
+      return;
     }
 
     try {
       setGuardando(true);
       setError("");
 
-      const responseServicio =
-        await api.post(
-          "/Servicios",
+      if (servicioEditando) {
+        await api.put(
+          `/Servicios/${servicioEditando.id}`,
           {
             nombre:
-              formulario.nombre,
-
+              formulario.nombre.trim(),
             descripcion:
-              formulario.descripcion ||
-              null,
-
-            precio:
-              precioServicio
-          }
-        );
-
-      const servicioId =
-        responseServicio.data.id;
-
-      for (
-        let i = 0;
-        i <
-        variantesValidas.length;
-        i += 1
-      ) {
-        const variante =
-          variantesValidas[i];
-
-        await api.post(
-          `/Servicios/${servicioId}/variantes`,
-          {
-            nombre:
-              variante.nombre.trim(),
-
-            precio:
-              Number(
-                variante.precio
-              ),
-
-            orden:
-              Number(
-                variante.orden ?? i
+              formulario.descripcion
+                ?.trim() || null,
+            precio,
+            activo:
+              Boolean(
+                formulario.activo
               )
           }
         );
+      } else {
+        const variantesValidas =
+          formulario.variantes.filter(
+            (variante) =>
+              variante.nombre.trim()
+          );
+
+        for (
+          const variante of
+          variantesValidas
+        ) {
+          const precioVariante =
+            Number(
+              variante.precio
+            );
+
+          if (
+            Number.isNaN(
+              precioVariante
+            ) ||
+            precioVariante < 0
+          ) {
+            setError(
+              `El precio de la variante "${variante.nombre}" no es válido.`
+            );
+            return;
+          }
+        }
+
+        let precioServicio =
+          precio;
+
+        if (
+          variantesValidas.length > 0
+        ) {
+          precioServicio =
+            Math.min(
+              ...variantesValidas.map(
+                (variante) =>
+                  Number(
+                    variante.precio
+                  )
+              )
+            );
+        }
+
+        const responseServicio =
+          await api.post(
+            "/Servicios",
+            {
+              nombre:
+                formulario.nombre.trim(),
+              descripcion:
+                formulario.descripcion
+                  ?.trim() || null,
+              precio:
+                precioServicio
+            }
+          );
+
+        const servicioId =
+          responseServicio.data.id;
+
+        for (
+          let i = 0;
+          i <
+          variantesValidas.length;
+          i += 1
+        ) {
+          const variante =
+            variantesValidas[i];
+
+          await api.post(
+            `/Servicios/${servicioId}/variantes`,
+            {
+              nombre:
+                variante.nombre.trim(),
+              precio:
+                Number(
+                  variante.precio
+                ),
+              orden:
+                Number(
+                  variante.orden ??
+                  i
+                )
+            }
+          );
+        }
       }
 
       cerrarFormulario();
@@ -395,16 +429,16 @@ function Servicios() {
     } catch (error) {
       setError(
         error.response?.data?.mensaje ||
-        "No fue posible crear el servicio."
+        (
+          servicioEditando
+            ? "No fue posible actualizar el servicio."
+            : "No fue posible crear el servicio."
+        )
       );
     } finally {
       setGuardando(false);
     }
   };
-
-  // ============================================================
-  // ADMINISTRAR VARIANTES
-  // ============================================================
 
   const abrirVariantes = (
     servicio
@@ -419,21 +453,16 @@ function Servicios() {
           (variante) => ({
             id:
               variante.id,
-
             nombre:
               variante.nombre,
-
             precio:
               variante.precio
                 ?.toString() ??
               "",
-
             orden:
               variante.orden ?? 0,
-
             activo:
               variante.activo,
-
             esNueva:
               false
           })
@@ -515,21 +544,23 @@ function Servicios() {
           setError(
             "Todas las variantes deben tener nombre."
           );
-
           return;
         }
 
-        const precio =
-          Number(variante.precio);
+        const precioVariante =
+          Number(
+            variante.precio
+          );
 
         if (
-          Number.isNaN(precio) ||
-          precio < 0
+          Number.isNaN(
+            precioVariante
+          ) ||
+          precioVariante < 0
         ) {
           setError(
             `El precio de "${variante.nombre}" no es válido.`
           );
-
           return;
         }
       }
@@ -538,7 +569,6 @@ function Servicios() {
         setGuardandoVariantes(
           true
         );
-
         setError("");
 
         for (
@@ -558,12 +588,10 @@ function Servicios() {
               {
                 nombre:
                   variante.nombre.trim(),
-
                 precio:
                   Number(
                     variante.precio
                   ),
-
                 orden:
                   Number(
                     variante.orden ??
@@ -577,18 +605,15 @@ function Servicios() {
               {
                 nombre:
                   variante.nombre.trim(),
-
                 precio:
                   Number(
                     variante.precio
                   ),
-
                 orden:
                   Number(
                     variante.orden ??
                     i
                   ),
-
                 activo:
                   Boolean(
                     variante.activo
@@ -613,17 +638,9 @@ function Servicios() {
       }
     };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
     <div>
-
-      {/* HEADER */}
-
       <div className="page-header">
-
         <div>
           <h1 className="page-title">
             Servicios
@@ -637,18 +654,14 @@ function Servicios() {
 
         <button
           className="btn btn-primary"
-          onClick={() =>
-            setMostrarFormulario(true)
+          onClick={
+            abrirNuevoServicio
           }
         >
           <FaPlus className="me-2" />
-
           Nuevo servicio
         </button>
-
       </div>
-
-      {/* ERROR */}
 
       {error && (
         <div className="alert alert-danger mt-4">
@@ -656,14 +669,9 @@ function Servicios() {
         </div>
       )}
 
-      {/* CONTENIDO */}
-
       <div className="content-card mt-4">
-
         <div className="client-toolbar">
-
           <div className="search-box">
-
             <FaSearch />
 
             <input
@@ -676,7 +684,6 @@ function Servicios() {
                 )
               }
             />
-
           </div>
 
           <div className="text-muted">
@@ -692,20 +699,15 @@ function Servicios() {
                 : ""
             }
           </div>
-
         </div>
 
         {cargando ? (
-
           <div className="empty-state">
             Cargando servicios...
           </div>
-
         ) : serviciosFiltrados
             .length === 0 ? (
-
           <div className="empty-state">
-
             <FaClock size={32} />
 
             <h5 className="mt-3">
@@ -716,13 +718,9 @@ function Servicios() {
               Registra el primer
               servicio del negocio.
             </p>
-
           </div>
-
         ) : (
-
           <div className="service-grid">
-
             {serviciosFiltrados.map(
               (servicio) => {
                 const activas =
@@ -737,9 +735,7 @@ function Servicios() {
                       servicio.id
                     }
                   >
-
                     <div className="service-card-top">
-
                       <div className="service-icon">
                         <FaClock />
                       </div>
@@ -755,7 +751,6 @@ function Servicios() {
                           ? "Activo"
                           : "Inactivo"}
                       </span>
-
                     </div>
 
                     <h5>
@@ -767,187 +762,161 @@ function Servicios() {
                         "Sin descripción"}
                     </p>
 
-                    {activas.length > 0 && (
-                      <div className="mb-3">
-
-                        <div className="small text-muted mb-2">
-                          Variantes
-                        </div>
-
-                        <div className="d-flex flex-column gap-2">
-
-                          {activas.map(
-                            (variante) => (
-
-                              <div
-                                key={
-                                  variante.id
-                                }
-                                className="d-flex justify-content-between align-items-center border rounded px-3 py-2"
-                              >
-                                <span>
-                                  {variante.nombre}
-                                </span>
-
-                                <strong className="ms-3">
-                                  {formatearMoneda(
-                                    variante.precio
-                                  )}
-                                </strong>
-                              </div>
-
+                    {activas.length >
+                    0 ? (
+                      <>
+                        <div className="fw-semibold mb-2">
+                          Desde{" "}
+                          {formatearMoneda(
+                            obtenerPrecioDesde(
+                              servicio
                             )
                           )}
-
                         </div>
 
+                        <div className="d-flex flex-column gap-1 mb-3">
+                          {activas
+                            .slice(0, 4)
+                            .map(
+                              (
+                                variante
+                              ) => (
+                                <div
+                                  key={
+                                    variante.id
+                                  }
+                                  className="d-flex justify-content-between small"
+                                >
+                                  <span>
+                                    {
+                                      variante.nombre
+                                    }
+                                  </span>
+
+                                  <span>
+                                    {formatearMoneda(
+                                      variante.precio
+                                    )}
+                                  </span>
+                                </div>
+                              )
+                            )}
+
+                          {activas.length >
+                            4 && (
+                            <span className="text-muted small">
+                              +
+                              {activas.length -
+                                4}{" "}
+                              variantes
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="fw-semibold mb-3">
+                        {formatearMoneda(
+                          servicio.precio
+                        )}
                       </div>
                     )}
 
-                    <div className="service-footer">
+                    <div className="d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={() =>
+                          abrirEditarServicio(
+                            servicio
+                          )
+                        }
+                      >
+                        <FaEdit className="me-1" />
+                        Editar
+                      </button>
 
-                      <strong>
-                        {activas.length > 0
-                          ? `Desde ${formatearMoneda(
-                              obtenerPrecioDesde(
-                                servicio
-                              )
-                            )}`
-                          : formatearMoneda(
-                              servicio.precio
-                            )}
-                      </strong>
-
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() =>
+                          abrirVariantes(
+                            servicio
+                          )
+                        }
+                      >
+                        Variantes
+                      </button>
                     </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-light w-100 mt-3"
-                      onClick={() =>
-                        abrirVariantes(
-                          servicio
-                        )
-                      }
-                    >
-                      {servicio.variantes
-                        ?.length > 0
-                        ? "Administrar variantes"
-                        : "Agregar variantes"}
-                    </button>
-
                   </div>
                 );
               }
             )}
-
           </div>
-
         )}
-
       </div>
 
-      {/* ============================================================
-          MODAL NUEVO SERVICIO
-          ============================================================ */}
-
       {mostrarFormulario && (
-
-        <div className="custom-modal-backdrop">
-
-          <div className="custom-modal custom-modal-large">
-
-            <div className="custom-modal-header">
-
-              <div>
-
-                <h4>
-                  Nuevo servicio
-                </h4>
-
-                <p className="text-muted mb-0">
-                  Puedes crear un precio
-                  único o agregar variantes.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                className="modal-close"
-                onClick={
-                  cerrarFormulario
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor:
+              "rgba(0,0,0,.45)"
+          }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <form
+                onSubmit={
+                  guardarServicio
                 }
               >
-                <FaTimes />
-              </button>
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    {servicioEditando
+                      ? "Editar servicio"
+                      : "Nuevo servicio"}
+                  </h5>
 
-            </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={
+                      cerrarFormulario
+                    }
+                  />
+                </div>
 
-            <form
-              onSubmit={
-                guardarServicio
-              }
-            >
-
-              <div className="custom-modal-body">
-
-                <div className="row g-3">
-
-                  <div className="col-12">
-
-                    <label className="form-label">
-                      Nombre *
-                    </label>
-
-                    <input
-                      type="text"
-                      name="nombre"
-                      className="form-control"
-                      value={
-                        formulario.nombre
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      placeholder="Ej. Balayage"
-                      required
-                    />
-
-                  </div>
-
-                  <div className="col-12">
-
-                    <label className="form-label">
-                      Descripción
-                    </label>
-
-                    <textarea
-                      name="descripcion"
-                      className="form-control"
-                      rows="3"
-                      value={
-                        formulario
-                          .descripcion
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      placeholder="Descripción del servicio..."
-                    />
-
-                  </div>
-
-                  {formulario.variantes
-                    .length === 0 && (
-                    <div className="col-12">
-
+                <div className="modal-body">
+                  <div className="row g-3">
+                    <div className="col-md-8">
                       <label className="form-label">
-                        Precio *
+                        Nombre *
                       </label>
 
                       <input
-                        type="number"
+                        name="nombre"
+                        className="form-control"
+                        value={
+                          formulario.nombre
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="col-md-4">
+                      <label className="form-label">
+                        Precio base *
+                      </label>
+
+                      <input
                         name="precio"
+                        type="number"
+                        min="0"
+                        step="0.01"
                         className="form-control"
                         value={
                           formulario.precio
@@ -955,149 +924,144 @@ function Servicios() {
                         onChange={
                           cambiarCampo
                         }
-                        min="0"
-                        step="1"
-                        placeholder="15000"
                         required
                       />
-
-                      <div className="form-text">
-                        Si agregas variantes,
-                        el precio base se
-                        calculará automáticamente
-                        usando la variante más
-                        económica.
-                      </div>
-
                     </div>
-                  )}
 
-                  <div className="col-12">
+                    <div className="col-12">
+                      <label className="form-label">
+                        Descripción
+                      </label>
 
-                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <textarea
+                        name="descripcion"
+                        className="form-control"
+                        rows="3"
+                        value={
+                          formulario.descripcion
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                      <div>
-                        <label className="form-label mb-0">
-                          Variantes
-                        </label>
+                    {servicioEditando && (
+                      <div className="col-12">
+                        <div className="form-check form-switch">
+                          <input
+                            id="servicioActivo"
+                            name="activo"
+                            type="checkbox"
+                            className="form-check-input"
+                            checked={
+                              formulario.activo
+                            }
+                            onChange={
+                              cambiarCampo
+                            }
+                          />
 
-                        <div className="form-text mt-0">
-                          Opcional. Por ejemplo:
-                          Corto, Medio y Largo.
+                          <label
+                            htmlFor="servicioActivo"
+                            className="form-check-label"
+                          >
+                            Servicio activo
+                          </label>
                         </div>
                       </div>
+                    )}
 
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={
-                          agregarVarianteNueva
-                        }
-                      >
-                        <FaPlus className="me-1" />
-                        Agregar variante
-                      </button>
+                    {!servicioEditando && (
+                      <div className="col-12">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <div>
+                            <h6 className="mb-0">
+                              Variantes
+                            </h6>
 
-                    </div>
+                            <small className="text-muted">
+                              Opcional. Por ejemplo: corto, medio y largo.
+                            </small>
+                          </div>
 
-                    {formulario.variantes
-                      .length > 0 && (
-                      <div className="d-flex flex-column gap-3">
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={
+                              agregarVarianteNueva
+                            }
+                          >
+                            <FaPlus className="me-1" />
+                            Agregar
+                          </button>
+                        </div>
 
-                        {formulario.variantes.map(
-                          (
-                            variante,
-                            indice
-                          ) => (
-
-                            <div
-                              className="border rounded p-3"
-                              key={
-                                indice
-                              }
-                            >
-
-                              <div className="row g-2 align-items-end">
-
-                                <div className="col-md-5">
-
+                        {formulario
+                          .variantes
+                          .map(
+                            (
+                              variante,
+                              indice
+                            ) => (
+                              <div
+                                key={
+                                  indice
+                                }
+                                className="row g-2 align-items-end mb-2"
+                              >
+                                <div className="col-md-6">
                                   <label className="form-label">
                                     Nombre
                                   </label>
 
                                   <input
-                                    type="text"
                                     className="form-control"
                                     value={
                                       variante.nombre
                                     }
-                                    onChange={(e) =>
+                                    onChange={(
+                                      e
+                                    ) =>
                                       cambiarVarianteNueva(
                                         indice,
                                         "nombre",
-                                        e.target.value
+                                        e
+                                          .target
+                                          .value
                                       )
                                     }
-                                    placeholder="Ej. Cabello corto"
-                                    required
                                   />
-
                                 </div>
 
                                 <div className="col-md-4">
-
                                   <label className="form-label">
                                     Precio
                                   </label>
 
                                   <input
                                     type="number"
+                                    min="0"
+                                    step="0.01"
                                     className="form-control"
                                     value={
                                       variante.precio
                                     }
-                                    onChange={(e) =>
+                                    onChange={(
+                                      e
+                                    ) =>
                                       cambiarVarianteNueva(
                                         indice,
                                         "precio",
-                                        e.target.value
+                                        e
+                                          .target
+                                          .value
                                       )
                                     }
-                                    min="0"
-                                    step="1"
-                                    placeholder="48000"
-                                    required
                                   />
-
                                 </div>
 
                                 <div className="col-md-2">
-
-                                  <label className="form-label">
-                                    Orden
-                                  </label>
-
-                                  <input
-                                    type="number"
-                                    className="form-control"
-                                    value={
-                                      variante.orden
-                                    }
-                                    onChange={(e) =>
-                                      cambiarVarianteNueva(
-                                        indice,
-                                        "orden",
-                                        e.target.value
-                                      )
-                                    }
-                                    min="0"
-                                    step="1"
-                                  />
-
-                                </div>
-
-                                <div className="col-md-1">
-
                                   <button
                                     type="button"
                                     className="btn btn-outline-danger w-100"
@@ -1106,298 +1070,234 @@ function Servicios() {
                                         indice
                                       )
                                     }
-                                    title="Quitar variante"
                                   >
                                     <FaTrash />
                                   </button>
-
                                 </div>
-
                               </div>
-
-                            </div>
-
-                          )
-                        )}
-
+                            )
+                          )}
                       </div>
                     )}
-
                   </div>
-
                 </div>
 
-              </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={
+                      cerrarFormulario
+                    }
+                  >
+                    Cancelar
+                  </button>
 
-              <div className="custom-modal-footer">
-
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={
-                    cerrarFormulario
-                  }
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={
-                    guardando
-                  }
-                >
-                  {guardando
-                    ? "Guardando..."
-                    : "Guardar servicio"}
-                </button>
-
-              </div>
-
-            </form>
-
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={
+                      guardando
+                    }
+                  >
+                    {guardando
+                      ? "Guardando..."
+                      : servicioEditando
+                        ? "Guardar cambios"
+                        : "Crear servicio"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-
         </div>
-
       )}
-
-      {/* ============================================================
-          MODAL ADMINISTRAR VARIANTES
-          ============================================================ */}
 
       {mostrarVariantes &&
         servicioVariantes && (
-
-        <div className="custom-modal-backdrop">
-
-          <div className="custom-modal custom-modal-large">
-
-            <div className="custom-modal-header">
-
-              <div>
-
-                <h4>
-                  Variantes de{" "}
-                  {servicioVariantes.nombre}
-                </h4>
-
-                <p className="text-muted mb-0">
-                  Administra nombres,
-                  precios, orden y estado.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                className="modal-close"
-                onClick={
-                  cerrarVariantes
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor:
+              "rgba(0,0,0,.45)"
+          }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <form
+                onSubmit={
+                  guardarCambiosVariantes
                 }
               >
-                <FaTimes />
-              </button>
+                <div className="modal-header">
+                  <div>
+                    <h5 className="modal-title">
+                      Variantes de{" "}
+                      {
+                        servicioVariantes.nombre
+                      }
+                    </h5>
 
-            </div>
-
-            <form
-              onSubmit={
-                guardarCambiosVariantes
-              }
-            >
-
-              <div className="custom-modal-body">
-
-                <div className="d-flex justify-content-between align-items-center mb-3">
-
-                  <div className="text-muted">
-                    {
-                      variantesEdicion
-                        .length
-                    }{" "}
-                    variante
-                    {
-                      variantesEdicion
-                        .length !== 1
-                        ? "s"
-                        : ""
-                    }
+                    <small className="text-muted">
+                      Puedes editar precio, orden y estado.
+                    </small>
                   </div>
 
                   <button
                     type="button"
-                    className="btn btn-outline-primary btn-sm"
+                    className="btn-close"
                     onClick={
-                      agregarVarianteEdicion
+                      cerrarVariantes
                     }
-                  >
-                    <FaPlus className="me-1" />
-                    Nueva variante
-                  </button>
-
+                  />
                 </div>
 
-                {variantesEdicion
-                  .length === 0 ? (
-
-                  <div className="empty-state">
-
-                    <FaClock size={30} />
-
-                    <h5 className="mt-3">
-                      Sin variantes
-                    </h5>
-
-                    <p>
-                      Este servicio utiliza
-                      actualmente un precio
-                      único.
-                    </p>
-
+                <div className="modal-body">
+                  <div className="d-flex justify-content-end mb-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={
+                        agregarVarianteEdicion
+                      }
+                    >
+                      <FaPlus className="me-1" />
+                      Nueva variante
+                    </button>
                   </div>
 
-                ) : (
-
-                  <div className="d-flex flex-column gap-3">
-
-                    {variantesEdicion.map(
+                  {variantesEdicion.length ===
+                  0 ? (
+                    <div className="text-muted text-center py-4">
+                      Este servicio no tiene variantes.
+                    </div>
+                  ) : (
+                    variantesEdicion.map(
                       (
                         variante,
                         indice
                       ) => (
-
                         <div
                           key={
                             variante.id ??
                             `nueva-${indice}`
                           }
-                          className="border rounded p-3"
+                          className="border rounded p-3 mb-3"
                         >
-
                           <div className="row g-2 align-items-end">
-
                             <div className="col-md-4">
-
                               <label className="form-label">
                                 Nombre
                               </label>
 
                               <input
-                                type="text"
                                 className="form-control"
                                 value={
                                   variante.nombre
                                 }
-                                onChange={(e) =>
+                                onChange={(
+                                  e
+                                ) =>
                                   cambiarVarianteEdicion(
                                     indice,
                                     "nombre",
-                                    e.target.value
+                                    e
+                                      .target
+                                      .value
                                   )
                                 }
-                                required
                               />
-
                             </div>
 
                             <div className="col-md-3">
-
                               <label className="form-label">
                                 Precio
                               </label>
 
                               <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 className="form-control"
                                 value={
                                   variante.precio
                                 }
-                                onChange={(e) =>
+                                onChange={(
+                                  e
+                                ) =>
                                   cambiarVarianteEdicion(
                                     indice,
                                     "precio",
-                                    e.target.value
+                                    e
+                                      .target
+                                      .value
                                   )
                                 }
-                                min="0"
-                                step="1"
-                                required
                               />
-
                             </div>
 
                             <div className="col-md-2">
-
                               <label className="form-label">
                                 Orden
                               </label>
 
                               <input
                                 type="number"
+                                min="0"
                                 className="form-control"
                                 value={
                                   variante.orden
                                 }
-                                onChange={(e) =>
+                                onChange={(
+                                  e
+                                ) =>
                                   cambiarVarianteEdicion(
                                     indice,
                                     "orden",
-                                    e.target.value
+                                    e
+                                      .target
+                                      .value
                                   )
                                 }
-                                min="0"
-                                step="1"
                               />
-
                             </div>
 
                             <div className="col-md-2">
+                              <div className="form-check form-switch mb-2">
+                                <input
+                                  id={`activo-variante-${indice}`}
+                                  type="checkbox"
+                                  className="form-check-input"
+                                  checked={
+                                    variante.activo
+                                  }
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    cambiarVarianteEdicion(
+                                      indice,
+                                      "activo",
+                                      e
+                                        .target
+                                        .checked
+                                    )
+                                  }
+                                  disabled={
+                                    variante.esNueva
+                                  }
+                                />
 
-                              {variante.esNueva ? (
-
-                                <span className="badge text-bg-info w-100 py-2">
-                                  Nueva
-                                </span>
-
-                              ) : (
-
-                                <div className="form-check form-switch pt-2">
-
-                                  <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    checked={
-                                      variante.activo
-                                    }
-                                    onChange={(e) =>
-                                      cambiarVarianteEdicion(
-                                        indice,
-                                        "activo",
-                                        e.target.checked
-                                      )
-                                    }
-                                    id={`variante-activa-${variante.id}`}
-                                  />
-
-                                  <label
-                                    className="form-check-label"
-                                    htmlFor={`variante-activa-${variante.id}`}
-                                  >
-                                    {variante.activo
-                                      ? "Activa"
-                                      : "Inactiva"}
-                                  </label>
-
-                                </div>
-
-                              )}
-
+                                <label
+                                  htmlFor={`activo-variante-${indice}`}
+                                  className="form-check-label"
+                                >
+                                  Activa
+                                </label>
+                              </div>
                             </div>
 
                             <div className="col-md-1">
-
                               {variante.esNueva && (
                                 <button
                                   type="button"
@@ -1407,61 +1307,46 @@ function Servicios() {
                                       indice
                                     )
                                   }
-                                  title="Quitar variante"
                                 >
-                                  <FaTrash />
+                                  <FaTimes />
                                 </button>
                               )}
-
                             </div>
-
                           </div>
-
                         </div>
-
                       )
-                    )}
+                    )
+                  )}
+                </div>
 
-                  </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={
+                      cerrarVariantes
+                    }
+                  >
+                    Cancelar
+                  </button>
 
-                )}
-
-              </div>
-
-              <div className="custom-modal-footer">
-
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={
-                    cerrarVariantes
-                  }
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={
-                    guardandoVariantes
-                  }
-                >
-                  {guardandoVariantes
-                    ? "Guardando..."
-                    : "Guardar cambios"}
-                </button>
-
-              </div>
-
-            </form>
-
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={
+                      guardandoVariantes
+                    }
+                  >
+                    {guardandoVariantes
+                      ? "Guardando..."
+                      : "Guardar cambios"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }

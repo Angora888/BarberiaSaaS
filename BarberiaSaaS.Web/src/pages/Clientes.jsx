@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  FaEdit,
   FaHistory,
   FaPlus,
   FaSearch,
@@ -9,30 +10,50 @@ import {
 import api from "../services/api";
 
 function Clientes() {
-  const [clientes, setClientes] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-  const [busqueda, setBusqueda] = useState("");
+  const [clientes, setClientes] =
+    useState([]);
 
-  const [mostrarFormulario, setMostrarFormulario] =
+  const [cargando, setCargando] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [busqueda, setBusqueda] =
+    useState("");
+
+  const [
+    mostrarFormulario,
+    setMostrarFormulario
+  ] = useState(false);
+
+  const [
+    clienteEditando,
+    setClienteEditando
+  ] = useState(null);
+
+  const [guardando, setGuardando] =
     useState(false);
 
-  const [guardando, setGuardando] = useState(false);
+  const [formulario, setFormulario] =
+    useState({
+      nombre: "",
+      apellidos: "",
+      telefono: "",
+      email: "",
+      fechaNacimiento: "",
+      notas: ""
+    });
 
-  const [formulario, setFormulario] = useState({
-    nombre: "",
-    apellidos: "",
-    telefono: "",
-    email: "",
-    fechaNacimiento: "",
-    notas: ""
-  });
+  const [
+    clienteHistorial,
+    setClienteHistorial
+  ] = useState(null);
 
-  const [clienteHistorial, setClienteHistorial] =
-    useState(null);
-
-  const [cargandoHistorial, setCargandoHistorial] =
-    useState(false);
+  const [
+    cargandoHistorial,
+    setCargandoHistorial
+  ] = useState(false);
 
   useEffect(() => {
     cargarClientes();
@@ -43,7 +64,8 @@ function Clientes() {
       setCargando(true);
       setError("");
 
-      const response = await api.get("/Clientes");
+      const response =
+        await api.get("/Clientes");
 
       setClientes(response.data);
     } catch (error) {
@@ -56,144 +78,241 @@ function Clientes() {
     }
   };
 
-  const clientesFiltrados = useMemo(() => {
-    const texto = busqueda
-      .trim()
-      .toLowerCase();
-
-    if (!texto) {
-      return clientes;
-    }
-
-    return clientes.filter((cliente) => {
-      const nombreCompleto =
-        `${cliente.nombre} ${cliente.apellidos || ""}`
+  const clientesFiltrados =
+    useMemo(() => {
+      const texto =
+        busqueda
+          .trim()
           .toLowerCase();
 
-      return (
-        nombreCompleto.includes(texto) ||
-        cliente.telefono
-          ?.toLowerCase()
-          .includes(texto) ||
-        cliente.email
-          ?.toLowerCase()
-          .includes(texto)
+      if (!texto) {
+        return clientes;
+      }
+
+      return clientes.filter(
+        (cliente) => {
+          const nombreCompleto =
+            `${cliente.nombre} ${cliente.apellidos || ""}`
+              .toLowerCase();
+
+          return (
+            nombreCompleto.includes(
+              texto
+            ) ||
+            cliente.telefono
+              ?.toLowerCase()
+              .includes(texto) ||
+            cliente.email
+              ?.toLowerCase()
+              .includes(texto)
+          );
+        }
       );
+    }, [clientes, busqueda]);
+
+  const formularioVacio = () => ({
+    nombre: "",
+    apellidos: "",
+    telefono: "",
+    email: "",
+    fechaNacimiento: "",
+    notas: ""
+  });
+
+  const abrirNuevoCliente = () => {
+    setClienteEditando(null);
+    setFormulario(
+      formularioVacio()
+    );
+    setError("");
+    setMostrarFormulario(true);
+  };
+
+  const abrirEditarCliente = (
+    cliente
+  ) => {
+    setClienteEditando(cliente);
+
+    setFormulario({
+      nombre:
+        cliente.nombre || "",
+      apellidos:
+        cliente.apellidos || "",
+      telefono:
+        cliente.telefono || "",
+      email:
+        cliente.email || "",
+      fechaNacimiento:
+        cliente.fechaNacimiento
+          ? cliente.fechaNacimiento
+              .substring(0, 10)
+          : "",
+      notas:
+        cliente.notas || ""
     });
-  }, [clientes, busqueda]);
+
+    setError("");
+    setMostrarFormulario(true);
+  };
 
   const cambiarCampo = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value
+    } = e.target;
 
-    setFormulario((anterior) => ({
-      ...anterior,
-      [name]: value
-    }));
+    setFormulario(
+      (anterior) => ({
+        ...anterior,
+        [name]: value
+      })
+    );
   };
 
   const limpiarFormulario = () => {
-    setFormulario({
-      nombre: "",
-      apellidos: "",
-      telefono: "",
-      email: "",
-      fechaNacimiento: "",
-      notas: ""
-    });
+    setFormulario(
+      formularioVacio()
+    );
   };
 
   const cerrarFormulario = () => {
     limpiarFormulario();
+    setClienteEditando(null);
     setMostrarFormulario(false);
   };
 
-  const guardarCliente = async (e) => {
-    e.preventDefault();
+  const guardarCliente =
+    async (e) => {
+      e.preventDefault();
 
-    if (!formulario.nombre.trim()) {
-      setError(
-        "El nombre del cliente es requerido."
-      );
+      if (
+        !formulario.nombre.trim()
+      ) {
+        setError(
+          "El nombre del cliente es requerido."
+        );
+        return;
+      }
 
-      return;
-    }
+      const payload = {
+        nombre:
+          formulario.nombre.trim(),
 
-    try {
-      setGuardando(true);
-      setError("");
-
-      await api.post("/Clientes", {
-        nombre: formulario.nombre,
-        apellidos: formulario.apellidos,
+        apellidos:
+          formulario.apellidos.trim(),
 
         telefono:
-          formulario.telefono || null,
+          formulario.telefono.trim() ||
+          null,
 
         email:
-          formulario.email || null,
+          formulario.email.trim() ||
+          null,
 
         fechaNacimiento:
-          formulario.fechaNacimiento || null,
+          formulario.fechaNacimiento ||
+          null,
 
         notas:
-          formulario.notas || null
-      });
+          formulario.notas.trim() ||
+          null
+      };
 
-      cerrarFormulario();
+      try {
+        setGuardando(true);
+        setError("");
 
-      await cargarClientes();
-    } catch (error) {
-      setError(
-        error.response?.data?.mensaje ||
-        "No fue posible crear el cliente."
-      );
-    } finally {
-      setGuardando(false);
-    }
+        if (clienteEditando) {
+          await api.put(
+            `/Clientes/${clienteEditando.id}`,
+            payload
+          );
+        } else {
+          await api.post(
+            "/Clientes",
+            payload
+          );
+        }
+
+        cerrarFormulario();
+
+        await cargarClientes();
+      } catch (error) {
+        setError(
+          error.response?.data?.mensaje ||
+          (
+            clienteEditando
+              ? "No fue posible actualizar el cliente."
+              : "No fue posible crear el cliente."
+          )
+        );
+      } finally {
+        setGuardando(false);
+      }
+    };
+
+  const abrirHistorial =
+    async (clienteId) => {
+      try {
+        setCargandoHistorial(
+          true
+        );
+        setError("");
+
+        const response =
+          await api.get(
+            `/Clientes/${clienteId}/historial`
+          );
+
+        setClienteHistorial(
+          response.data
+        );
+      } catch (error) {
+        setError(
+          error.response?.data?.mensaje ||
+          "No fue posible cargar el historial."
+        );
+      } finally {
+        setCargandoHistorial(
+          false
+        );
+      }
+    };
+
+  const formatearMoneda = (
+    valor
+  ) => {
+    return new Intl.NumberFormat(
+      "es-CR",
+      {
+        style: "currency",
+        currency: "CRC",
+        maximumFractionDigits: 0
+      }
+    ).format(valor || 0);
   };
 
-  const abrirHistorial = async (clienteId) => {
-    try {
-      setCargandoHistorial(true);
-      setError("");
-
-      const response = await api.get(
-        `/Clientes/${clienteId}/historial`
-      );
-
-      setClienteHistorial(response.data);
-    } catch (error) {
-      setError(
-        error.response?.data?.mensaje ||
-        "No fue posible cargar el historial."
-      );
-    } finally {
-      setCargandoHistorial(false);
-    }
-  };
-
-  const formatearMoneda = (valor) => {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-      maximumFractionDigits: 0
-    }).format(valor || 0);
-  };
-
-  const formatearFecha = (fecha) => {
+  const formatearFecha = (
+    fecha
+  ) => {
     if (!fecha) {
       return "-";
     }
 
-    const partes = fecha
-      .substring(0, 10)
-      .split("-");
+    const partes =
+      fecha
+        .substring(0, 10)
+        .split("-");
 
     if (partes.length !== 3) {
       return fecha;
     }
 
-    const [anio, mes, dia] = partes;
+    const [
+      anio,
+      mes,
+      dia
+    ] = partes;
 
     return `${dia}/${mes}/${anio}`;
   };
@@ -207,14 +326,15 @@ function Clientes() {
           </h1>
 
           <p className="text-muted mb-0">
-            Administra los clientes del negocio.
+            Administra los clientes
+            del negocio.
           </p>
         </div>
 
         <button
           className="btn btn-primary"
-          onClick={() =>
-            setMostrarFormulario(true)
+          onClick={
+            abrirNuevoCliente
           }
         >
           <FaPlus className="me-2" />
@@ -238,16 +358,23 @@ function Clientes() {
               placeholder="Buscar por nombre, teléfono o correo..."
               value={busqueda}
               onChange={(e) =>
-                setBusqueda(e.target.value)
+                setBusqueda(
+                  e.target.value
+                )
               }
             />
           </div>
 
           <div className="text-muted">
-            {clientesFiltrados.length} cliente
-            {clientesFiltrados.length !== 1
-              ? "s"
-              : ""}
+            {
+              clientesFiltrados.length
+            }{" "}
+            cliente
+            {
+              clientesFiltrados.length !== 1
+                ? "s"
+                : ""
+            }
           </div>
         </div>
 
@@ -255,7 +382,8 @@ function Clientes() {
           <div className="empty-state">
             Cargando clientes...
           </div>
-        ) : clientesFiltrados.length === 0 ? (
+        ) : clientesFiltrados.length ===
+          0 ? (
           <div className="empty-state">
             <FaUser size={32} />
 
@@ -264,8 +392,8 @@ function Clientes() {
             </h5>
 
             <p>
-              Registra el primer cliente para
-              comenzar.
+              Registra el primer
+              cliente para comenzar.
             </p>
           </div>
         ) : (
@@ -276,7 +404,9 @@ function Clientes() {
                   <th>Cliente</th>
                   <th>Teléfono</th>
                   <th>Correo</th>
-                  <th>Fecha nacimiento</th>
+                  <th>
+                    Fecha nacimiento
+                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -284,7 +414,11 @@ function Clientes() {
               <tbody>
                 {clientesFiltrados.map(
                   (cliente) => (
-                    <tr key={cliente.id}>
+                    <tr
+                      key={
+                        cliente.id
+                      }
+                    >
                       <td>
                         <div className="client-name-cell">
                           <div className="client-avatar">
@@ -295,13 +429,19 @@ function Clientes() {
 
                           <div>
                             <strong>
-                              {cliente.nombre}{" "}
-                              {cliente.apellidos}
+                              {
+                                cliente.nombre
+                              }{" "}
+                              {
+                                cliente.apellidos
+                              }
                             </strong>
 
                             {cliente.notas && (
                               <div className="client-note">
-                                {cliente.notas}
+                                {
+                                  cliente.notas
+                                }
                               </div>
                             )}
                           </div>
@@ -309,11 +449,13 @@ function Clientes() {
                       </td>
 
                       <td>
-                        {cliente.telefono || "-"}
+                        {cliente.telefono ||
+                          "-"}
                       </td>
 
                       <td>
-                        {cliente.email || "-"}
+                        {cliente.email ||
+                          "-"}
                       </td>
 
                       <td>
@@ -323,17 +465,33 @@ function Clientes() {
                       </td>
 
                       <td className="text-end">
-                        <button
-                          className="btn btn-light btn-sm"
-                          onClick={() =>
-                            abrirHistorial(
-                              cliente.id
-                            )
-                          }
-                        >
-                          <FaHistory className="me-2" />
-                          Historial
-                        </button>
+                        <div className="d-flex justify-content-end gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() =>
+                              abrirEditarCliente(
+                                cliente
+                              )
+                            }
+                          >
+                            <FaEdit className="me-2" />
+                            Editar
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-light btn-sm"
+                            onClick={() =>
+                              abrirHistorial(
+                                cliente.id
+                              )
+                            }
+                          >
+                            <FaHistory className="me-2" />
+                            Historial
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -349,22 +507,35 @@ function Clientes() {
           <div className="custom-modal">
             <div className="custom-modal-header">
               <div>
-                <h4>Nuevo cliente</h4>
+                <h4>
+                  {clienteEditando
+                    ? "Editar cliente"
+                    : "Nuevo cliente"}
+                </h4>
 
                 <p className="text-muted mb-0">
-                  Ingresa la información del cliente.
+                  {clienteEditando
+                    ? "Actualiza la información del cliente."
+                    : "Ingresa la información del cliente."}
                 </p>
               </div>
 
               <button
+                type="button"
                 className="modal-close"
-                onClick={cerrarFormulario}
+                onClick={
+                  cerrarFormulario
+                }
               >
                 <FaTimes />
               </button>
             </div>
 
-            <form onSubmit={guardarCliente}>
+            <form
+              onSubmit={
+                guardarCliente
+              }
+            >
               <div className="custom-modal-body">
                 <div className="row g-3">
                   <div className="col-md-6">
@@ -376,8 +547,12 @@ function Clientes() {
                       type="text"
                       name="nombre"
                       className="form-control"
-                      value={formulario.nombre}
-                      onChange={cambiarCampo}
+                      value={
+                        formulario.nombre
+                      }
+                      onChange={
+                        cambiarCampo
+                      }
                       required
                     />
                   </div>
@@ -391,8 +566,12 @@ function Clientes() {
                       type="text"
                       name="apellidos"
                       className="form-control"
-                      value={formulario.apellidos}
-                      onChange={cambiarCampo}
+                      value={
+                        formulario.apellidos
+                      }
+                      onChange={
+                        cambiarCampo
+                      }
                     />
                   </div>
 
@@ -405,8 +584,12 @@ function Clientes() {
                       type="text"
                       name="telefono"
                       className="form-control"
-                      value={formulario.telefono}
-                      onChange={cambiarCampo}
+                      value={
+                        formulario.telefono
+                      }
+                      onChange={
+                        cambiarCampo
+                      }
                     />
                   </div>
 
@@ -419,8 +602,12 @@ function Clientes() {
                       type="email"
                       name="email"
                       className="form-control"
-                      value={formulario.email}
-                      onChange={cambiarCampo}
+                      value={
+                        formulario.email
+                      }
+                      onChange={
+                        cambiarCampo
+                      }
                     />
                   </div>
 
@@ -436,7 +623,9 @@ function Clientes() {
                       value={
                         formulario.fechaNacimiento
                       }
-                      onChange={cambiarCampo}
+                      onChange={
+                        cambiarCampo
+                      }
                     />
                   </div>
 
@@ -449,8 +638,12 @@ function Clientes() {
                       name="notas"
                       className="form-control"
                       rows="3"
-                      value={formulario.notas}
-                      onChange={cambiarCampo}
+                      value={
+                        formulario.notas
+                      }
+                      onChange={
+                        cambiarCampo
+                      }
                       placeholder="Preferencias, observaciones..."
                     />
                   </div>
@@ -461,7 +654,9 @@ function Clientes() {
                 <button
                   type="button"
                   className="btn btn-light"
-                  onClick={cerrarFormulario}
+                  onClick={
+                    cerrarFormulario
+                  }
                 >
                   Cancelar
                 </button>
@@ -469,11 +664,15 @@ function Clientes() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={guardando}
+                  disabled={
+                    guardando
+                  }
                 >
                   {guardando
                     ? "Guardando..."
-                    : "Guardar cliente"}
+                    : clienteEditando
+                      ? "Guardar cambios"
+                      : "Guardar cliente"}
                 </button>
               </div>
             </form>
@@ -494,8 +693,15 @@ function Clientes() {
                 <div className="custom-modal-header">
                   <div>
                     <h4>
-                      {clienteHistorial.cliente.nombre}{" "}
-                      {clienteHistorial.cliente.apellidos}
+                      {
+                        clienteHistorial
+                          .cliente.nombre
+                      }{" "}
+                      {
+                        clienteHistorial
+                          .cliente
+                          .apellidos
+                      }
                     </h4>
 
                     <p className="text-muted mb-0">
@@ -504,9 +710,12 @@ function Clientes() {
                   </div>
 
                   <button
+                    type="button"
                     className="modal-close"
                     onClick={() =>
-                      setClienteHistorial(null)
+                      setClienteHistorial(
+                        null
+                      )
                     }
                   >
                     <FaTimes />
@@ -517,11 +726,15 @@ function Clientes() {
                   <div className="row g-3 mb-4">
                     <div className="col-md-3">
                       <div className="history-stat">
-                        <span>Total citas</span>
+                        <span>
+                          Total citas
+                        </span>
+
                         <strong>
                           {
                             clienteHistorial
-                              .resumen.totalCitas
+                              .resumen
+                              .totalCitas
                           }
                         </strong>
                       </div>
@@ -529,7 +742,10 @@ function Clientes() {
 
                     <div className="col-md-3">
                       <div className="history-stat">
-                        <span>Completadas</span>
+                        <span>
+                          Completadas
+                        </span>
+
                         <strong>
                           {
                             clienteHistorial
@@ -542,11 +758,15 @@ function Clientes() {
 
                     <div className="col-md-3">
                       <div className="history-stat">
-                        <span>No asistió</span>
+                        <span>
+                          No asistió
+                        </span>
+
                         <strong>
                           {
                             clienteHistorial
-                              .resumen.noAsistio
+                              .resumen
+                              .noAsistio
                           }
                         </strong>
                       </div>
@@ -554,7 +774,10 @@ function Clientes() {
 
                     <div className="col-md-3">
                       <div className="history-stat">
-                        <span>Total gastado</span>
+                        <span>
+                          Total gastado
+                        </span>
+
                         <strong>
                           {formatearMoneda(
                             clienteHistorial
@@ -566,73 +789,95 @@ function Clientes() {
                     </div>
                   </div>
 
-                  {clienteHistorial.citas.length ===
+                  {clienteHistorial
+                    .citas.length ===
                   0 ? (
                     <div className="empty-state">
-                      Este cliente todavía no tiene
-                      citas.
+                      Este cliente todavía no tiene citas.
                     </div>
                   ) : (
                     <div className="table-responsive">
                       <table className="table align-middle">
                         <thead>
                           <tr>
-                            <th>Fecha</th>
-                            <th>Servicio</th>
-                            <th>Profesional</th>
-                            <th>Estado</th>
-                            <th>Precio</th>
+                            <th>
+                              Fecha
+                            </th>
+                            <th>
+                              Servicio
+                            </th>
+                            <th>
+                              Profesional
+                            </th>
+                            <th>
+                              Estado
+                            </th>
+                            <th>
+                              Precio
+                            </th>
                           </tr>
                         </thead>
 
                         <tbody>
-                          {clienteHistorial.citas.map(
-                            (cita) => (
-                              <tr key={cita.id}>
-                                <td>
-                                  {new Date(
-                                    cita.fechaInicio
-                                  ).toLocaleString(
-                                    "es-CR",
+                          {clienteHistorial
+                            .citas.map(
+                              (
+                                cita
+                              ) => (
+                                <tr
+                                  key={
+                                    cita.id
+                                  }
+                                >
+                                  <td>
+                                    {new Date(
+                                      cita.fechaInicio
+                                    ).toLocaleString(
+                                      "es-CR",
+                                      {
+                                        timeZone:
+                                          "America/Costa_Rica"
+                                      }
+                                    )}
+                                  </td>
+
+                                  <td>
                                     {
-                                      timeZone:
-                                        "America/Costa_Rica"
+                                      cita
+                                        .servicio
+                                        .nombre
                                     }
-                                  )}
-                                </td>
+                                  </td>
 
-                                <td>
-                                  {
-                                    cita.servicio
-                                      .nombre
-                                  }
-                                </td>
+                                  <td>
+                                    {
+                                      cita
+                                        .profesional
+                                        .nombre
+                                    }{" "}
+                                    {
+                                      cita
+                                        .profesional
+                                        .apellidos
+                                    }
+                                  </td>
 
-                                <td>
-                                  {
-                                    cita.profesional
-                                      .nombre
-                                  }{" "}
-                                  {
-                                    cita.profesional
-                                      .apellidos
-                                  }
-                                </td>
+                                  <td>
+                                    <span className="status-badge">
+                                      {
+                                        cita.estado
+                                      }
+                                    </span>
+                                  </td>
 
-                                <td>
-                                  <span className="status-badge">
-                                    {cita.estado}
-                                  </span>
-                                </td>
-
-                                <td>
-                                  {formatearMoneda(
-                                    cita.precio
-                                  )}
-                                </td>
-                              </tr>
-                            )
-                          )}
+                                  <td>
+                                    {formatearMoneda(
+                                      cita.precio
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            )}
                         </tbody>
                       </table>
                     </div>

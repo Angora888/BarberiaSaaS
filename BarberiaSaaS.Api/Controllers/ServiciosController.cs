@@ -192,6 +192,79 @@ namespace BarberiaSaaS.Api.Controllers
         }
 
         // ============================================================
+        // ACTUALIZAR SERVICIO
+        // ============================================================
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Actualizar(
+            int id,
+            ActualizarServicioDto request)
+        {
+            if (string.IsNullOrWhiteSpace(
+                request.Nombre))
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "El nombre del servicio es requerido."
+                });
+            }
+
+            if (request.Precio < 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "El precio no puede ser negativo."
+                });
+            }
+
+            var tenantId =
+                _tenantContext.TenantId;
+
+            var servicio =
+                await _context.Servicios
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == id &&
+                        x.TenantId == tenantId);
+
+            if (servicio == null)
+            {
+                return NotFound(new
+                {
+                    mensaje =
+                        "Servicio no encontrado."
+                });
+            }
+
+            servicio.Nombre =
+                request.Nombre.Trim();
+
+            servicio.Descripcion =
+                request.Descripcion?.Trim();
+
+            servicio.Precio =
+                request.Precio;
+
+            servicio.Activo =
+                request.Activo;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje =
+                    "Servicio actualizado correctamente.",
+
+                servicio.Id,
+                servicio.Nombre,
+                servicio.Descripcion,
+                servicio.Precio,
+                servicio.Activo
+            });
+        }
+
+        // ============================================================
         // LISTAR VARIANTES DE UN SERVICIO
         // ============================================================
 

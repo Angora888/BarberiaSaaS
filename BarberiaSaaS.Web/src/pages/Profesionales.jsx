@@ -3,9 +3,9 @@ import {
   FaBriefcase,
   FaCalendarAlt,
   FaClock,
+  FaEdit,
   FaPlus,
   FaSearch,
-  FaTimes,
   FaUserTie
 } from "react-icons/fa";
 
@@ -23,55 +23,81 @@ const DIAS_SEMANA = [
 ];
 
 function Profesionales() {
-  const [profesionales, setProfesionales] = useState([]);
-  const [servicios, setServicios] = useState([]);
-  const [sucursales, setSucursales] = useState([]);
+  const [profesionales, setProfesionales] =
+    useState([]);
 
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-  const [busqueda, setBusqueda] = useState("");
+  const [servicios, setServicios] =
+    useState([]);
 
-  const [mostrarFormulario, setMostrarFormulario] =
+  const [sucursales, setSucursales] =
+    useState([]);
+
+  const [cargando, setCargando] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [busqueda, setBusqueda] =
+    useState("");
+
+  const [
+    mostrarFormulario,
+    setMostrarFormulario
+  ] = useState(false);
+
+  const [
+    profesionalEditando,
+    setProfesionalEditando
+  ] = useState(null);
+
+  const [guardando, setGuardando] =
     useState(false);
 
-  const [guardando, setGuardando] = useState(false);
+  const [formulario, setFormulario] =
+    useState({
+      sucursalId: "",
+      nombre: "",
+      apellidos: "",
+      telefono: "",
+      email: "",
+      especialidad: "",
+      fotoUrl: "",
+      servicioIds: [],
+      activo: true
+    });
 
-  const [formulario, setFormulario] = useState({
-    sucursalId: "",
-    nombre: "",
-    apellidos: "",
-    telefono: "",
-    email: "",
-    especialidad: "",
-    fotoUrl: "",
-    servicioIds: []
-  });
+  const [
+    mostrarHorarios,
+    setMostrarHorarios
+  ] = useState(false);
 
-  const [mostrarHorarios, setMostrarHorarios] =
-    useState(false);
-
-  const [profesionalHorario, setProfesionalHorario] =
-    useState(null);
+  const [
+    profesionalHorario,
+    setProfesionalHorario
+  ] = useState(null);
 
   const [horarios, setHorarios] =
     useState([]);
 
-  const [cargandoHorarios, setCargandoHorarios] =
-    useState(false);
+  const [
+    cargandoHorarios,
+    setCargandoHorarios
+  ] = useState(false);
 
-  const [guardandoHorario, setGuardandoHorario] =
-    useState(false);
+  const [
+    guardandoHorario,
+    setGuardandoHorario
+  ] = useState(false);
 
-  const [formularioHorario, setFormularioHorario] =
-    useState({
-      diaSemana: 1,
-      horaInicio: "08:00",
-      horaFin: "17:00"
-    });
-
-  // ============================================================
-  // CARGA INICIAL
-  // ============================================================
+  const [
+    formularioHorario,
+    setFormularioHorario
+  ] = useState({
+    diaSemana: 1,
+    horaInicio: "08:00",
+    horaFin: "17:00"
+  });
 
   useEffect(() => {
     cargarDatos();
@@ -105,7 +131,8 @@ function Profesionales() {
       );
 
       if (
-        sucursalesResponse.data.length === 1
+        sucursalesResponse
+          .data.length === 1
       ) {
         setFormulario(
           (anterior) => ({
@@ -121,16 +148,12 @@ function Profesionales() {
     } catch (error) {
       setError(
         error.response?.data?.mensaje ||
-          "No fue posible cargar los profesionales."
+        "No fue posible cargar los profesionales."
       );
     } finally {
       setCargando(false);
     }
   };
-
-  // ============================================================
-  // BUSCADOR
-  // ============================================================
 
   const profesionalesFiltrados =
     useMemo(() => {
@@ -170,135 +193,211 @@ function Profesionales() {
       busqueda
     ]);
 
-  // ============================================================
-  // PROFESIONAL
-  // ============================================================
+  const formularioVacio = () => ({
+    sucursalId:
+      sucursales.length === 1
+        ? sucursales[0]
+            .id
+            .toString()
+        : "",
+    nombre: "",
+    apellidos: "",
+    telefono: "",
+    email: "",
+    especialidad: "",
+    fotoUrl: "",
+    servicioIds: [],
+    activo: true
+  });
+
+  const abrirNuevoProfesional = () => {
+    setProfesionalEditando(null);
+    setFormulario(
+      formularioVacio()
+    );
+    setError("");
+    setMostrarFormulario(true);
+  };
+
+  const abrirEditarProfesional = (
+    profesional
+  ) => {
+    setProfesionalEditando(
+      profesional
+    );
+
+    setFormulario({
+      sucursalId:
+        profesional.sucursalId
+          ?.toString() || "",
+      nombre:
+        profesional.nombre || "",
+      apellidos:
+        profesional.apellidos || "",
+      telefono:
+        profesional.telefono || "",
+      email:
+        profesional.email || "",
+      especialidad:
+        profesional.especialidad ||
+        "",
+      fotoUrl:
+        profesional.fotoUrl || "",
+      servicioIds:
+        (
+          profesional.servicios ||
+          []
+        ).map(
+          (servicio) =>
+            servicio.id
+        ),
+      activo:
+        profesional.activo !== false
+    });
+
+    setError("");
+    setMostrarFormulario(true);
+  };
+
+  const limpiarFormulario = () => {
+    setFormulario(
+      formularioVacio()
+    );
+  };
+
+  const cerrarFormulario = () => {
+    limpiarFormulario();
+    setProfesionalEditando(null);
+    setMostrarFormulario(false);
+  };
 
   const cambiarCampo = (e) => {
     const {
       name,
-      value
+      value,
+      type,
+      checked
     } = e.target;
 
     setFormulario(
       (anterior) => ({
         ...anterior,
-        [name]: value
+        [name]:
+          type === "checkbox"
+            ? checked
+            : value
       })
     );
   };
 
-  const cambiarServicio =
-    (servicioId) => {
-      setFormulario(
-        (anterior) => {
-          const existe =
-            anterior.servicioIds.includes(
-              servicioId
-            );
+  const cambiarServicio = (
+    servicioId
+  ) => {
+    setFormulario(
+      (anterior) => {
+        const existe =
+          anterior.servicioIds.includes(
+            servicioId
+          );
 
-          return {
-            ...anterior,
-
-            servicioIds: existe
-              ? anterior.servicioIds.filter(
-                  (id) =>
-                    id !== servicioId
-                )
-              : [
-                  ...anterior.servicioIds,
-                  servicioId
-                ]
-          };
-        }
-      );
-    };
-
-  const limpiarFormulario = () => {
-    setFormulario({
-      sucursalId:
-        sucursales.length === 1
-          ? sucursales[0].id.toString()
-          : "",
-
-      nombre: "",
-      apellidos: "",
-      telefono: "",
-      email: "",
-      especialidad: "",
-      fotoUrl: "",
-      servicioIds: []
-    });
-  };
-
-  const cerrarFormulario = () => {
-    limpiarFormulario();
-
-    setMostrarFormulario(false);
+        return {
+          ...anterior,
+          servicioIds: existe
+            ? anterior.servicioIds.filter(
+                (id) =>
+                  id !== servicioId
+              )
+            : [
+                ...anterior.servicioIds,
+                servicioId
+              ]
+        };
+      }
+    );
   };
 
   const guardarProfesional =
     async (e) => {
       e.preventDefault();
 
-      if (!formulario.nombre.trim()) {
+      if (
+        !formulario.nombre.trim()
+      ) {
         setError(
           "El nombre es requerido."
         );
-
         return;
       }
 
       if (
-        formulario.servicioIds.length === 0
+        formulario
+          .servicioIds
+          .length === 0
       ) {
         setError(
           "Selecciona al menos un servicio."
         );
-
         return;
       }
+
+      const payload = {
+        sucursalId:
+          formulario.sucursalId
+            ? Number(
+                formulario.sucursalId
+              )
+            : null,
+
+        nombre:
+          formulario.nombre.trim(),
+
+        apellidos:
+          formulario.apellidos
+            .trim(),
+
+        telefono:
+          formulario.telefono
+            .trim() || null,
+
+        email:
+          formulario.email
+            .trim() || null,
+
+        especialidad:
+          formulario.especialidad
+            .trim() || null,
+
+        fotoUrl:
+          formulario.fotoUrl
+            .trim() || null,
+
+        servicioIds:
+          formulario.servicioIds
+      };
 
       try {
         setGuardando(true);
         setError("");
 
-        await api.post(
-          "/Profesionales",
-          {
-            sucursalId:
-              formulario.sucursalId
-                ? Number(
-                    formulario.sucursalId
-                  )
-                : null,
-
-            nombre:
-              formulario.nombre,
-
-            apellidos:
-              formulario.apellidos,
-
-            telefono:
-              formulario.telefono ||
-              null,
-
-            email:
-              formulario.email ||
-              null,
-
-            especialidad:
-              formulario.especialidad ||
-              null,
-
-            fotoUrl:
-              formulario.fotoUrl ||
-              null,
-
-            servicioIds:
-              formulario.servicioIds
-          }
-        );
+        if (
+          profesionalEditando
+        ) {
+          await api.put(
+            `/Profesionales/${profesionalEditando.id}`,
+            {
+              ...payload,
+              activo:
+                Boolean(
+                  formulario.activo
+                )
+            }
+          );
+        } else {
+          await api.post(
+            "/Profesionales",
+            payload
+          );
+        }
 
         cerrarFormulario();
 
@@ -306,16 +405,16 @@ function Profesionales() {
       } catch (error) {
         setError(
           error.response?.data?.mensaje ||
-            "No fue posible crear el profesional."
+          (
+            profesionalEditando
+              ? "No fue posible actualizar el profesional."
+              : "No fue posible crear el profesional."
+          )
         );
       } finally {
         setGuardando(false);
       }
     };
-
-  // ============================================================
-  // HORARIOS
-  // ============================================================
 
   const abrirHorarios =
     async (profesional) => {
@@ -347,7 +446,7 @@ function Profesionales() {
       } catch (error) {
         setError(
           error.response?.data?.mensaje ||
-            "No fue posible cargar los horarios."
+          "No fue posible cargar los horarios."
         );
       } finally {
         setCargandoHorarios(false);
@@ -356,9 +455,7 @@ function Profesionales() {
 
   const cerrarHorarios = () => {
     setMostrarHorarios(false);
-
     setProfesionalHorario(null);
-
     setHorarios([]);
 
     setFormularioHorario({
@@ -396,13 +493,14 @@ function Profesionales() {
       }
 
       if (
-        formularioHorario.horaFin <=
-        formularioHorario.horaInicio
+        formularioHorario
+          .horaFin <=
+        formularioHorario
+          .horaInicio
       ) {
         setError(
           "La hora de salida debe ser posterior a la hora de entrada."
         );
-
         return;
       }
 
@@ -414,7 +512,8 @@ function Profesionales() {
           `/profesionales/${profesionalHorario.id}/horarios`,
           {
             diaSemana:
-              formularioHorario.diaSemana,
+              formularioHorario
+                .diaSemana,
 
             horaInicio:
               `${formularioHorario.horaInicio}:00`,
@@ -438,7 +537,7 @@ function Profesionales() {
       } catch (error) {
         setError(
           error.response?.data?.mensaje ||
-            "No fue posible guardar el horario."
+          "No fue posible guardar el horario."
         );
       } finally {
         setGuardandoHorario(false);
@@ -450,7 +549,8 @@ function Profesionales() {
       return (
         DIAS_SEMANA.find(
           (dia) =>
-            dia.valor === diaSemana
+            dia.valor ===
+            diaSemana
         )?.nombre || "Día"
       );
     };
@@ -496,17 +596,10 @@ function Profesionales() {
       );
     }, [horarios]);
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
     <div>
-
       <div className="page-header">
-
         <div>
-
           <h1 className="page-title">
             Profesionales
           </h1>
@@ -516,20 +609,17 @@ function Profesionales() {
             servicios, horarios y
             ausencias.
           </p>
-
         </div>
 
         <button
           className="btn btn-primary"
-          onClick={() =>
-            setMostrarFormulario(true)
+          onClick={
+            abrirNuevoProfesional
           }
         >
           <FaPlus className="me-2" />
-
           Nuevo profesional
         </button>
-
       </div>
 
       {error && (
@@ -539,11 +629,8 @@ function Profesionales() {
       )}
 
       <div className="content-card mt-4">
-
         <div className="client-toolbar">
-
           <div className="search-box">
-
             <FaSearch />
 
             <input
@@ -556,31 +643,30 @@ function Profesionales() {
                 )
               }
             />
-
           </div>
 
           <div className="text-muted">
-
-            {profesionalesFiltrados.length}{" "}
+            {
+              profesionalesFiltrados
+                .length
+            }{" "}
             profesional
-            {profesionalesFiltrados.length !== 1
-              ? "es"
-              : ""}
-
+            {
+              profesionalesFiltrados
+                .length !== 1
+                ? "es"
+                : ""
+            }
           </div>
-
         </div>
 
         {cargando ? (
-
           <div className="empty-state">
             Cargando profesionales...
           </div>
-
-        ) : profesionalesFiltrados.length === 0 ? (
-
+        ) : profesionalesFiltrados
+            .length === 0 ? (
           <div className="empty-state">
-
             <FaUserTie size={32} />
 
             <h5 className="mt-3">
@@ -591,27 +677,19 @@ function Profesionales() {
               Registra la primera persona
               que brindará servicios.
             </p>
-
           </div>
-
         ) : (
-
           <div className="professional-grid">
-
             {profesionalesFiltrados.map(
               (profesional) => (
-
                 <div
                   className="professional-card"
                   key={
                     profesional.id
                   }
                 >
-
                   <div className="professional-header">
-
                     {profesional.fotoUrl ? (
-
                       <img
                         src={
                           profesional.fotoUrl
@@ -621,31 +699,26 @@ function Profesionales() {
                         }
                         className="professional-avatar-image"
                       />
-
                     ) : (
-
                       <div className="professional-avatar">
-
                         {profesional.nombre
                           ?.charAt(0)
                           .toUpperCase()}
-
                       </div>
-
                     )}
 
                     <div className="professional-info">
-
                       <h5>
                         {profesional.nombre}{" "}
-                        {profesional.apellidos}
+                        {
+                          profesional.apellidos
+                        }
                       </h5>
 
                       <span>
                         {profesional.especialidad ||
                           "Profesional"}
                       </span>
-
                     </div>
 
                     <span
@@ -659,707 +732,619 @@ function Profesionales() {
                         ? "Activo"
                         : "Inactivo"}
                     </span>
-
                   </div>
 
                   <div className="professional-contact">
-
                     {profesional.telefono && (
-
                       <div>
-
                         <strong>
                           Teléfono
                         </strong>
 
                         <span>
-                          {profesional.telefono}
+                          {
+                            profesional.telefono
+                          }
                         </span>
-
                       </div>
-
                     )}
 
                     {profesional.email && (
-
                       <div>
-
                         <strong>
                           Correo
                         </strong>
 
                         <span>
-                          {profesional.email}
+                          {
+                            profesional.email
+                          }
                         </span>
-
                       </div>
-
                     )}
 
+                    {profesional.sucursal && (
+                      <div>
+                        <strong>
+                          Sucursal
+                        </strong>
+
+                        <span>
+                          {
+                            profesional.sucursal
+                          }
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="professional-services">
-
                     <div className="professional-section-title">
-
                       <FaBriefcase />
 
                       <span>
                         Servicios
                       </span>
-
                     </div>
 
                     <div className="professional-service-tags">
-
                       {profesional.servicios
                         ?.length > 0 ? (
-
                         profesional.servicios.map(
-                          (servicio) => (
-
+                          (
+                            servicio
+                          ) => (
                             <span
-                              className="professional-service-tag"
                               key={
                                 servicio.id
                               }
+                              className="professional-service-tag"
                             >
-                              {servicio.nombre}
+                              {
+                                servicio.nombre
+                              }
                             </span>
-
                           )
                         )
-
                       ) : (
-
                         <span className="text-muted small">
-                          Sin servicios asignados.
+                          Sin servicios
                         </span>
-
                       )}
-
                     </div>
-
                   </div>
 
-                  <div className="professional-card-actions">
+                  <div className="d-flex flex-wrap gap-2 mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() =>
+                        abrirEditarProfesional(
+                          profesional
+                        )
+                      }
+                    >
+                      <FaEdit className="me-1" />
+                      Editar
+                    </button>
 
                     <button
-                      className="btn btn-light w-100"
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
                       onClick={() =>
                         abrirHorarios(
                           profesional
                         )
                       }
                     >
-                      <FaCalendarAlt className="me-2" />
-
-                      Horario y ausencias
+                      <FaClock className="me-1" />
+                      Horarios
                     </button>
-
                   </div>
 
+                  <div className="mt-3">
+                    <BloqueosProfesional
+                      profesional={
+                        profesional
+                      }
+                    />
+                  </div>
                 </div>
-
               )
             )}
-
           </div>
-
         )}
-
       </div>
 
-      {/* NUEVO PROFESIONAL */}
-
       {mostrarFormulario && (
-
-        <div className="custom-modal-backdrop">
-
-          <div className="custom-modal custom-modal-large">
-
-            <div className="custom-modal-header">
-
-              <div>
-
-                <h4>
-                  Nuevo profesional
-                </h4>
-
-                <p className="text-muted mb-0">
-                  Registra la información y
-                  selecciona los servicios
-                  que realiza.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                className="modal-close"
-                onClick={
-                  cerrarFormulario
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor:
+              "rgba(0,0,0,.45)"
+          }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content">
+              <form
+                onSubmit={
+                  guardarProfesional
                 }
               >
-                <FaTimes />
-              </button>
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    {profesionalEditando
+                      ? "Editar profesional"
+                      : "Nuevo profesional"}
+                  </h5>
 
-            </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={
+                      cerrarFormulario
+                    }
+                  />
+                </div>
 
-            <form
-              onSubmit={
-                guardarProfesional
-              }
-            >
+                <div className="modal-body">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Nombre *
+                      </label>
 
-              <div className="custom-modal-body">
+                      <input
+                        name="nombre"
+                        className="form-control"
+                        value={
+                          formulario.nombre
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                        required
+                      />
+                    </div>
 
-                <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Apellidos
+                      </label>
 
-                  <div className="col-md-6">
+                      <input
+                        name="apellidos"
+                        className="form-control"
+                        value={
+                          formulario.apellidos
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                    <label className="form-label">
-                      Sucursal
-                    </label>
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Teléfono
+                      </label>
 
-                    <select
-                      name="sucursalId"
-                      className="form-select"
-                      value={
-                        formulario.sucursalId
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                    >
+                      <input
+                        name="telefono"
+                        className="form-control"
+                        value={
+                          formulario.telefono
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                      <option value="">
-                        Sin sucursal específica
-                      </option>
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Correo
+                      </label>
 
-                      {sucursales.map(
-                        (sucursal) => (
+                      <input
+                        name="email"
+                        type="email"
+                        className="form-control"
+                        value={
+                          formulario.email
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                          <option
-                            key={
-                              sucursal.id
-                            }
-                            value={
-                              sucursal.id
-                            }
-                          >
-                            {sucursal.nombre}
-                          </option>
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Especialidad
+                      </label>
 
-                        )
-                      )}
+                      <input
+                        name="especialidad"
+                        className="form-control"
+                        value={
+                          formulario.especialidad
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                    </select>
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Sucursal
+                      </label>
 
-                  </div>
+                      <select
+                        name="sucursalId"
+                        className="form-select"
+                        value={
+                          formulario.sucursalId
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      >
+                        <option value="">
+                          Sin sucursal
+                        </option>
 
-                  <div className="col-md-6">
+                        {sucursales.map(
+                          (sucursal) => (
+                            <option
+                              key={
+                                sucursal.id
+                              }
+                              value={
+                                sucursal.id
+                              }
+                            >
+                              {
+                                sucursal.nombre
+                              }
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
 
-                    <label className="form-label">
-                      Especialidad
-                    </label>
+                    <div className="col-12">
+                      <label className="form-label">
+                        URL de foto
+                      </label>
 
-                    <input
-                      type="text"
-                      name="especialidad"
-                      className="form-control"
-                      value={
-                        formulario.especialidad
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      placeholder="Ej. Colorista"
-                    />
+                      <input
+                        name="fotoUrl"
+                        className="form-control"
+                        value={
+                          formulario.fotoUrl
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                      />
+                    </div>
 
-                  </div>
-
-                  <div className="col-md-6">
-
-                    <label className="form-label">
-                      Nombre *
-                    </label>
-
-                    <input
-                      type="text"
-                      name="nombre"
-                      className="form-control"
-                      value={
-                        formulario.nombre
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      required
-                    />
-
-                  </div>
-
-                  <div className="col-md-6">
-
-                    <label className="form-label">
-                      Apellidos
-                    </label>
-
-                    <input
-                      type="text"
-                      name="apellidos"
-                      className="form-control"
-                      value={
-                        formulario.apellidos
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                    />
-
-                  </div>
-
-                  <div className="col-md-6">
-
-                    <label className="form-label">
-                      Teléfono
-                    </label>
-
-                    <input
-                      type="text"
-                      name="telefono"
-                      className="form-control"
-                      value={
-                        formulario.telefono
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                    />
-
-                  </div>
-
-                  <div className="col-md-6">
-
-                    <label className="form-label">
-                      Correo
-                    </label>
-
-                    <input
-                      type="email"
-                      name="email"
-                      className="form-control"
-                      value={
-                        formulario.email
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                    />
-
-                  </div>
-
-                  <div className="col-12">
-
-                    <label className="form-label">
-                      URL de fotografía
-                    </label>
-
-                    <input
-                      type="url"
-                      name="fotoUrl"
-                      className="form-control"
-                      value={
-                        formulario.fotoUrl
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      placeholder="https://..."
-                    />
-
-                  </div>
-
-                  <div className="col-12">
-
-                    <div className="professional-form-services-header">
-
-                      <label className="form-label mb-0">
+                    <div className="col-12">
+                      <label className="form-label d-block">
                         Servicios *
                       </label>
 
-                      <span className="text-muted small">
-
-                        {formulario.servicioIds.length} seleccionado
-                        {formulario.servicioIds.length !== 1
-                          ? "s"
-                          : ""}
-
-                      </span>
-
-                    </div>
-
-                    <div className="professional-service-selector">
-
-                      {servicios.map(
-                        (servicio) => {
-
-                          const seleccionado =
-                            formulario.servicioIds
-                              .includes(
-                                servicio.id
-                              );
-
-                          return (
-
-                            <label
-                              key={
-                                servicio.id
-                              }
-                              className={
-                                seleccionado
-                                  ? "service-select-card selected"
-                                  : "service-select-card"
-                              }
-                            >
-
-                              <input
-                                type="checkbox"
-                                checked={
-                                  seleccionado
+                      <div className="row g-2">
+                        {servicios
+                          .filter(
+                            (servicio) =>
+                              servicio.activo ||
+                              formulario
+                                .servicioIds
+                                .includes(
+                                  servicio.id
+                                )
+                          )
+                          .map(
+                            (
+                              servicio
+                            ) => (
+                              <div
+                                className="col-md-6"
+                                key={
+                                  servicio.id
                                 }
-                                onChange={() =>
-                                  cambiarServicio(
-                                    servicio.id
-                                  )
-                                }
-                              />
+                              >
+                                <div className="form-check border rounded p-3">
+                                  <input
+                                    id={`servicio-${servicio.id}`}
+                                    className="form-check-input ms-0 me-2"
+                                    type="checkbox"
+                                    checked={
+                                      formulario
+                                        .servicioIds
+                                        .includes(
+                                          servicio.id
+                                        )
+                                    }
+                                    onChange={() =>
+                                      cambiarServicio(
+                                        servicio.id
+                                      )
+                                    }
+                                  />
 
-                              <div>
-
-                                <strong>
-                                  {servicio.nombre}
-                                </strong>
-
+                                  <label
+                                    className="form-check-label"
+                                    htmlFor={`servicio-${servicio.id}`}
+                                  >
+                                    {
+                                      servicio.nombre
+                                    }
+                                    {!servicio.activo &&
+                                      " (Inactivo)"}
+                                  </label>
+                                </div>
                               </div>
-
-                            </label>
-
-                          );
-                        }
-                      )}
-
+                            )
+                          )}
+                      </div>
                     </div>
 
-                  </div>
+                    {profesionalEditando && (
+                      <div className="col-12">
+                        <div className="form-check form-switch">
+                          <input
+                            id="profesionalActivo"
+                            name="activo"
+                            type="checkbox"
+                            className="form-check-input"
+                            checked={
+                              formulario.activo
+                            }
+                            onChange={
+                              cambiarCampo
+                            }
+                          />
 
+                          <label
+                            htmlFor="profesionalActivo"
+                            className="form-check-label"
+                          >
+                            Profesional activo
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={
+                      cerrarFormulario
+                    }
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={
+                      guardando
+                    }
+                  >
+                    {guardando
+                      ? "Guardando..."
+                      : profesionalEditando
+                        ? "Guardar cambios"
+                        : "Crear profesional"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarHorarios &&
+        profesionalHorario && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor:
+              "rgba(0,0,0,.45)"
+          }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <div>
+                  <h5 className="modal-title">
+                    Horarios de{" "}
+                    {
+                      profesionalHorario.nombre
+                    }{" "}
+                    {
+                      profesionalHorario.apellidos
+                    }
+                  </h5>
+
+                  <small className="text-muted">
+                    Define los horarios normales de atención.
+                  </small>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={
+                    cerrarHorarios
+                  }
+                />
               </div>
 
-              <div className="custom-modal-footer">
+              <div className="modal-body">
+                <form
+                  className="row g-3 align-items-end mb-4"
+                  onSubmit={
+                    guardarHorario
+                  }
+                >
+                  <div className="col-md-4">
+                    <label className="form-label">
+                      Día
+                    </label>
 
+                    <select
+                      name="diaSemana"
+                      className="form-select"
+                      value={
+                        formularioHorario.diaSemana
+                      }
+                      onChange={
+                        cambiarCampoHorario
+                      }
+                    >
+                      {DIAS_SEMANA.map(
+                        (dia) => (
+                          <option
+                            key={
+                              dia.valor
+                            }
+                            value={
+                              dia.valor
+                            }
+                          >
+                            {
+                              dia.nombre
+                            }
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">
+                      Desde
+                    </label>
+
+                    <input
+                      name="horaInicio"
+                      type="time"
+                      className="form-control"
+                      value={
+                        formularioHorario.horaInicio
+                      }
+                      onChange={
+                        cambiarCampoHorario
+                      }
+                    />
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">
+                      Hasta
+                    </label>
+
+                    <input
+                      name="horaFin"
+                      type="time"
+                      className="form-control"
+                      value={
+                        formularioHorario.horaFin
+                      }
+                      onChange={
+                        cambiarCampoHorario
+                      }
+                    />
+                  </div>
+
+                  <div className="col-md-2">
+                    <button
+                      type="submit"
+                      className="btn btn-primary w-100"
+                      disabled={
+                        guardandoHorario
+                      }
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+                </form>
+
+                <div className="professional-section-title mb-3">
+                  <FaCalendarAlt />
+
+                  <span>
+                    Horarios registrados
+                  </span>
+                </div>
+
+                {cargandoHorarios ? (
+                  <div className="text-muted">
+                    Cargando horarios...
+                  </div>
+                ) : horariosOrdenados
+                    .length === 0 ? (
+                  <div className="text-muted">
+                    No hay horarios registrados.
+                  </div>
+                ) : (
+                  <div className="list-group">
+                    {horariosOrdenados.map(
+                      (horario) => (
+                        <div
+                          key={
+                            horario.id
+                          }
+                          className="list-group-item d-flex justify-content-between align-items-center"
+                        >
+                          <strong>
+                            {obtenerNombreDia(
+                              horario.diaSemana
+                            )}
+                          </strong>
+
+                          <span>
+                            {formatearHora(
+                              horario.horaInicio
+                            )}{" "}
+                            -{" "}
+                            {formatearHora(
+                              horario.horaFin
+                            )}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer">
                 <button
                   type="button"
                   className="btn btn-light"
                   onClick={
-                    cerrarFormulario
-                  }
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={
-                    guardando
-                  }
-                >
-                  {guardando
-                    ? "Guardando..."
-                    : "Guardar profesional"}
-                </button>
-
-              </div>
-
-            </form>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* HORARIOS Y BLOQUEOS */}
-
-      {mostrarHorarios &&
-        profesionalHorario && (
-
-          <div className="custom-modal-backdrop">
-
-            <div className="custom-modal custom-modal-large">
-
-              <div className="custom-modal-header">
-
-                <div>
-
-                  <h4>
-                    {profesionalHorario.nombre}{" "}
-                    {profesionalHorario.apellidos}
-                  </h4>
-
-                  <p className="text-muted mb-0">
-                    Horario laboral y períodos
-                    no disponibles.
-                  </p>
-
-                </div>
-
-                <button
-                  type="button"
-                  className="modal-close"
-                  onClick={
                     cerrarHorarios
                   }
                 >
-                  <FaTimes />
+                  Cerrar
                 </button>
-
               </div>
-
-              <div className="custom-modal-body">
-
-                <div className="schedule-form-card">
-
-                  <h6>
-                    Agregar horario
-                  </h6>
-
-                  <form
-                    onSubmit={
-                      guardarHorario
-                    }
-                  >
-
-                    <div className="row g-3 align-items-end">
-
-                      <div className="col-md-4">
-
-                        <label className="form-label">
-                          Día
-                        </label>
-
-                        <select
-                          name="diaSemana"
-                          className="form-select"
-                          value={
-                            formularioHorario.diaSemana
-                          }
-                          onChange={
-                            cambiarCampoHorario
-                          }
-                        >
-
-                          {DIAS_SEMANA.map(
-                            (dia) => (
-
-                              <option
-                                key={
-                                  dia.valor
-                                }
-                                value={
-                                  dia.valor
-                                }
-                              >
-                                {dia.nombre}
-                              </option>
-
-                            )
-                          )}
-
-                        </select>
-
-                      </div>
-
-                      <div className="col-md-3">
-
-                        <label className="form-label">
-                          Desde
-                        </label>
-
-                        <input
-                          type="time"
-                          name="horaInicio"
-                          className="form-control"
-                          value={
-                            formularioHorario.horaInicio
-                          }
-                          onChange={
-                            cambiarCampoHorario
-                          }
-                          required
-                        />
-
-                      </div>
-
-                      <div className="col-md-3">
-
-                        <label className="form-label">
-                          Hasta
-                        </label>
-
-                        <input
-                          type="time"
-                          name="horaFin"
-                          className="form-control"
-                          value={
-                            formularioHorario.horaFin
-                          }
-                          onChange={
-                            cambiarCampoHorario
-                          }
-                          required
-                        />
-
-                      </div>
-
-                      <div className="col-md-2">
-
-                        <button
-                          type="submit"
-                          className="btn btn-primary w-100"
-                          disabled={
-                            guardandoHorario
-                          }
-                        >
-                          {guardandoHorario
-                            ? "..."
-                            : "Agregar"}
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  </form>
-
-                </div>
-
-                <div className="schedule-section">
-
-                  <div className="schedule-section-title">
-
-                    <FaClock />
-
-                    <span>
-                      Horario semanal
-                    </span>
-
-                  </div>
-
-                  {cargandoHorarios ? (
-
-                    <div className="empty-state">
-                      Cargando horarios...
-                    </div>
-
-                  ) : horariosOrdenados.length === 0 ? (
-
-                    <div className="schedule-empty">
-
-                      <FaCalendarAlt size={28} />
-
-                      <strong>
-                        Sin horario configurado
-                      </strong>
-
-                    </div>
-
-                  ) : (
-
-                    <div className="schedule-list">
-
-                      {horariosOrdenados.map(
-                        (horario) => (
-
-                          <div
-                            className="schedule-row"
-                            key={
-                              horario.id
-                            }
-                          >
-
-                            <div className="schedule-day">
-
-                              {obtenerNombreDia(
-                                horario.diaSemana
-                              )}
-
-                            </div>
-
-                            <div className="schedule-time">
-
-                              <FaClock />
-
-                              <span>
-                                {formatearHora(
-                                  horario.horaInicio
-                                )}
-                                {" — "}
-                                {formatearHora(
-                                  horario.horaFin
-                                )}
-                              </span>
-
-                            </div>
-
-                            <span className="service-status active">
-                              Activo
-                            </span>
-
-                          </div>
-
-                        )
-                      )}
-
-                    </div>
-
-                  )}
-
-                </div>
-
-                <hr className="my-4" />
-
-                <BloqueosProfesional
-                  profesional={
-                    profesionalHorario
-                  }
-                />
-
-              </div>
-
-              <div className="custom-modal-footer">
-
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={
-                    cerrarHorarios
-                  }
-                >
-                  Listo
-                </button>
-
-              </div>
-
             </div>
-
           </div>
-
-        )}
-
+        </div>
+      )}
     </div>
   );
 }
