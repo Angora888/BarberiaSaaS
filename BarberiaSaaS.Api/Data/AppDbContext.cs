@@ -24,6 +24,9 @@ namespace BarberiaSaaS.Api.Data
 
         public DbSet<Servicio> Servicios => Set<Servicio>();
 
+        public DbSet<ServicioVariante> ServicioVariantes =>
+            Set<ServicioVariante>();
+
         public DbSet<ProfesionalServicio> ProfesionalServicios =>
             Set<ProfesionalServicio>();
 
@@ -41,6 +44,10 @@ namespace BarberiaSaaS.Api.Data
             ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ============================================================
+            // TENANT
+            // ============================================================
 
             modelBuilder.Entity<Tenant>(entity =>
             {
@@ -63,6 +70,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasMaxLength(150);
             });
 
+            // ============================================================
+            // CONFIGURACIÓN TENANT
+            // ============================================================
+
             modelBuilder.Entity<ConfiguracionTenant>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -80,6 +91,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasPrecision(5, 2);
             });
 
+            // ============================================================
+            // SUCURSAL
+            // ============================================================
+
             modelBuilder.Entity<Sucursal>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -93,6 +108,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.TenantId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============================================================
+            // USUARIO
+            // ============================================================
 
             modelBuilder.Entity<Usuario>(entity =>
             {
@@ -134,6 +153,10 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
+            // ============================================================
+            // PROFESIONAL
+            // ============================================================
+
             modelBuilder.Entity<Profesional>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -168,6 +191,10 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
+            // ============================================================
+            // SERVICIO
+            // ============================================================
+
             modelBuilder.Entity<Servicio>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -194,6 +221,46 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // ============================================================
+            // VARIANTE DE SERVICIO
+            // ============================================================
+
+            modelBuilder.Entity<ServicioVariante>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Precio)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Orden)
+                    .IsRequired();
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.ServicioId,
+                    x.Nombre
+                });
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Servicio)
+                    .WithMany(x => x.Variantes)
+                    .HasForeignKey(x => x.ServicioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ============================================================
+            // PROFESIONAL - SERVICIO
+            // ============================================================
+
             modelBuilder.Entity<ProfesionalServicio>(entity =>
             {
                 entity.HasKey(x => new
@@ -212,6 +279,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.ServicioId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============================================================
+            // CLIENTE
+            // ============================================================
 
             modelBuilder.Entity<Cliente>(entity =>
             {
@@ -244,6 +315,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.TenantId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============================================================
+            // CITA
+            // ============================================================
 
             modelBuilder.Entity<Cita>(entity =>
             {
@@ -300,7 +375,16 @@ namespace BarberiaSaaS.Api.Data
                     .WithMany(x => x.Citas)
                     .HasForeignKey(x => x.ServicioId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.ServicioVariante)
+                    .WithMany(x => x.Citas)
+                    .HasForeignKey(x => x.ServicioVarianteId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
+
+            // ============================================================
+            // HORARIO PROFESIONAL
+            // ============================================================
 
             modelBuilder.Entity<HorarioProfesional>(entity =>
             {
@@ -323,6 +407,10 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.ProfesionalId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============================================================
+            // BLOQUEO PROFESIONAL
+            // ============================================================
 
             modelBuilder.Entity<BloqueoProfesional>(entity =>
             {

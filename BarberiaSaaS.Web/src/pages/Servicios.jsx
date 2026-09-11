@@ -3,7 +3,8 @@ import {
   FaClock,
   FaPlus,
   FaSearch,
-  FaTimes
+  FaTimes,
+  FaTrash
 } from "react-icons/fa";
 import api from "../services/api";
 import {
@@ -32,15 +33,36 @@ function Servicios() {
     setMostrarFormulario
   ] = useState(false);
 
+  const [
+    mostrarVariantes,
+    setMostrarVariantes
+  ] = useState(false);
+
+  const [
+    servicioVariantes,
+    setServicioVariantes
+  ] = useState(null);
+
   const [guardando, setGuardando] =
     useState(false);
+
+  const [
+    guardandoVariantes,
+    setGuardandoVariantes
+  ] = useState(false);
 
   const [formulario, setFormulario] =
     useState({
       nombre: "",
       descripcion: "",
-      precio: ""
+      precio: "",
+      variantes: []
     });
+
+  const [
+    variantesEdicion,
+    setVariantesEdicion
+  ] = useState([]);
 
   useEffect(() => {
     cargarServicios();
@@ -86,20 +108,67 @@ function Servicios() {
 
       return servicios.filter(
         (servicio) => {
+          const coincideVariante =
+            servicio.variantes
+              ?.some(
+                (variante) =>
+                  variante.nombre
+                    ?.toLowerCase()
+                    .includes(texto)
+              ) || false;
+
           return (
             servicio.nombre
               ?.toLowerCase()
               .includes(texto) ||
             servicio.descripcion
               ?.toLowerCase()
-              .includes(texto)
+              .includes(texto) ||
+            coincideVariante
           );
         }
       );
     }, [servicios, busqueda]);
 
   // ============================================================
-  // FORMULARIO
+  // HELPERS
+  // ============================================================
+
+  const variantesActivas = (
+    servicio
+  ) => {
+    return (
+      servicio.variantes?.filter(
+        (variante) =>
+          variante.activo
+      ) || []
+    );
+  };
+
+  const obtenerPrecioDesde = (
+    servicio
+  ) => {
+    const activas =
+      variantesActivas(servicio);
+
+    if (activas.length === 0) {
+      return Number(
+        servicio.precio || 0
+      );
+    }
+
+    return Math.min(
+      ...activas.map(
+        (variante) =>
+          Number(
+            variante.precio || 0
+          )
+      )
+    );
+  };
+
+  // ============================================================
+  // FORMULARIO NUEVO SERVICIO
   // ============================================================
 
   const cambiarCampo = (e) => {
@@ -116,11 +185,73 @@ function Servicios() {
     );
   };
 
+  const agregarVarianteNueva = () => {
+    setFormulario(
+      (anterior) => ({
+        ...anterior,
+        variantes: [
+          ...anterior.variantes,
+          {
+            nombre: "",
+            precio: "",
+            orden:
+              anterior.variantes.length
+          }
+        ]
+      })
+    );
+  };
+
+  const cambiarVarianteNueva = (
+    indice,
+    campo,
+    valor
+  ) => {
+    setFormulario(
+      (anterior) => ({
+        ...anterior,
+        variantes:
+          anterior.variantes.map(
+            (variante, i) =>
+              i === indice
+                ? {
+                    ...variante,
+                    [campo]: valor
+                  }
+                : variante
+          )
+      })
+    );
+  };
+
+  const eliminarVarianteNueva = (
+    indice
+  ) => {
+    setFormulario(
+      (anterior) => ({
+        ...anterior,
+        variantes:
+          anterior.variantes
+            .filter(
+              (_, i) =>
+                i !== indice
+            )
+            .map(
+              (variante, i) => ({
+                ...variante,
+                orden: i
+              })
+            )
+      })
+    );
+  };
+
   const limpiarFormulario = () => {
     setFormulario({
       nombre: "",
       descripcion: "",
-      precio: ""
+      precio: "",
+      variantes: []
     });
   };
 
@@ -130,7 +261,7 @@ function Servicios() {
   };
 
   // ============================================================
-  // CREAR SERVICIO
+  // CREAR SERVICIO + VARIANTES
   // ============================================================
 
   const guardarServicio = async (
@@ -148,37 +279,115 @@ function Servicios() {
       return;
     }
 
-    const precio =
-      Number(formulario.precio);
-
-    if (
-      Number.isNaN(precio) ||
-      precio < 0
-    ) {
-      setError(
-        "El precio no es válido."
+    const variantesValidas =
+      formulario.variantes.filter(
+        (variante) =>
+          variante.nombre.trim()
       );
 
-      return;
+    for (
+      const variante of
+      variantesValidas
+    ) {
+      const precioVariante =
+        Number(variante.precio);
+
+      if (
+        Number.isNaN(
+          precioVariante
+        ) ||
+        precioVariante < 0
+      ) {
+        setError(
+          `El precio de la variante "${variante.nombre}" no es válido.`
+        );
+
+        return;
+      }
+    }
+
+    let precioServicio;
+
+    if (
+      variantesValidas.length > 0
+    ) {
+      precioServicio =
+        Math.min(
+          ...variantesValidas.map(
+            (variante) =>
+              Number(
+                variante.precio
+              )
+          )
+        );
+    } else {
+      precioServicio =
+        Number(formulario.precio);
+
+      if (
+        Number.isNaN(
+          precioServicio
+        ) ||
+        precioServicio < 0
+      ) {
+        setError(
+          "El precio del servicio no es válido."
+        );
+
+        return;
+      }
     }
 
     try {
       setGuardando(true);
       setError("");
 
-      await api.post(
-        "/Servicios",
-        {
-          nombre:
-            formulario.nombre,
+      const responseServicio =
+        await api.post(
+          "/Servicios",
+          {
+            nombre:
+              formulario.nombre,
 
-          descripcion:
-            formulario.descripcion ||
-            null,
+            descripcion:
+              formulario.descripcion ||
+              null,
 
-          precio
-        }
-      );
+            precio:
+              precioServicio
+          }
+        );
+
+      const servicioId =
+        responseServicio.data.id;
+
+      for (
+        let i = 0;
+        i <
+        variantesValidas.length;
+        i += 1
+      ) {
+        const variante =
+          variantesValidas[i];
+
+        await api.post(
+          `/Servicios/${servicioId}/variantes`,
+          {
+            nombre:
+              variante.nombre.trim(),
+
+            precio:
+              Number(
+                variante.precio
+              ),
+
+            orden:
+              Number(
+                variante.orden ?? i
+              )
+          }
+        );
+      }
 
       cerrarFormulario();
 
@@ -192,6 +401,217 @@ function Servicios() {
       setGuardando(false);
     }
   };
+
+  // ============================================================
+  // ADMINISTRAR VARIANTES
+  // ============================================================
+
+  const abrirVariantes = (
+    servicio
+  ) => {
+    setServicioVariantes(
+      servicio
+    );
+
+    setVariantesEdicion(
+      (servicio.variantes || [])
+        .map(
+          (variante) => ({
+            id:
+              variante.id,
+
+            nombre:
+              variante.nombre,
+
+            precio:
+              variante.precio
+                ?.toString() ??
+              "",
+
+            orden:
+              variante.orden ?? 0,
+
+            activo:
+              variante.activo,
+
+            esNueva:
+              false
+          })
+        )
+    );
+
+    setMostrarVariantes(true);
+    setError("");
+  };
+
+  const cerrarVariantes = () => {
+    setMostrarVariantes(false);
+    setServicioVariantes(null);
+    setVariantesEdicion([]);
+  };
+
+  const agregarVarianteEdicion = () => {
+    setVariantesEdicion(
+      (anterior) => [
+        ...anterior,
+        {
+          id: null,
+          nombre: "",
+          precio: "",
+          orden:
+            anterior.length,
+          activo: true,
+          esNueva: true
+        }
+      ]
+    );
+  };
+
+  const cambiarVarianteEdicion = (
+    indice,
+    campo,
+    valor
+  ) => {
+    setVariantesEdicion(
+      (anterior) =>
+        anterior.map(
+          (variante, i) =>
+            i === indice
+              ? {
+                  ...variante,
+                  [campo]: valor
+                }
+              : variante
+        )
+    );
+  };
+
+  const quitarVarianteNuevaEdicion =
+    (indice) => {
+      setVariantesEdicion(
+        (anterior) =>
+          anterior.filter(
+            (_, i) =>
+              i !== indice
+          )
+      );
+    };
+
+  const guardarCambiosVariantes =
+    async (e) => {
+      e.preventDefault();
+
+      if (!servicioVariantes) {
+        return;
+      }
+
+      for (
+        const variante of
+        variantesEdicion
+      ) {
+        if (
+          !variante.nombre.trim()
+        ) {
+          setError(
+            "Todas las variantes deben tener nombre."
+          );
+
+          return;
+        }
+
+        const precio =
+          Number(variante.precio);
+
+        if (
+          Number.isNaN(precio) ||
+          precio < 0
+        ) {
+          setError(
+            `El precio de "${variante.nombre}" no es válido.`
+          );
+
+          return;
+        }
+      }
+
+      try {
+        setGuardandoVariantes(
+          true
+        );
+
+        setError("");
+
+        for (
+          let i = 0;
+          i <
+          variantesEdicion.length;
+          i += 1
+        ) {
+          const variante =
+            variantesEdicion[i];
+
+          if (
+            variante.esNueva
+          ) {
+            await api.post(
+              `/Servicios/${servicioVariantes.id}/variantes`,
+              {
+                nombre:
+                  variante.nombre.trim(),
+
+                precio:
+                  Number(
+                    variante.precio
+                  ),
+
+                orden:
+                  Number(
+                    variante.orden ??
+                    i
+                  )
+              }
+            );
+          } else {
+            await api.put(
+              `/Servicios/${servicioVariantes.id}/variantes/${variante.id}`,
+              {
+                nombre:
+                  variante.nombre.trim(),
+
+                precio:
+                  Number(
+                    variante.precio
+                  ),
+
+                orden:
+                  Number(
+                    variante.orden ??
+                    i
+                  ),
+
+                activo:
+                  Boolean(
+                    variante.activo
+                  )
+              }
+            );
+          }
+        }
+
+        cerrarVariantes();
+
+        await cargarServicios();
+      } catch (error) {
+        setError(
+          error.response?.data?.mensaje ||
+          "No fue posible guardar las variantes."
+        );
+      } finally {
+        setGuardandoVariantes(
+          false
+        );
+      }
+    };
 
   // ============================================================
   // RENDER
@@ -304,55 +724,120 @@ function Servicios() {
           <div className="service-grid">
 
             {serviciosFiltrados.map(
-              (servicio) => (
+              (servicio) => {
+                const activas =
+                  variantesActivas(
+                    servicio
+                  );
 
-                <div
-                  className="service-card"
-                  key={servicio.id}
-                >
+                return (
+                  <div
+                    className="service-card"
+                    key={
+                      servicio.id
+                    }
+                  >
 
-                  <div className="service-card-top">
+                    <div className="service-card-top">
 
-                    <div className="service-icon">
-                      <FaClock />
+                      <div className="service-icon">
+                        <FaClock />
+                      </div>
+
+                      <span
+                        className={
+                          servicio.activo
+                            ? "service-status active"
+                            : "service-status"
+                        }
+                      >
+                        {servicio.activo
+                          ? "Activo"
+                          : "Inactivo"}
+                      </span>
+
                     </div>
 
-                    <span
-                      className={
-                        servicio.activo
-                          ? "service-status active"
-                          : "service-status"
+                    <h5>
+                      {servicio.nombre}
+                    </h5>
+
+                    <p className="service-description">
+                      {servicio.descripcion ||
+                        "Sin descripción"}
+                    </p>
+
+                    {activas.length > 0 && (
+                      <div className="mb-3">
+
+                        <div className="small text-muted mb-2">
+                          Variantes
+                        </div>
+
+                        <div className="d-flex flex-column gap-2">
+
+                          {activas.map(
+                            (variante) => (
+
+                              <div
+                                key={
+                                  variante.id
+                                }
+                                className="d-flex justify-content-between align-items-center border rounded px-3 py-2"
+                              >
+                                <span>
+                                  {variante.nombre}
+                                </span>
+
+                                <strong className="ms-3">
+                                  {formatearMoneda(
+                                    variante.precio
+                                  )}
+                                </strong>
+                              </div>
+
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    <div className="service-footer">
+
+                      <strong>
+                        {activas.length > 0
+                          ? `Desde ${formatearMoneda(
+                              obtenerPrecioDesde(
+                                servicio
+                              )
+                            )}`
+                          : formatearMoneda(
+                              servicio.precio
+                            )}
+                      </strong>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-light w-100 mt-3"
+                      onClick={() =>
+                        abrirVariantes(
+                          servicio
+                        )
                       }
                     >
-                      {servicio.activo
-                        ? "Activo"
-                        : "Inactivo"}
-                    </span>
+                      {servicio.variantes
+                        ?.length > 0
+                        ? "Administrar variantes"
+                        : "Agregar variantes"}
+                    </button>
 
                   </div>
-
-                  <h5>
-                    {servicio.nombre}
-                  </h5>
-
-                  <p className="service-description">
-                    {servicio.descripcion ||
-                      "Sin descripción"}
-                  </p>
-
-                  <div className="service-footer">
-
-                    <strong>
-                      {formatearMoneda(
-                        servicio.precio
-                      )}
-                    </strong>
-
-                  </div>
-
-                </div>
-
-              )
+                );
+              }
             )}
 
           </div>
@@ -362,14 +847,14 @@ function Servicios() {
       </div>
 
       {/* ============================================================
-          MODAL
+          MODAL NUEVO SERVICIO
           ============================================================ */}
 
       {mostrarFormulario && (
 
         <div className="custom-modal-backdrop">
 
-          <div className="custom-modal">
+          <div className="custom-modal custom-modal-large">
 
             <div className="custom-modal-header">
 
@@ -380,13 +865,14 @@ function Servicios() {
                 </h4>
 
                 <p className="text-muted mb-0">
-                  Agrega un servicio
-                  al catálogo.
+                  Puedes crear un precio
+                  único o agregar variantes.
                 </p>
 
               </div>
 
               <button
+                type="button"
                 className="modal-close"
                 onClick={
                   cerrarFormulario
@@ -406,8 +892,6 @@ function Servicios() {
               <div className="custom-modal-body">
 
                 <div className="row g-3">
-
-                  {/* NOMBRE */}
 
                   <div className="col-12">
 
@@ -431,8 +915,6 @@ function Servicios() {
 
                   </div>
 
-                  {/* DESCRIPCIÓN */}
-
                   <div className="col-12">
 
                     <label className="form-label">
@@ -455,29 +937,191 @@ function Servicios() {
 
                   </div>
 
-                  {/* PRECIO */}
+                  {formulario.variantes
+                    .length === 0 && (
+                    <div className="col-12">
+
+                      <label className="form-label">
+                        Precio *
+                      </label>
+
+                      <input
+                        type="number"
+                        name="precio"
+                        className="form-control"
+                        value={
+                          formulario.precio
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                        min="0"
+                        step="1"
+                        placeholder="15000"
+                        required
+                      />
+
+                      <div className="form-text">
+                        Si agregas variantes,
+                        el precio base se
+                        calculará automáticamente
+                        usando la variante más
+                        económica.
+                      </div>
+
+                    </div>
+                  )}
 
                   <div className="col-12">
 
-                    <label className="form-label">
-                      Precio *
-                    </label>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
 
-                    <input
-                      type="number"
-                      name="precio"
-                      className="form-control"
-                      value={
-                        formulario.precio
-                      }
-                      onChange={
-                        cambiarCampo
-                      }
-                      min="0"
-                      step="1"
-                      placeholder="15000"
-                      required
-                    />
+                      <div>
+                        <label className="form-label mb-0">
+                          Variantes
+                        </label>
+
+                        <div className="form-text mt-0">
+                          Opcional. Por ejemplo:
+                          Corto, Medio y Largo.
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={
+                          agregarVarianteNueva
+                        }
+                      >
+                        <FaPlus className="me-1" />
+                        Agregar variante
+                      </button>
+
+                    </div>
+
+                    {formulario.variantes
+                      .length > 0 && (
+                      <div className="d-flex flex-column gap-3">
+
+                        {formulario.variantes.map(
+                          (
+                            variante,
+                            indice
+                          ) => (
+
+                            <div
+                              className="border rounded p-3"
+                              key={
+                                indice
+                              }
+                            >
+
+                              <div className="row g-2 align-items-end">
+
+                                <div className="col-md-5">
+
+                                  <label className="form-label">
+                                    Nombre
+                                  </label>
+
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    value={
+                                      variante.nombre
+                                    }
+                                    onChange={(e) =>
+                                      cambiarVarianteNueva(
+                                        indice,
+                                        "nombre",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Ej. Cabello corto"
+                                    required
+                                  />
+
+                                </div>
+
+                                <div className="col-md-4">
+
+                                  <label className="form-label">
+                                    Precio
+                                  </label>
+
+                                  <input
+                                    type="number"
+                                    className="form-control"
+                                    value={
+                                      variante.precio
+                                    }
+                                    onChange={(e) =>
+                                      cambiarVarianteNueva(
+                                        indice,
+                                        "precio",
+                                        e.target.value
+                                      )
+                                    }
+                                    min="0"
+                                    step="1"
+                                    placeholder="48000"
+                                    required
+                                  />
+
+                                </div>
+
+                                <div className="col-md-2">
+
+                                  <label className="form-label">
+                                    Orden
+                                  </label>
+
+                                  <input
+                                    type="number"
+                                    className="form-control"
+                                    value={
+                                      variante.orden
+                                    }
+                                    onChange={(e) =>
+                                      cambiarVarianteNueva(
+                                        indice,
+                                        "orden",
+                                        e.target.value
+                                      )
+                                    }
+                                    min="0"
+                                    step="1"
+                                  />
+
+                                </div>
+
+                                <div className="col-md-1">
+
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-danger w-100"
+                                    onClick={() =>
+                                      eliminarVarianteNueva(
+                                        indice
+                                      )
+                                    }
+                                    title="Quitar variante"
+                                  >
+                                    <FaTrash />
+                                  </button>
+
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                          )
+                        )}
+
+                      </div>
+                    )}
 
                   </div>
 
@@ -507,6 +1151,305 @@ function Servicios() {
                   {guardando
                     ? "Guardando..."
                     : "Guardar servicio"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* ============================================================
+          MODAL ADMINISTRAR VARIANTES
+          ============================================================ */}
+
+      {mostrarVariantes &&
+        servicioVariantes && (
+
+        <div className="custom-modal-backdrop">
+
+          <div className="custom-modal custom-modal-large">
+
+            <div className="custom-modal-header">
+
+              <div>
+
+                <h4>
+                  Variantes de{" "}
+                  {servicioVariantes.nombre}
+                </h4>
+
+                <p className="text-muted mb-0">
+                  Administra nombres,
+                  precios, orden y estado.
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                className="modal-close"
+                onClick={
+                  cerrarVariantes
+                }
+              >
+                <FaTimes />
+              </button>
+
+            </div>
+
+            <form
+              onSubmit={
+                guardarCambiosVariantes
+              }
+            >
+
+              <div className="custom-modal-body">
+
+                <div className="d-flex justify-content-between align-items-center mb-3">
+
+                  <div className="text-muted">
+                    {
+                      variantesEdicion
+                        .length
+                    }{" "}
+                    variante
+                    {
+                      variantesEdicion
+                        .length !== 1
+                        ? "s"
+                        : ""
+                    }
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={
+                      agregarVarianteEdicion
+                    }
+                  >
+                    <FaPlus className="me-1" />
+                    Nueva variante
+                  </button>
+
+                </div>
+
+                {variantesEdicion
+                  .length === 0 ? (
+
+                  <div className="empty-state">
+
+                    <FaClock size={30} />
+
+                    <h5 className="mt-3">
+                      Sin variantes
+                    </h5>
+
+                    <p>
+                      Este servicio utiliza
+                      actualmente un precio
+                      único.
+                    </p>
+
+                  </div>
+
+                ) : (
+
+                  <div className="d-flex flex-column gap-3">
+
+                    {variantesEdicion.map(
+                      (
+                        variante,
+                        indice
+                      ) => (
+
+                        <div
+                          key={
+                            variante.id ??
+                            `nueva-${indice}`
+                          }
+                          className="border rounded p-3"
+                        >
+
+                          <div className="row g-2 align-items-end">
+
+                            <div className="col-md-4">
+
+                              <label className="form-label">
+                                Nombre
+                              </label>
+
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={
+                                  variante.nombre
+                                }
+                                onChange={(e) =>
+                                  cambiarVarianteEdicion(
+                                    indice,
+                                    "nombre",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+
+                            </div>
+
+                            <div className="col-md-3">
+
+                              <label className="form-label">
+                                Precio
+                              </label>
+
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={
+                                  variante.precio
+                                }
+                                onChange={(e) =>
+                                  cambiarVarianteEdicion(
+                                    indice,
+                                    "precio",
+                                    e.target.value
+                                  )
+                                }
+                                min="0"
+                                step="1"
+                                required
+                              />
+
+                            </div>
+
+                            <div className="col-md-2">
+
+                              <label className="form-label">
+                                Orden
+                              </label>
+
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={
+                                  variante.orden
+                                }
+                                onChange={(e) =>
+                                  cambiarVarianteEdicion(
+                                    indice,
+                                    "orden",
+                                    e.target.value
+                                  )
+                                }
+                                min="0"
+                                step="1"
+                              />
+
+                            </div>
+
+                            <div className="col-md-2">
+
+                              {variante.esNueva ? (
+
+                                <span className="badge text-bg-info w-100 py-2">
+                                  Nueva
+                                </span>
+
+                              ) : (
+
+                                <div className="form-check form-switch pt-2">
+
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={
+                                      variante.activo
+                                    }
+                                    onChange={(e) =>
+                                      cambiarVarianteEdicion(
+                                        indice,
+                                        "activo",
+                                        e.target.checked
+                                      )
+                                    }
+                                    id={`variante-activa-${variante.id}`}
+                                  />
+
+                                  <label
+                                    className="form-check-label"
+                                    htmlFor={`variante-activa-${variante.id}`}
+                                  >
+                                    {variante.activo
+                                      ? "Activa"
+                                      : "Inactiva"}
+                                  </label>
+
+                                </div>
+
+                              )}
+
+                            </div>
+
+                            <div className="col-md-1">
+
+                              {variante.esNueva && (
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-danger w-100"
+                                  onClick={() =>
+                                    quitarVarianteNuevaEdicion(
+                                      indice
+                                    )
+                                  }
+                                  title="Quitar variante"
+                                >
+                                  <FaTrash />
+                                </button>
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                      )
+                    )}
+
+                  </div>
+
+                )}
+
+              </div>
+
+              <div className="custom-modal-footer">
+
+                <button
+                  type="button"
+                  className="btn btn-light"
+                  onClick={
+                    cerrarVariantes
+                  }
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={
+                    guardandoVariantes
+                  }
+                >
+                  {guardandoVariantes
+                    ? "Guardando..."
+                    : "Guardar cambios"}
                 </button>
 
               </div>

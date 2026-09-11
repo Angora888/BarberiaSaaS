@@ -8,6 +8,8 @@
 
         public int ServicioId { get; set; }
 
+        public int? ServicioVarianteId { get; set; }
+
         public int SucursalId { get; set; }
 
         public DateTime FechaInicio { get; set; }

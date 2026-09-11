@@ -114,6 +114,16 @@ namespace BarberiaSaaS.Api.Controllers
                             x.Servicio.Nombre
                         },
 
+                        ServicioVariante =
+                            x.ServicioVariante == null
+                                ? null
+                                : new
+                                {
+                                    x.ServicioVariante.Id,
+                                    x.ServicioVariante.Nombre,
+                                    x.ServicioVariante.Precio
+                                },
+
                         Sucursal = new
                         {
                             x.Sucursal.Id,
@@ -172,6 +182,16 @@ namespace BarberiaSaaS.Api.Controllers
                             x.Servicio.Id,
                             x.Servicio.Nombre
                         },
+
+                        ServicioVariante =
+                            x.ServicioVariante == null
+                                ? null
+                                : new
+                                {
+                                    x.ServicioVariante.Id,
+                                    x.ServicioVariante.Nombre,
+                                    x.ServicioVariante.Precio
+                                },
 
                         Sucursal = new
                         {
@@ -315,6 +335,63 @@ namespace BarberiaSaaS.Api.Controllers
             }
 
             // ========================================================
+            // VARIANTE Y PRECIO
+            // ========================================================
+
+            var tieneVariantesActivas =
+                await _context.ServicioVariantes
+                    .AnyAsync(x =>
+                        x.TenantId == tenantId &&
+                        x.ServicioId == servicio.Id &&
+                        x.Activo);
+
+            ServicioVariante? variante = null;
+
+            if (tieneVariantesActivas)
+            {
+                if (!request.ServicioVarianteId.HasValue)
+                {
+                    return BadRequest(new
+                    {
+                        mensaje =
+                            "Selecciona una variante para este servicio."
+                    });
+                }
+
+                variante =
+                    await _context.ServicioVariantes
+                        .FirstOrDefaultAsync(x =>
+                            x.Id ==
+                                request.ServicioVarianteId.Value &&
+                            x.TenantId ==
+                                tenantId &&
+                            x.ServicioId ==
+                                servicio.Id &&
+                            x.Activo);
+
+                if (variante == null)
+                {
+                    return BadRequest(new
+                    {
+                        mensaje =
+                            "La variante seleccionada no es válida para este servicio."
+                    });
+                }
+            }
+            else if (request.ServicioVarianteId.HasValue)
+            {
+                return BadRequest(new
+                {
+                    mensaje =
+                        "El servicio seleccionado no utiliza variantes."
+                });
+            }
+
+            var precioCita =
+                variante?.Precio ??
+                servicio.Precio;
+
+            // ========================================================
             // HORA LOCAL DEL NEGOCIO
             // ========================================================
 
@@ -365,7 +442,8 @@ namespace BarberiaSaaS.Api.Controllers
             var cita =
                 new Cita
                 {
-                    TenantId = tenantId,
+                    TenantId =
+                        tenantId,
 
                     SucursalId =
                         sucursal.Id,
@@ -379,6 +457,9 @@ namespace BarberiaSaaS.Api.Controllers
                     ServicioId =
                         servicio.Id,
 
+                    ServicioVarianteId =
+                        variante?.Id,
+
                     FechaInicio =
                         fechaInicioUtc,
 
@@ -389,7 +470,7 @@ namespace BarberiaSaaS.Api.Controllers
                         fechaFinUtc,
 
                     Precio =
-                        servicio.Precio,
+                        precioCita,
 
                     Estado =
                         EstadosCita.Pendiente,
@@ -411,6 +492,13 @@ namespace BarberiaSaaS.Api.Controllers
                     "Cita creada correctamente.",
 
                 cita.Id,
+
+                cita.ServicioId,
+
+                cita.ServicioVarianteId,
+
+                variante =
+                    variante?.Nombre,
 
                 cita.DuracionMinutos,
 

@@ -14,6 +14,8 @@
 
         public int ServicioId { get; set; }
 
+        public int? ServicioVarianteId { get; set; }
+
         public DateTime FechaInicio { get; set; }
 
         public int DuracionMinutos { get; set; }
@@ -22,13 +24,16 @@
 
         public decimal Precio { get; set; }
 
-        public string Estado { get; set; } = EstadosCita.Pendiente;
+        public string Estado { get; set; } =
+            EstadosCita.Pendiente;
 
         public string? Notas { get; set; }
 
-        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public DateTime FechaCreacion { get; set; } =
+            DateTime.UtcNow;
 
         // Relaciones
+
         public Tenant Tenant { get; set; } = null!;
 
         public Sucursal Sucursal { get; set; } = null!;
@@ -38,5 +43,7 @@
         public Profesional Profesional { get; set; } = null!;
 
         public Servicio Servicio { get; set; } = null!;
+
+        public ServicioVariante? ServicioVariante { get; set; }
     }
 }

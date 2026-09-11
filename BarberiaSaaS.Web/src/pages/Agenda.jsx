@@ -100,6 +100,7 @@ function Agenda() {
     useState({
       clienteId: "",
       servicioId: "",
+      servicioVarianteId: "",
       profesionalId: "",
       sucursalId: "",
       fecha: obtenerFechaHoy(),
@@ -245,6 +246,84 @@ function Agenda() {
     ]);
 
   // ============================================================
+  // VARIANTE DEL SERVICIO
+  // ============================================================
+
+  const variantesServicioSeleccionado =
+    useMemo(() => {
+      if (!servicioSeleccionado) {
+        return [];
+      }
+
+      return (servicioSeleccionado.variantes || [])
+        .filter(
+          (variante) =>
+            variante.activo !== false
+        )
+        .sort((a, b) => {
+          const ordenA =
+            Number(a.orden) || 0;
+
+          const ordenB =
+            Number(b.orden) || 0;
+
+          if (ordenA !== ordenB) {
+            return ordenA - ordenB;
+          }
+
+          return (a.nombre || "")
+            .localeCompare(
+              b.nombre || "",
+              "es"
+            );
+        });
+    }, [servicioSeleccionado]);
+
+  const servicioTieneVariantes =
+    variantesServicioSeleccionado.length > 0;
+
+  const varianteSeleccionada =
+    useMemo(() => {
+      return variantesServicioSeleccionado.find(
+        (variante) =>
+          variante.id ===
+          Number(
+            formulario.servicioVarianteId
+          )
+      );
+    }, [
+      variantesServicioSeleccionado,
+      formulario.servicioVarianteId
+    ]);
+
+  const obtenerPrecioDesdeServicio =
+    (servicio) => {
+      const variantesActivas =
+        (servicio?.variantes || [])
+          .filter(
+            (variante) =>
+              variante.activo !== false
+          );
+
+      if (
+        variantesActivas.length === 0
+      ) {
+        return Number(
+          servicio?.precio || 0
+        );
+      }
+
+      return Math.min(
+        ...variantesActivas.map(
+          (variante) =>
+            Number(
+              variante.precio || 0
+            )
+        )
+      );
+    };
+
+  // ============================================================
   // DURACIÓN DE LA CITA
   // ============================================================
 
@@ -344,6 +423,7 @@ function Agenda() {
           return {
             ...anterior,
             servicioId: value,
+            servicioVarianteId: "",
             profesionalId:
               profesionalCompatible
                 ? anterior.profesionalId
@@ -361,9 +441,10 @@ function Agenda() {
       return;
     }
 
-    // Si cambia profesional, fecha o duración,
+    // Si cambia variante, profesional, fecha o duración,
     // hay que consultar nuevamente.
     if (
+      name === "servicioVarianteId" ||
       name === "profesionalId" ||
       name === "fecha" ||
       name === "duracionHoras" ||
@@ -402,6 +483,17 @@ function Agenda() {
       ) {
         setErrorModal(
           "Selecciona un servicio."
+        );
+
+        return;
+      }
+
+      if (
+        servicioTieneVariantes &&
+        !formulario.servicioVarianteId
+      ) {
+        setErrorModal(
+          "Selecciona una variante del servicio."
         );
 
         return;
@@ -627,6 +719,17 @@ function Agenda() {
     }
 
     if (
+      servicioTieneVariantes &&
+      !formulario.servicioVarianteId
+    ) {
+      setErrorModal(
+        "Selecciona una variante del servicio."
+      );
+
+      return;
+    }
+
+    if (
       !formulario.profesionalId
     ) {
       setErrorModal(
@@ -698,6 +801,13 @@ function Agenda() {
               formulario.servicioId
             ),
 
+          servicioVarianteId:
+            formulario.servicioVarianteId
+              ? Number(
+                  formulario.servicioVarianteId
+                )
+              : null,
+
           sucursalId:
             Number(
               formulario.sucursalId
@@ -767,6 +877,7 @@ function Agenda() {
     setFormulario({
       clienteId: "",
       servicioId: "",
+      servicioVarianteId: "",
       profesionalId: "",
 
       sucursalId:
@@ -805,6 +916,7 @@ function Agenda() {
     setFormulario({
       clienteId: "",
       servicioId: "",
+      servicioVarianteId: "",
       profesionalId:
         profesionalFiltro !== "todos"
           ? profesionalFiltro
@@ -846,6 +958,7 @@ function Agenda() {
     setFormulario({
       clienteId: "",
       servicioId: "",
+      servicioVarianteId: "",
       profesionalId:
         profesional.id.toString(),
       sucursalId,
@@ -1148,6 +1261,7 @@ function Agenda() {
     setFormulario({
       clienteId: "",
       servicioId: "",
+      servicioVarianteId: "",
       profesionalId: "",
 
       sucursalId:
@@ -1531,19 +1645,20 @@ function Agenda() {
 
   const obtenerNombreServicio =
     (cita) => {
-      if (
-        cita.servicio?.nombre
-      ) {
-        return cita.servicio.nombre;
-      }
+      const nombreServicio =
+        cita.servicio?.nombre ||
+        cita.servicioNombre ||
+        "Servicio";
 
-      if (
-        cita.servicioNombre
-      ) {
-        return cita.servicioNombre;
-      }
+      const nombreVariante =
+        cita.servicioVariante?.nombre ||
+        cita.variante?.nombre ||
+        cita.servicioVarianteNombre ||
+        "";
 
-      return "Servicio";
+      return nombreVariante
+        ? `${nombreServicio} · ${nombreVariante}`
+        : nombreServicio;
     };
 
   const obtenerClaseEstado =
@@ -2866,9 +2981,19 @@ function Agenda() {
                               }
                             >
                               {servicio.nombre}
-                              {" - "}
+                              {
+                                (servicio.variantes || [])
+                                  .some(
+                                    (variante) =>
+                                      variante.activo !== false
+                                  )
+                                  ? " — Desde "
+                                  : " — "
+                              }
                               {formatearMoneda(
-                                servicio.precio
+                                obtenerPrecioDesdeServicio(
+                                  servicio
+                                )
                               )}
                             </option>
 
@@ -2878,6 +3003,64 @@ function Agenda() {
                     </select>
 
                   </div>
+
+                  {servicioTieneVariantes && (
+
+                    <div className="col-md-6">
+
+                      <label className="form-label">
+                        Variante *
+                      </label>
+
+                      <select
+                        name="servicioVarianteId"
+                        className="form-select"
+                        value={
+                          formulario.servicioVarianteId
+                        }
+                        onChange={
+                          cambiarCampo
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecciona una variante
+                        </option>
+
+                        {variantesServicioSeleccionado.map(
+                          (variante) => (
+
+                            <option
+                              key={variante.id}
+                              value={variante.id}
+                            >
+                              {variante.nombre} —{" "}
+                              {formatearMoneda(
+                                variante.precio
+                              )}
+                            </option>
+
+                          )
+                        )}
+
+                      </select>
+
+                      {varianteSeleccionada && (
+
+                        <div className="form-text">
+                          Precio:{" "}
+                          <strong>
+                            {formatearMoneda(
+                              varianteSeleccionada.precio
+                            )}
+                          </strong>
+                        </div>
+
+                      )}
+
+                    </div>
+
+                  )}
 
                   {/* PROFESIONAL */}
 
@@ -3087,7 +3270,9 @@ function Agenda() {
 
                           <strong>
                             {formatearMoneda(
-                              servicioSeleccionado.precio
+                              varianteSeleccionada
+                                ? varianteSeleccionada.precio
+                                : servicioSeleccionado.precio
                             )}
                           </strong>
 
@@ -3917,8 +4102,7 @@ function obtenerDuracionCita(
 ) {
   const duracionCita =
     Number(
-      cita.duracionMinutos ||
-      cita.servicio?.duracionMinutos
+      cita.duracionMinutos
     );
 
   if (
