@@ -1,0 +1,67 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - barberiaSaaS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Restore dependencies
+        run: dotnet restore BarberiaSaaS.Api/BarberiaSaaS.csproj
+
+      - name: Build API
+        run: dotnet build BarberiaSaaS.Api/BarberiaSaaS.csproj --configuration Release --no-restore
+
+      - name: Publish API
+        run: dotnet publish BarberiaSaaS.Api/BarberiaSaaS.csproj --configuration Release --no-build --output ./publish
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ./publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+          path: ./publish
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55FED37B93674B3DB9E56C92A847D44B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4F5CC7E480414E8EA46D30DBE2803B0E }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ED6EE27222254B5F81C05319C2B115C0 }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "barberiaSaaS"
+          slot-name: "Production"
+          package: ./publish
