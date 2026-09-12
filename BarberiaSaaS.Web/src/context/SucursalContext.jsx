@@ -56,7 +56,11 @@ export function SucursalProvider({
             Number(sucursalId)
         )
       ) {
-        seleccionarSucursal("");
+        localStorage.removeItem(
+          STORAGE_KEY
+        );
+
+        setSucursalId("");
       }
     } catch (error) {
       setErrorSucursales(
@@ -80,6 +84,10 @@ export function SucursalProvider({
         ? String(nuevoSucursalId)
         : "";
 
+    if (valor === sucursalId) {
+      return;
+    }
+
     setSucursalId(valor);
 
     if (valor) {
@@ -92,6 +100,10 @@ export function SucursalProvider({
         STORAGE_KEY
       );
     }
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 0);
   };
 
   const sucursalSeleccionada =
