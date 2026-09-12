@@ -10,6 +10,7 @@ import Clientes from "./pages/Clientes";
 import Servicios from "./pages/Servicios";
 import Profesionales from "./pages/Profesionales";
 import Agenda from "./pages/Agenda";
+import Productos from "./pages/Productos";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -90,6 +91,11 @@ function App() {
         <Route
           path="/agenda"
           element={<Agenda />}
+        />
+
+        <Route
+          path="/productos"
+          element={<Productos />}
         />
 
       </Route>
