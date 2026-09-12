@@ -1505,11 +1505,8 @@ function Agenda() {
         `📅 Fecha: ${capitalizar(fecha)}`,
         `🕐 Hora: ${hora}`,
         `✨ Servicio: ${servicio}`,
-        `👩‍💼 Profesional: ${profesional}`,
-        `📍 ${sucursal}`,
-        `💰 Precio: ${formatearMoneda(cita.precio)}`,
         "",
-        "¡Te esperamos! 💕"
+        "Cualquier cambio me avisas!.¡Te esperamos! 💕"
       ].join("\n");
     }
 
@@ -1521,10 +1518,8 @@ function Agenda() {
       `📅 Fecha: ${capitalizar(fecha)}`,
       `🕐 Hora: ${hora}`,
       `✨ Servicio: ${servicio}`,
-      `👩‍💼 Profesional: ${profesional}`,
-      `📍 ${sucursal}`,
       "",
-      "¡Te esperamos! 💕"
+      "Cualquier cambio me avisas!.¡Te esperamos! 💕"
     ].join("\n");
   };
 
