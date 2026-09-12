@@ -162,9 +162,15 @@ function Dashboard() {
   const ingresosServicios = Number(resumenFinanciero?.servicios?.ingresos || 0);
   const ingresosProductos = Number(resumenFinanciero?.productos?.ingresos || 0);
   const cantidadVentasProductos = Number(resumenFinanciero?.productos?.cantidadVentas || 0);
+  const cantidadCobros = Number(resumenFinanciero?.caja?.cantidadCobros || 0);
+  const cantidadCobrosServicios = Number(resumenFinanciero?.servicios?.cantidadCobros || 0);
+  const cantidadCobrosProductos = Number(resumenFinanciero?.productos?.cantidadCobros || 0);
   const utilidadBrutaProductos = Number(resumenFinanciero?.productos?.utilidadBruta || 0);
   const descuentosProductos = Number(resumenFinanciero?.productos?.descuentos || 0);
-  const ventasPorMetodoPago = resumenFinanciero?.ventasPorMetodoPago || [];
+  const cobrosPorMetodoPago =
+    resumenFinanciero?.cobrosPorMetodoPago ||
+    resumenFinanciero?.ventasPorMetodoPago ||
+    [];
 
   if (cargando) {
     return (
@@ -193,12 +199,18 @@ function Dashboard() {
         <div className="alert alert-danger mb-4">{error}</div>
       )}
 
+      <div className="alert alert-light border mb-4">
+        <strong>Caja real:</strong>{" "}
+        los ingresos muestran únicamente dinero recibido hoy.
+        Los abonos de cuentas pendientes cuentan en la fecha en que se pagan.
+      </div>
+
       <div className="row g-4">
         <div className="col-md-6 col-xl-3">
           <DashboardMoneyCard
-            label="Ingresos de hoy"
+            label="Ingresos recibidos hoy"
             valor={ingresosTotales}
-            detalle={`${citasCompletadas} cita(s) + ${cantidadVentasProductos} venta(s)`}
+            detalle={`${cantidadCobros} cobro(s) recibido(s)`}
             icono={<FaMoneyBillWave size={28} className="text-primary" />}
             formatearMoneda={formatearMoneda}
             moneda={moneda}
@@ -207,9 +219,9 @@ function Dashboard() {
 
         <div className="col-md-6 col-xl-3">
           <DashboardMoneyCard
-            label="Servicios"
+            label="Servicios cobrados"
             valor={ingresosServicios}
-            detalle={`${resumenFinanciero?.servicios?.cantidadCitas || 0} cita(s) completada(s)`}
+            detalle={`${cantidadCobrosServicios} cobro(s) de servicios`}
             icono={<FaCheckCircle size={28} className="text-primary" />}
             formatearMoneda={formatearMoneda}
             moneda={moneda}
@@ -218,9 +230,9 @@ function Dashboard() {
 
         <div className="col-md-6 col-xl-3">
           <DashboardMoneyCard
-            label="Productos"
+            label="Productos cobrados"
             valor={ingresosProductos}
-            detalle={`${cantidadVentasProductos} venta(s) de producto(s)`}
+            detalle={`${cantidadCobrosProductos} cobro(s) de productos`}
             icono={<FaShoppingBag size={28} className="text-primary" />}
             formatearMoneda={formatearMoneda}
             moneda={moneda}
@@ -277,7 +289,7 @@ function Dashboard() {
           <DashboardMoneyCard
             label="Utilidad bruta productos"
             valor={utilidadBrutaProductos}
-            detalle="Ventas menos costo de productos"
+            detalle="Venta facturada menos costo de productos"
             icono={<FaMoneyBillWave size={28} className="text-primary" />}
             formatearMoneda={formatearMoneda}
             moneda={moneda}
@@ -288,7 +300,7 @@ function Dashboard() {
           <DashboardMoneyCard
             label="Descuentos productos"
             valor={descuentosProductos}
-            detalle="Descuentos aplicados hoy"
+            detalle="Descuentos aplicados a ventas de hoy"
             icono={<FaShoppingBag size={28} className="text-primary" />}
             formatearMoneda={formatearMoneda}
             moneda={moneda}
@@ -395,7 +407,7 @@ function Dashboard() {
                       <th>Profesional</th>
                       <th className="text-center">Citas</th>
                       <th className="text-center">Completadas</th>
-                      <th className="text-end">Servicios</th>
+                      <th className="text-end">Facturado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -427,26 +439,28 @@ function Dashboard() {
           <div className="dashboard-card h-100">
             <div className="d-flex align-items-center justify-content-between mb-4">
               <div>
-                <div className="dashboard-label">Ventas de productos</div>
+                <div className="dashboard-label">Cobros recibidos</div>
                 <div className="fw-bold mt-1">Por método de pago</div>
               </div>
 
               <FaMoneyBillWave size={24} className="text-primary" />
             </div>
 
-            {ventasPorMetodoPago.length === 0 ? (
+            {cobrosPorMetodoPago.length === 0 ? (
               <div className="text-muted py-3 text-center">
-                No hay ventas de productos hoy.
+                No hay cobros registrados hoy.
               </div>
             ) : (
-              ventasPorMetodoPago.map((item) => (
+              cobrosPorMetodoPago.map((item) => (
                 <div
                   key={item.metodoPago}
                   className="d-flex align-items-center justify-content-between py-2 border-bottom"
                 >
                   <div>
                     <div className="fw-semibold">{item.metodoPago}</div>
-                    <small className="text-muted">{item.cantidadVentas} venta(s)</small>
+                    <small className="text-muted">
+                      {item.cantidadCobros ?? item.cantidadVentas ?? 0} cobro(s)
+                    </small>
                   </div>
 
                   <strong>
