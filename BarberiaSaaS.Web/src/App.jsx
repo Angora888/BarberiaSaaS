@@ -23,6 +23,10 @@ import {
   ConfiguracionProvider
 } from "./context/ConfiguracionContext";
 
+import {
+  SucursalProvider
+} from "./context/SucursalContext";
+
 function RutaProtegida({
   children
 }) {
@@ -64,7 +68,9 @@ function App() {
         element={
           <RutaProtegida>
             <ConfiguracionProvider>
-              <MainLayout />
+              <SucursalProvider>
+                <MainLayout />
+              </SucursalProvider>
             </ConfiguracionProvider>
           </RutaProtegida>
         }
