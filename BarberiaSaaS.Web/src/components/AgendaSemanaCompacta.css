@@ -1,0 +1,314 @@
+.compact-week-wrapper {
+  width: 100%;
+}
+
+.compact-week-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #faf8f9;
+  border-bottom: 1px solid var(--border);
+  color: #746c71;
+  font-size: 12px;
+}
+
+.compact-week-help small {
+  color: var(--text-muted);
+}
+
+.compact-week-calendar {
+  width: 100%;
+  overflow-x: hidden;
+  background: white;
+}
+
+.compact-week-header,
+.compact-week-body {
+  display: grid;
+  grid-template-columns:
+    64px
+    repeat(7, minmax(0, 1fr));
+}
+
+.compact-week-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+
+.compact-week-time-header {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #faf8f9;
+  color: #8c8589;
+  border-right: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.compact-week-day-header {
+  min-width: 0;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 7px 2px;
+  background: white;
+  color: #5e575b;
+  border: 0;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.compact-week-day-header:last-child {
+  border-right: 0;
+}
+
+.compact-week-day-header span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-week-day-header strong {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #393438;
+  font-size: 15px;
+}
+
+.compact-week-day-header.today {
+  background: rgba(198, 40, 100, 0.035);
+  color: var(--primary);
+}
+
+.compact-week-day-header.today strong {
+  background: var(--primary);
+  color: white;
+}
+
+.compact-week-time-column,
+.compact-week-day-column {
+  position: relative;
+  min-width: 0;
+}
+
+.compact-week-time-column {
+  background: #faf8f9;
+  border-right: 1px solid var(--border);
+}
+
+.compact-week-day-column {
+  background: white;
+  border-right: 1px solid var(--border);
+  cursor: crosshair;
+}
+
+.compact-week-day-column:last-child {
+  border-right: 0;
+}
+
+.compact-week-day-column.today {
+  background: rgba(198, 40, 100, 0.026);
+}
+
+.compact-week-day-column:hover {
+  background: rgba(198, 40, 100, 0.018);
+}
+
+.compact-week-time-label {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+  padding-right: 7px;
+  color: #857e82;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compact-week-hour-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #eee9eb;
+  pointer-events: none;
+}
+
+.compact-week-appointment {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 4px 5px;
+  overflow: hidden;
+  background: white;
+  color: #3f393d;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  text-align: left;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.045);
+  cursor: pointer;
+}
+
+.compact-week-appointment strong,
+.compact-week-appointment span {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-week-appointment strong {
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.compact-week-appointment span {
+  color: #6f686c;
+  font-size: 8px;
+  line-height: 1.1;
+}
+
+.compact-week-appointment.visual-pending {
+  border-left-color: #c99825;
+  background: #fffaf0;
+}
+
+.compact-week-appointment.visual-confirmed {
+  border-left-color: #4b78b6;
+  background: #f5f8fd;
+}
+
+.compact-week-appointment.visual-in-progress {
+  border-left-color: #795bb4;
+  background: #f8f5fd;
+}
+
+.compact-week-appointment.visual-completed {
+  border-left-color: #438b5c;
+  background: #f4faf6;
+}
+
+.compact-week-appointment.visual-cancelled {
+  opacity: 0.55;
+  border-left-color: #b45858;
+  text-decoration: line-through;
+}
+
+.compact-week-appointment.visual-absent {
+  opacity: 0.72;
+  border-left-color: #777;
+}
+
+.compact-week-empty-hint {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(198, 40, 100, 0.22);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .compact-week-help {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .compact-week-header,
+  .compact-week-body {
+    grid-template-columns:
+      45px
+      repeat(7, minmax(0, 1fr));
+  }
+
+  .compact-week-time-header {
+    min-height: 50px;
+    font-size: 8px;
+  }
+
+  .compact-week-day-header {
+    min-height: 50px;
+    padding: 5px 1px;
+  }
+
+  .compact-week-day-header span {
+    font-size: 8px;
+  }
+
+  .compact-week-day-header strong {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  .compact-week-time-label {
+    padding-right: 4px;
+    font-size: 7px;
+  }
+
+  .compact-week-appointment {
+    left: 1px;
+    right: 1px;
+    padding: 2px;
+    border-left-width: 2px;
+    border-radius: 4px;
+  }
+
+  .compact-week-appointment strong {
+    font-size: 7px;
+  }
+
+  .compact-week-appointment span {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .compact-week-header,
+  .compact-week-body {
+    grid-template-columns:
+      39px
+      repeat(7, minmax(0, 1fr));
+  }
+
+  .compact-week-help small {
+    display: none;
+  }
+
+  .compact-week-time-label {
+    white-space: normal;
+    line-height: 1;
+  }
+}
