@@ -18,6 +18,7 @@ import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
+import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -94,7 +95,12 @@ function App() {
 
         <Route
           path="/profesionales"
-          element={<Profesionales />}
+          element={
+            <>
+              <Profesionales />
+              <HorariosProfesionalEditor />
+            </>
+          }
         />
 
         <Route
