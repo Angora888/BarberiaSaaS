@@ -16,6 +16,7 @@ import Ventas from "./pages/Ventas";
 import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
+import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -97,7 +98,12 @@ function App() {
 
         <Route
           path="/agenda"
-          element={<Agenda />}
+          element={
+            <>
+              <Agenda />
+              <AgendaAvailabilityFeedback />
+            </>
+          }
         />
 
         <Route
