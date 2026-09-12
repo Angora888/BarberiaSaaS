@@ -155,6 +155,48 @@ function emitirEventoCitaCompletada(response) {
   );
 }
 
+function emitirEventoVentaRegistrada(response) {
+  const config = response?.config;
+
+  if (!config) {
+    return;
+  }
+
+  const metodo = String(
+    config.method || ""
+  ).toLowerCase();
+
+  if (metodo !== "post") {
+    return;
+  }
+
+  const ruta =
+    obtenerRuta(config);
+
+  if (ruta !== "/ventas") {
+    return;
+  }
+
+  const ventaId = Number(
+    response?.data?.id
+  );
+
+  if (!Number.isFinite(ventaId)) {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "barberiaSaaS:ventaRegistrada",
+      {
+        detail: {
+          ventaId
+        }
+      }
+    )
+  );
+}
+
 api.interceptors.request.use(
   (config) => {
     const token =
@@ -210,6 +252,10 @@ api.interceptors.response.use(
       obtenerSucursalSeleccionada();
 
     emitirEventoCitaCompletada(
+      response
+    );
+
+    emitirEventoVentaRegistrada(
       response
     );
 
