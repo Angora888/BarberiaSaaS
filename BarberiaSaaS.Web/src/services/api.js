@@ -96,6 +96,65 @@ function filtrarRespuestaPorSucursal(
   return response;
 }
 
+function emitirEventoCitaCompletada(response) {
+  const config = response?.config;
+
+  if (!config) {
+    return;
+  }
+
+  const metodo = String(
+    config.method || ""
+  ).toLowerCase();
+
+  if (metodo !== "put") {
+    return;
+  }
+
+  const ruta = obtenerRuta(config);
+  const match = ruta.match(
+    /^\/citas\/(\d+)\/estado$/
+  );
+
+  if (!match) {
+    return;
+  }
+
+  let data = config.data;
+
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      data = null;
+    }
+  }
+
+  if (
+    String(data?.estado || "") !==
+    "Completada"
+  ) {
+    return;
+  }
+
+  const citaId = Number(match[1]);
+
+  if (!Number.isFinite(citaId)) {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "barberiaSaaS:citaCompletada",
+      {
+        detail: {
+          citaId
+        }
+      }
+    )
+  );
+}
+
 api.interceptors.request.use(
   (config) => {
     const token =
@@ -149,6 +208,10 @@ api.interceptors.response.use(
   (response) => {
     const sucursalId =
       obtenerSucursalSeleccionada();
+
+    emitirEventoCitaCompletada(
+      response
+    );
 
     return filtrarRespuestaPorSucursal(
       response,
