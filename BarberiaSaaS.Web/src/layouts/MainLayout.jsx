@@ -13,6 +13,7 @@ import {
   FaCut,
   FaHome,
   FaSignOutAlt,
+  FaStore,
   FaUsers,
   FaUserTie
 } from "react-icons/fa";
@@ -162,6 +163,14 @@ function MainLayout() {
           >
             <FaChartBar />
             <span>Reportes</span>
+          </NavLink>
+
+          <NavLink
+            to="/sucursales"
+            className="sidebar-link"
+          >
+            <FaStore />
+            <span>Sucursales</span>
           </NavLink>
 
           <NavLink
