@@ -20,6 +20,7 @@ import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
+import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
 
@@ -130,7 +131,12 @@ function App() {
 
         <Route
           path="/ventas"
-          element={<Ventas />}
+          element={
+            <>
+              <Ventas />
+              <VentaCobroCompletada />
+            </>
+          }
         />
 
         <Route
