@@ -15,6 +15,7 @@ import Productos from "./pages/Productos";
 import Ventas from "./pages/Ventas";
 import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
+import Sucursales from "./pages/Sucursales";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -106,6 +107,11 @@ function App() {
         <Route
           path="/reportes"
           element={<Reportes />}
+        />
+
+        <Route
+          path="/sucursales"
+          element={<Sucursales />}
         />
 
         <Route
