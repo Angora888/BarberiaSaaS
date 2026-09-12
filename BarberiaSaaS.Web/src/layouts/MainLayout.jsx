@@ -11,6 +11,7 @@ import {
   FaChartBar,
   FaCog,
   FaCut,
+  FaFileInvoiceDollar,
   FaHome,
   FaSignOutAlt,
   FaStore,
@@ -174,6 +175,14 @@ function MainLayout() {
           >
             <FaCashRegister />
             <span>Ventas / Caja</span>
+          </NavLink>
+
+          <NavLink
+            to="/cuentas-por-cobrar"
+            className="sidebar-link"
+          >
+            <FaFileInvoiceDollar />
+            <span>Cuentas por cobrar</span>
           </NavLink>
 
           <NavLink
