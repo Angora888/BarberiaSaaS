@@ -7,6 +7,7 @@ import {
 import {
   FaBoxes,
   FaCalendarAlt,
+  FaCashRegister,
   FaCut,
   FaHome,
   FaSignOutAlt,
@@ -143,6 +144,14 @@ function MainLayout() {
           >
             <FaBoxes />
             <span>Productos</span>
+          </NavLink>
+
+          <NavLink
+            to="/ventas"
+            className="sidebar-link"
+          >
+            <FaCashRegister />
+            <span>Ventas / Caja</span>
           </NavLink>
         </nav>
 
