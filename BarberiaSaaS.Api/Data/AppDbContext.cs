@@ -40,14 +40,28 @@ namespace BarberiaSaaS.Api.Data
         public DbSet<BloqueoProfesional> BloqueosProfesionales =>
             Set<BloqueoProfesional>();
 
+        public DbSet<CategoriaProducto> CategoriasProducto =>
+            Set<CategoriaProducto>();
+
+        public DbSet<Producto> Productos =>
+            Set<Producto>();
+
+        public DbSet<InventarioSucursal> InventariosSucursal =>
+            Set<InventarioSucursal>();
+
+        public DbSet<MovimientoInventario> MovimientosInventario =>
+            Set<MovimientoInventario>();
+
+        public DbSet<Venta> Ventas =>
+            Set<Venta>();
+
+        public DbSet<VentaDetalle> VentaDetalles =>
+            Set<VentaDetalle>();
+
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // ============================================================
-            // TENANT
-            // ============================================================
 
             modelBuilder.Entity<Tenant>(entity =>
             {
@@ -70,10 +84,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasMaxLength(150);
             });
 
-            // ============================================================
-            // CONFIGURACIÓN TENANT
-            // ============================================================
-
             modelBuilder.Entity<ConfiguracionTenant>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -91,10 +101,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasPrecision(5, 2);
             });
 
-            // ============================================================
-            // SUCURSAL
-            // ============================================================
-
             modelBuilder.Entity<Sucursal>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -108,10 +114,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.TenantId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // USUARIO
-            // ============================================================
 
             modelBuilder.Entity<Usuario>(entity =>
             {
@@ -153,10 +155,6 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ============================================================
-            // PROFESIONAL
-            // ============================================================
-
             modelBuilder.Entity<Profesional>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -191,10 +189,6 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ============================================================
-            // SERVICIO
-            // ============================================================
-
             modelBuilder.Entity<Servicio>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -220,10 +214,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.TenantId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // VARIANTE DE SERVICIO
-            // ============================================================
 
             modelBuilder.Entity<ServicioVariante>(entity =>
             {
@@ -257,10 +247,6 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ============================================================
-            // PROFESIONAL - SERVICIO
-            // ============================================================
-
             modelBuilder.Entity<ProfesionalServicio>(entity =>
             {
                 entity.HasKey(x => new
@@ -279,10 +265,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.ServicioId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // CLIENTE
-            // ============================================================
 
             modelBuilder.Entity<Cliente>(entity =>
             {
@@ -315,10 +297,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.TenantId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // CITA
-            // ============================================================
 
             modelBuilder.Entity<Cita>(entity =>
             {
@@ -382,10 +360,6 @@ namespace BarberiaSaaS.Api.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ============================================================
-            // HORARIO PROFESIONAL
-            // ============================================================
-
             modelBuilder.Entity<HorarioProfesional>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -407,10 +381,6 @@ namespace BarberiaSaaS.Api.Data
                     .HasForeignKey(x => x.ProfesionalId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // BLOQUEO PROFESIONAL
-            // ============================================================
 
             modelBuilder.Entity<BloqueoProfesional>(entity =>
             {
@@ -435,6 +405,275 @@ namespace BarberiaSaaS.Api.Data
                     .WithMany(x => x.Bloqueos)
                     .HasForeignKey(x => x.ProfesionalId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<CategoriaProducto>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(1000);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.Nombre
+                });
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Producto>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(1000);
+
+                entity.Property(x => x.Codigo)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.CodigoBarras)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.Costo)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.PrecioVenta)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.StockMinimo)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.ImagenUrl)
+                    .HasMaxLength(500);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.Nombre
+                });
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.Codigo
+                })
+                .IsUnique();
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.CodigoBarras
+                })
+                .IsUnique();
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.CategoriaProducto)
+                    .WithMany(x => x.Productos)
+                    .HasForeignKey(x => x.CategoriaProductoId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<InventarioSucursal>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Cantidad)
+                    .HasPrecision(12, 2);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.SucursalId,
+                    x.ProductoId
+                })
+                .IsUnique();
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(x => x.SucursalId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Producto)
+                    .WithMany(x => x.Inventarios)
+                    .HasForeignKey(x => x.ProductoId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<MovimientoInventario>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Tipo)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.Cantidad)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.CantidadAnterior)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.CantidadNueva)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Motivo)
+                    .HasMaxLength(500);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.SucursalId,
+                    x.ProductoId,
+                    x.Fecha
+                });
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(x => x.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Producto)
+                    .WithMany(x => x.MovimientosInventario)
+                    .HasForeignKey(x => x.ProductoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Usuario)
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+
+            // ============================================================
+            // VENTA
+            // ============================================================
+
+            modelBuilder.Entity<Venta>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.MetodoPago)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.Subtotal)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Descuento)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Total)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Estado)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.Notas)
+                    .HasMaxLength(1000);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.SucursalId,
+                    x.Fecha
+                });
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.ClienteId,
+                    x.Fecha
+                });
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(x => x.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Cliente)
+                    .WithMany()
+                    .HasForeignKey(x => x.ClienteId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(x => x.Usuario)
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ============================================================
+            // DETALLE DE VENTA
+            // ============================================================
+
+            modelBuilder.Entity<VentaDetalle>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Cantidad)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.PrecioUnitario)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.CostoUnitario)
+                    .HasPrecision(12, 2);
+
+                entity.Property(x => x.Subtotal)
+                    .HasPrecision(12, 2);
+
+                entity.HasIndex(x => new
+                {
+                    x.TenantId,
+                    x.VentaId
+                });
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Venta)
+                    .WithMany(x => x.Detalles)
+                    .HasForeignKey(x => x.VentaId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Producto)
+                    .WithMany()
+                    .HasForeignKey(x => x.ProductoId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
