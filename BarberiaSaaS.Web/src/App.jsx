@@ -17,6 +17,7 @@ import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
+import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -102,6 +103,7 @@ function App() {
             <>
               <Agenda />
               <AgendaAvailabilityFeedback />
+              <AgendaQuickTimeSelection />
             </>
           }
         />
