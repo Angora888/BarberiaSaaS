@@ -1,6 +1,9 @@
 import { FaPlus } from "react-icons/fa";
 import "./AgendaSemanaCompacta.css";
 
+const QUICK_TIME_STORAGE_KEY =
+  "barberiaSaaS.agendaHoraPreseleccionada";
+
 function AgendaSemanaCompacta({
   diasSemana,
   citasSemanaPorDia,
@@ -63,6 +66,20 @@ function AgendaSemanaCompacta({
     minutoInicio = Math.min(
       configuracionAgenda.minutoFin - intervalo,
       minutoInicio
+    );
+
+    const hora =
+      formatearHora24(
+        minutoInicio
+      );
+
+    sessionStorage.setItem(
+      QUICK_TIME_STORAGE_KEY,
+      JSON.stringify({
+        fecha,
+        hora,
+        creadoEn: Date.now()
+      })
     );
 
     abrirNuevaCitaParaFechaYHora(
@@ -245,6 +262,16 @@ function AgendaSemanaCompacta({
       </div>
     </div>
   );
+}
+
+function formatearHora24(minutos) {
+  const hora =
+    Math.floor(minutos / 60);
+
+  const minuto =
+    minutos % 60;
+
+  return `${String(hora).padStart(2, "0")}:${String(minuto).padStart(2, "0")}`;
 }
 
 function formatearHoraCompacta(minutos) {
