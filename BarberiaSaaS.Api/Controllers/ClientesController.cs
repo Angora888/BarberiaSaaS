@@ -47,7 +47,14 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Email,
                     x.FechaNacimiento,
                     x.Notas,
-                    x.Activo
+                    x.Activo,
+                    Deuda = _context.Set<CuentaPorCobrar>()
+                        .Where(c =>
+                            c.TenantId == tenantId &&
+                            c.ClienteId == x.Id &&
+                            c.Estado != EstadosCuentaPorCobrar.Anulada &&
+                            c.SaldoPendiente > 0)
+                        .Sum(c => (decimal?)c.SaldoPendiente) ?? 0
                 })
                 .ToListAsync();
 
@@ -77,7 +84,14 @@ namespace BarberiaSaaS.Api.Controllers
                     x.FechaNacimiento,
                     x.Notas,
                     x.Activo,
-                    x.FechaCreacion
+                    x.FechaCreacion,
+                    Deuda = _context.Set<CuentaPorCobrar>()
+                        .Where(c =>
+                            c.TenantId == tenantId &&
+                            c.ClienteId == x.Id &&
+                            c.Estado != EstadosCuentaPorCobrar.Anulada &&
+                            c.SaldoPendiente > 0)
+                        .Sum(c => (decimal?)c.SaldoPendiente) ?? 0
                 })
                 .FirstOrDefaultAsync();
 
@@ -113,31 +127,17 @@ namespace BarberiaSaaS.Api.Controllers
             var cliente = new Cliente
             {
                 TenantId = tenantId,
-
                 Nombre = request.Nombre.Trim(),
-
-                Apellidos =
-                    request.Apellidos?.Trim() ?? string.Empty,
-
-                Telefono =
-                    request.Telefono?.Trim(),
-
-                Email =
-                    request.Email?.Trim().ToLowerInvariant(),
-
-                FechaNacimiento =
-                    request.FechaNacimiento,
-
-                Notas =
-                    request.Notas?.Trim(),
-
+                Apellidos = request.Apellidos?.Trim() ?? string.Empty,
+                Telefono = request.Telefono?.Trim(),
+                Email = request.Email?.Trim().ToLowerInvariant(),
+                FechaNacimiento = request.FechaNacimiento,
+                Notas = request.Notas?.Trim(),
                 Activo = true,
-
                 FechaCreacion = DateTime.UtcNow
             };
 
             _context.Clientes.Add(cliente);
-
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -181,25 +181,12 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            cliente.Nombre =
-                request.Nombre.Trim();
-
-            cliente.Apellidos =
-                request.Apellidos?.Trim() ?? string.Empty;
-
-            cliente.Telefono =
-                request.Telefono?.Trim();
-
-            cliente.Email =
-                request.Email?
-                    .Trim()
-                    .ToLowerInvariant();
-
-            cliente.FechaNacimiento =
-                request.FechaNacimiento;
-
-            cliente.Notas =
-                request.Notas?.Trim();
+            cliente.Nombre = request.Nombre.Trim();
+            cliente.Apellidos = request.Apellidos?.Trim() ?? string.Empty;
+            cliente.Telefono = request.Telefono?.Trim();
+            cliente.Email = request.Email?.Trim().ToLowerInvariant();
+            cliente.FechaNacimiento = request.FechaNacimiento;
+            cliente.Notas = request.Notas?.Trim();
 
             await _context.SaveChangesAsync();
 
@@ -251,20 +238,17 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Precio,
                     x.Estado,
                     x.Notas,
-
                     Servicio = new
                     {
                         x.Servicio.Id,
                         x.Servicio.Nombre
                     },
-
                     Profesional = new
                     {
                         x.Profesional.Id,
                         x.Profesional.Nombre,
                         x.Profesional.Apellidos
                     },
-
                     Sucursal = new
                     {
                         x.Sucursal.Id,
@@ -274,20 +258,24 @@ namespace BarberiaSaaS.Api.Controllers
                 .ToListAsync();
 
             var totalCitas = citas.Count;
-
             var citasCompletadas = citas.Count(x =>
                 x.Estado == EstadosCita.Completada);
-
             var canceladas = citas.Count(x =>
                 x.Estado == EstadosCita.Cancelada);
-
             var noAsistio = citas.Count(x =>
                 x.Estado == EstadosCita.NoAsistio);
-
             var totalGastado = citas
                 .Where(x =>
                     x.Estado == EstadosCita.Completada)
                 .Sum(x => x.Precio);
+
+            var deuda = await _context.Set<CuentaPorCobrar>()
+                .Where(x =>
+                    x.TenantId == tenantId &&
+                    x.ClienteId == id &&
+                    x.Estado != EstadosCuentaPorCobrar.Anulada &&
+                    x.SaldoPendiente > 0)
+                .SumAsync(x => (decimal?)x.SaldoPendiente) ?? 0;
 
             return Ok(new
             {
@@ -299,18 +287,18 @@ namespace BarberiaSaaS.Api.Controllers
                     cliente.Telefono,
                     cliente.Email,
                     cliente.FechaNacimiento,
-                    cliente.Notas
+                    cliente.Notas,
+                    deuda
                 },
-
                 resumen = new
                 {
                     totalCitas,
                     citasCompletadas,
                     canceladas,
                     noAsistio,
-                    totalGastado
+                    totalGastado,
+                    deuda
                 },
-
                 citas
             });
         }
