@@ -2,6 +2,9 @@ import { useEffect } from "react";
 
 function AgendaAvailabilityFeedback() {
   useEffect(() => {
+    let observer = null;
+    let framePendiente = null;
+
     const actualizarMensaje = () => {
       const modal = document.querySelector(
         ".custom-modal"
@@ -55,19 +58,39 @@ function AgendaAvailabilityFeedback() {
         aviso.className =
           "availability-inline-error alert alert-danger mt-3 mb-0";
 
+        aviso.textContent = mensaje;
+
         contenedorDisponibilidad.insertAdjacentElement(
           "afterend",
           aviso
         );
+
+        return;
       }
 
-      aviso.textContent = mensaje;
+      if (
+        aviso.textContent?.trim() !== mensaje
+      ) {
+        aviso.textContent = mensaje;
+      }
+    };
+
+    const programarActualizacion = () => {
+      if (framePendiente !== null) {
+        return;
+      }
+
+      framePendiente =
+        window.requestAnimationFrame(() => {
+          framePendiente = null;
+          actualizarMensaje();
+        });
     };
 
     actualizarMensaje();
 
-    const observer = new MutationObserver(
-      actualizarMensaje
+    observer = new MutationObserver(
+      programarActualizacion
     );
 
     observer.observe(
@@ -80,7 +103,15 @@ function AgendaAvailabilityFeedback() {
     );
 
     return () => {
-      observer.disconnect();
+      if (observer) {
+        observer.disconnect();
+      }
+
+      if (framePendiente !== null) {
+        window.cancelAnimationFrame(
+          framePendiente
+        );
+      }
 
       document
         .querySelectorAll(
