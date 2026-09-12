@@ -7,10 +7,28 @@ function AgendaQuickTimeSelection() {
   const estadoRef = useRef({
     clave: "",
     solicitudEnviada: false,
-    finalizado: false
+    finalizado: false,
+    aplicandoAutomaticamente: false
   });
 
   useEffect(() => {
+    const reiniciarEstado = () => {
+      estadoRef.current = {
+        clave: "",
+        solicitudEnviada: false,
+        finalizado: false,
+        aplicandoAutomaticamente: false
+      };
+    };
+
+    const limpiarPreferencia = () => {
+      sessionStorage.removeItem(
+        STORAGE_KEY
+      );
+
+      reiniciarEstado();
+    };
+
     const leerPendiente = () => {
       try {
         const valor =
@@ -30,10 +48,7 @@ function AgendaQuickTimeSelection() {
           !pendiente?.hora ||
           !pendiente?.creadoEn
         ) {
-          sessionStorage.removeItem(
-            STORAGE_KEY
-          );
-
+          limpiarPreferencia();
           return null;
         }
 
@@ -42,19 +57,13 @@ function AgendaQuickTimeSelection() {
             Number(pendiente.creadoEn) >
           15 * 60 * 1000
         ) {
-          sessionStorage.removeItem(
-            STORAGE_KEY
-          );
-
+          limpiarPreferencia();
           return null;
         }
 
         return pendiente;
       } catch {
-        sessionStorage.removeItem(
-          STORAGE_KEY
-        );
-
+        limpiarPreferencia();
         return null;
       }
     };
@@ -162,7 +171,8 @@ function AgendaQuickTimeSelection() {
         estadoRef.current = {
           clave,
           solicitudEnviada: false,
-          finalizado: false
+          finalizado: false,
+          aplicandoAutomaticamente: false
         };
       }
 
@@ -188,13 +198,7 @@ function AgendaQuickTimeSelection() {
         fecha?.value &&
         fecha.value !== pendiente.fecha
       ) {
-        sessionStorage.removeItem(
-          STORAGE_KEY
-        );
-
-        estadoRef.current.finalizado =
-          true;
-
+        limpiarPreferencia();
         return;
       }
 
@@ -243,7 +247,13 @@ function AgendaQuickTimeSelection() {
               "selected"
             )
           ) {
+            estadoRef.current.aplicandoAutomaticamente =
+              true;
+
             slotObjetivo.click();
+
+            estadoRef.current.aplicandoAutomaticamente =
+              false;
           }
 
           mostrarAviso(
@@ -251,10 +261,10 @@ function AgendaQuickTimeSelection() {
             `Hora ${pendiente.hora} preseleccionada desde la vista semanal.`
           );
 
-          sessionStorage.removeItem(
-            STORAGE_KEY
-          );
-
+          // No eliminamos la preferencia aquí.
+          // Si el usuario cambia la duración, servicio o profesional,
+          // se vuelve a validar automáticamente la misma hora tocada
+          // originalmente en la cuadrícula semanal.
           estadoRef.current.finalizado =
             true;
 
@@ -267,10 +277,8 @@ function AgendaQuickTimeSelection() {
           "danger"
         );
 
-        sessionStorage.removeItem(
-          STORAGE_KEY
-        );
-
+        // Conservamos la hora preferida para que, si el usuario vuelve
+        // a cambiar duración/servicio/profesional, pueda revalidarse.
         estadoRef.current.finalizado =
           true;
 
@@ -317,10 +325,6 @@ function AgendaQuickTimeSelection() {
             modal,
             `La hora ${pendiente.hora} no está disponible con el profesional y duración seleccionados.`,
             "danger"
-          );
-
-          sessionStorage.removeItem(
-            STORAGE_KEY
           );
 
           estadoRef.current.finalizado =
@@ -374,9 +378,12 @@ function AgendaQuickTimeSelection() {
 
         limpiarAvisos(modal);
 
+        // React limpia la hora/slots al cambiar duración u otros campos.
+        // Esperamos el siguiente render y volvemos a consultar la
+        // disponibilidad usando la hora que vino de la cuadrícula.
         window.setTimeout(
           intentarAplicar,
-          80
+          120
         );
       }
     };
@@ -402,17 +409,40 @@ function AgendaQuickTimeSelection() {
         texto === "cancelar" ||
         boton.classList.contains(
           "modal-close"
-        )
+        ) ||
+        texto === "crear cita"
       ) {
-        sessionStorage.removeItem(
-          STORAGE_KEY
-        );
+        limpiarPreferencia();
+        return;
+      }
 
-        estadoRef.current = {
-          clave: "",
-          solicitudEnviada: false,
-          finalizado: false
-        };
+      if (
+        boton.classList.contains(
+          "availability-slot"
+        ) &&
+        !estadoRef.current
+          .aplicandoAutomaticamente
+      ) {
+        const pendiente =
+          leerPendiente();
+
+        if (!pendiente) {
+          return;
+        }
+
+        const horaElegida =
+          obtenerHoraSlot(
+            boton
+          );
+
+        // Si el usuario selecciona manualmente otra hora, respetamos
+        // esa decisión y dejamos de forzar la hora tocada en la semana.
+        if (
+          horaElegida &&
+          horaElegida !== pendiente.hora
+        ) {
+          limpiarPreferencia();
+        }
       }
     };
 
