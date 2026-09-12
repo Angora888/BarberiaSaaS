@@ -19,6 +19,7 @@ import Sucursales from "./pages/Sucursales";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
+import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -85,7 +86,12 @@ function App() {
 
         <Route
           path="/clientes"
-          element={<Clientes />}
+          element={
+            <>
+              <Clientes />
+              <EnviarDisponibilidadClientes />
+            </>
+          }
         />
 
         <Route
