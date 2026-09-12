@@ -9,6 +9,7 @@ import {
   FaCalendarAlt,
   FaCashRegister,
   FaChartBar,
+  FaCog,
   FaCut,
   FaHome,
   FaSignOutAlt,
@@ -161,6 +162,14 @@ function MainLayout() {
           >
             <FaChartBar />
             <span>Reportes</span>
+          </NavLink>
+
+          <NavLink
+            to="/configuracion"
+            className="sidebar-link"
+          >
+            <FaCog />
+            <span>Configuración</span>
           </NavLink>
         </nav>
 
