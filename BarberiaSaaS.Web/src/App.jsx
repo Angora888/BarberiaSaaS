@@ -16,6 +16,7 @@ import Ventas from "./pages/Ventas";
 import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
+import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
@@ -128,6 +129,11 @@ function App() {
         <Route
           path="/ventas"
           element={<Ventas />}
+        />
+
+        <Route
+          path="/cuentas-por-cobrar"
+          element={<CuentasPorCobrar />}
         />
 
         <Route
