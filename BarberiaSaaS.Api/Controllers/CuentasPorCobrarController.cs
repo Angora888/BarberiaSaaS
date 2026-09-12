@@ -168,6 +168,14 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            if (request.Descuento < 0)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El descuento no puede ser negativo."
+                });
+            }
+
             var cita = await _context.Citas
                 .Include(x => x.Cliente)
                 .FirstOrDefaultAsync(x =>
@@ -203,11 +211,24 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            if (request.MontoPagado > cita.Precio)
+            if (request.Descuento > cita.Precio)
             {
                 return BadRequest(new
                 {
-                    mensaje = "El monto pagado no puede superar el total de la cita."
+                    mensaje = "El descuento no puede superar el precio original de la cita."
+                });
+            }
+
+            var totalCobrar = decimal.Round(
+                cita.Precio - request.Descuento,
+                2,
+                MidpointRounding.AwayFromZero);
+
+            if (request.MontoPagado > totalCobrar)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El monto pagado no puede superar el total a cobrar después del descuento."
                 });
             }
 
@@ -221,7 +242,7 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            var saldo = cita.Precio - request.MontoPagado;
+            var saldo = totalCobrar - request.MontoPagado;
 
             var estado = saldo <= 0
                 ? EstadosCuentaPorCobrar.Pagada
@@ -238,7 +259,7 @@ namespace BarberiaSaaS.Api.Controllers
                 SucursalId = cita.SucursalId,
                 ClienteId = cita.ClienteId,
                 CitaId = cita.Id,
-                MontoOriginal = cita.Precio,
+                MontoOriginal = totalCobrar,
                 SaldoPendiente = saldo,
                 Estado = estado,
                 Notas = LimpiarTexto(request.Notas),
@@ -274,6 +295,9 @@ namespace BarberiaSaaS.Api.Controllers
                 cuenta.Id,
                 cuenta.CitaId,
                 cuenta.ClienteId,
+                PrecioOriginal = cita.Precio,
+                Descuento = request.Descuento,
+                TotalCobrar = totalCobrar,
                 cuenta.MontoOriginal,
                 MontoPagado = request.MontoPagado,
                 cuenta.SaldoPendiente,
@@ -442,6 +466,8 @@ namespace BarberiaSaaS.Api.Controllers
             public int CitaId { get; set; }
 
             public decimal MontoPagado { get; set; }
+
+            public decimal Descuento { get; set; }
 
             public string? MetodoPago { get; set; }
 
