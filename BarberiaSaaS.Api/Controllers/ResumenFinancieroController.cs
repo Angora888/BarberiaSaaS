@@ -62,6 +62,7 @@ namespace BarberiaSaaS.Api.Controllers
                 var ahoraLocal =
                     await _timeZoneService
                         .UtcALocalAsync(
+                            tenantId,
                             DateTime.UtcNow);
 
                 fechaLocal =
@@ -82,11 +83,13 @@ namespace BarberiaSaaS.Api.Controllers
             var inicioUtc =
                 await _timeZoneService
                     .LocalAUtcAsync(
+                        tenantId,
                         inicioLocal);
 
             var finUtc =
                 await _timeZoneService
                     .LocalAUtcAsync(
+                        tenantId,
                         finLocal);
 
             var citasQuery =
