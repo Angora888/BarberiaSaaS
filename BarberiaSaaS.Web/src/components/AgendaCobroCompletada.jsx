@@ -26,6 +26,7 @@ function AgendaCobroCompletada() {
   const [mensaje, setMensaje] = useState("");
 
   const [formulario, setFormulario] = useState({
+    descuento: "0",
     montoPagado: "",
     metodoPago: "SINPE Movil",
     notas: ""
@@ -54,12 +55,15 @@ function AgendaCobroCompletada() {
         const citaActual =
           response.data;
 
+        const precio = Number(
+          citaActual?.precio || 0
+        );
+
         setCita(citaActual);
         setFormulario({
+          descuento: "0",
           montoPagado:
-            Number(
-              citaActual?.precio || 0
-            ).toString(),
+            precio.toString(),
           metodoPago: "SINPE Movil",
           notas: ""
         });
@@ -86,8 +90,25 @@ function AgendaCobroCompletada() {
     };
   }, []);
 
-  const total =
+  const precioOriginal =
     Number(cita?.precio || 0);
+
+  const descuento =
+    Number(
+      formulario.descuento || 0
+    );
+
+  const descuentoValido =
+    Number.isFinite(descuento)
+      ? Math.max(0, descuento)
+      : 0;
+
+  const totalCobrar = useMemo(() => {
+    return Math.max(
+      0,
+      precioOriginal - descuentoValido
+    );
+  }, [precioOriginal, descuentoValido]);
 
   const montoPagado =
     Number(
@@ -96,15 +117,22 @@ function AgendaCobroCompletada() {
 
   const saldo = useMemo(() => {
     const valor =
-      total -
+      totalCobrar -
       (Number.isFinite(montoPagado)
         ? montoPagado
         : 0);
 
     return Math.max(0, valor);
-  }, [total, montoPagado]);
+  }, [totalCobrar, montoPagado]);
 
   const tipoCobro = useMemo(() => {
+    if (totalCobrar <= 0) {
+      return {
+        texto: "Cubierto por descuento",
+        clase: "agenda-cobro-status paid"
+      };
+    }
+
     if (
       !Number.isFinite(montoPagado) ||
       montoPagado <= 0
@@ -115,7 +143,7 @@ function AgendaCobroCompletada() {
       };
     }
 
-    if (montoPagado < total) {
+    if (montoPagado < totalCobrar) {
       return {
         texto: "Pago parcial",
         clase: "agenda-cobro-status partial"
@@ -126,7 +154,7 @@ function AgendaCobroCompletada() {
       texto: "Pagado completo",
       clase: "agenda-cobro-status paid"
     };
-  }, [montoPagado, total]);
+  }, [montoPagado, totalCobrar]);
 
   const nombreCliente = useMemo(() => {
     if (!cita?.cliente) {
@@ -162,6 +190,7 @@ function AgendaCobroCompletada() {
     setError("");
     setMensaje("");
     setFormulario({
+      descuento: "0",
       montoPagado: "",
       metodoPago: "SINPE Movil",
       notas: ""
@@ -173,7 +202,7 @@ function AgendaCobroCompletada() {
       (anterior) => ({
         ...anterior,
         montoPagado:
-          total.toString()
+          totalCobrar.toString()
       })
     );
   };
@@ -183,6 +212,48 @@ function AgendaCobroCompletada() {
       (anterior) => ({
         ...anterior,
         montoPagado: "0"
+      })
+    );
+  };
+
+  const cambiarDescuento = (valor) => {
+    const nuevoDescuento = valor;
+    const descuentoAnterior = Number(
+      formulario.descuento || 0
+    );
+    const totalAnterior = Math.max(
+      0,
+      precioOriginal -
+        (Number.isFinite(descuentoAnterior)
+          ? descuentoAnterior
+          : 0)
+    );
+
+    const descuentoNumero = Number(
+      nuevoDescuento || 0
+    );
+    const nuevoTotal = Math.max(
+      0,
+      precioOriginal -
+        (Number.isFinite(descuentoNumero)
+          ? descuentoNumero
+          : 0)
+    );
+
+    const pagabaCompleto =
+      Number(formulario.montoPagado || 0) ===
+      totalAnterior;
+
+    setFormulario(
+      (anterior) => ({
+        ...anterior,
+        descuento: nuevoDescuento,
+        montoPagado:
+          pagabaCompleto
+            ? nuevoTotal.toString()
+            : Number(anterior.montoPagado || 0) > nuevoTotal
+              ? nuevoTotal.toString()
+              : anterior.montoPagado
       })
     );
   };
@@ -198,6 +269,27 @@ function AgendaCobroCompletada() {
       formulario.montoPagado
     );
 
+    const descuentoEnviar = Number(
+      formulario.descuento || 0
+    );
+
+    if (
+      !Number.isFinite(descuentoEnviar) ||
+      descuentoEnviar < 0
+    ) {
+      setError(
+        "Ingresa un descuento válido."
+      );
+      return;
+    }
+
+    if (descuentoEnviar > precioOriginal) {
+      setError(
+        "El descuento no puede superar el precio original del servicio."
+      );
+      return;
+    }
+
     if (
       !Number.isFinite(monto) ||
       monto < 0
@@ -208,9 +300,9 @@ function AgendaCobroCompletada() {
       return;
     }
 
-    if (monto > total) {
+    if (monto > totalCobrar) {
       setError(
-        "El monto pagado no puede superar el total de la cita."
+        "El monto pagado no puede superar el total a cobrar después del descuento."
       );
       return;
     }
@@ -235,6 +327,7 @@ function AgendaCobroCompletada() {
           "/CuentasPorCobrar/registrar-cobro-cita",
           {
             citaId: cita.id,
+            descuento: descuentoEnviar,
             montoPagado: monto,
             metodoPago:
               monto > 0
@@ -334,9 +427,9 @@ function AgendaCobroCompletada() {
                 </div>
 
                 <div>
-                  <span>Total de la cita</span>
+                  <span>Precio original</span>
                   <strong className="agenda-cobro-total">
-                    {formatearMoneda(total)}
+                    {formatearMoneda(precioOriginal)}
                   </strong>
                 </div>
               </div>
@@ -379,13 +472,39 @@ function AgendaCobroCompletada() {
               <div className="row g-3 mt-1">
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">
+                    Descuento
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    max={precioOriginal}
+                    step="0.01"
+                    className="form-control form-control-lg"
+                    value={
+                      formulario.descuento
+                    }
+                    onChange={(e) =>
+                      cambiarDescuento(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <div className="form-text">
+                    Total a cobrar: {formatearMoneda(totalCobrar)}
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">
                     Monto pagado
                   </label>
 
                   <input
                     type="number"
                     min="0"
-                    max={total}
+                    max={totalCobrar}
                     step="0.01"
                     className="form-control form-control-lg"
                     value={
@@ -439,8 +558,28 @@ function AgendaCobroCompletada() {
                   </select>
                 </div>
 
+                <div className="col-md-6">
+                  <div className="border rounded-3 p-3 h-100 bg-light">
+                    <div className="small text-muted mb-1">
+                      Descuento aplicado
+                    </div>
+                    <strong className="fs-5">
+                      {formatearMoneda(descuentoValido)}
+                    </strong>
+                  </div>
+                </div>
+
                 <div className="col-12">
                   <div className="agenda-cobro-summary">
+                    <div>
+                      <span>Total a cobrar</span>
+                      <strong>
+                        {formatearMoneda(
+                          totalCobrar
+                        )}
+                      </strong>
+                    </div>
+
                     <div>
                       <span>Pagado ahora</span>
                       <strong>
@@ -484,7 +623,7 @@ function AgendaCobroCompletada() {
                   <textarea
                     className="form-control"
                     rows="2"
-                    placeholder="Ej: saldo pendiente para el viernes..."
+                    placeholder="Ej: descuento especial, saldo pendiente para el viernes..."
                     value={
                       formulario.notas
                     }
