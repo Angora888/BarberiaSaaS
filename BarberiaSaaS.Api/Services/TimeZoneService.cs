@@ -10,6 +10,13 @@ namespace BarberiaSaaS.Api.Services
         private const string ZonaHorariaDefault =
             "America/Costa_Rica";
 
+        private readonly Dictionary<int, string>
+            _zonasHorariasPorTenant = new();
+
+        private readonly Dictionary<string, TimeZoneInfo>
+            _timeZones = new(
+                StringComparer.OrdinalIgnoreCase);
+
         public TimeZoneService(
             AppDbContext context)
         {
@@ -19,15 +26,35 @@ namespace BarberiaSaaS.Api.Services
         public async Task<string> ObtenerZonaHorariaAsync(
             int tenantId)
         {
-            var zonaHoraria = await _context.ConfiguracionesTenant
-                .Where(x => x.TenantId == tenantId)
-                .Select(x => x.ZonaHoraria)
-                .FirstOrDefaultAsync();
-
-            if (string.IsNullOrWhiteSpace(zonaHoraria))
+            if (
+                _zonasHorariasPorTenant.TryGetValue(
+                    tenantId,
+                    out var zonaHorariaCache)
+            )
             {
-                return ZonaHorariaDefault;
+                return zonaHorariaCache;
             }
+
+            var zonaHoraria =
+                await _context.ConfiguracionesTenant
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.TenantId == tenantId)
+                    .Select(x =>
+                        x.ZonaHoraria)
+                    .FirstOrDefaultAsync();
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    zonaHoraria)
+            )
+            {
+                zonaHoraria =
+                    ZonaHorariaDefault;
+            }
+
+            _zonasHorariasPorTenant[tenantId] =
+                zonaHoraria;
 
             return zonaHoraria;
         }
@@ -37,10 +64,12 @@ namespace BarberiaSaaS.Api.Services
             DateTime fechaLocal)
         {
             var zonaId =
-                await ObtenerZonaHorariaAsync(tenantId);
+                await ObtenerZonaHorariaAsync(
+                    tenantId);
 
             var zona =
-                ObtenerTimeZoneInfo(zonaId);
+                ObtenerTimeZoneInfo(
+                    zonaId);
 
             var fechaSinZona =
                 DateTime.SpecifyKind(
@@ -62,10 +91,12 @@ namespace BarberiaSaaS.Api.Services
             DateTime fechaUtc)
         {
             var zonaId =
-                await ObtenerZonaHorariaAsync(tenantId);
+                await ObtenerZonaHorariaAsync(
+                    tenantId);
 
             var zona =
-                ObtenerTimeZoneInfo(zonaId);
+                ObtenerTimeZoneInfo(
+                    zonaId);
 
             var utc =
                 DateTime.SpecifyKind(
@@ -77,22 +108,62 @@ namespace BarberiaSaaS.Api.Services
                 zona);
         }
 
-        private static TimeZoneInfo ObtenerTimeZoneInfo(
+        private TimeZoneInfo ObtenerTimeZoneInfo(
             string zonaId)
+        {
+            if (
+                _timeZones.TryGetValue(
+                    zonaId,
+                    out var zonaCache)
+            )
+            {
+                return zonaCache;
+            }
+
+            TimeZoneInfo zona;
+
+            try
+            {
+                zona =
+                    TimeZoneInfo
+                        .FindSystemTimeZoneById(
+                            zonaId);
+            }
+            catch (
+                TimeZoneNotFoundException)
+            {
+                zona =
+                    ObtenerZonaFallback();
+            }
+            catch (
+                InvalidTimeZoneException)
+            {
+                zona =
+                    ObtenerZonaFallback();
+            }
+
+            _timeZones[zonaId] = zona;
+
+            return zona;
+        }
+
+        private static TimeZoneInfo ObtenerZonaFallback()
         {
             try
             {
                 return TimeZoneInfo
-                    .FindSystemTimeZoneById(zonaId);
+                    .FindSystemTimeZoneById(
+                        ZonaHorariaDefault);
             }
-            catch (TimeZoneNotFoundException)
+            catch (
+                TimeZoneNotFoundException)
             {
-                // Fallback para algunos entornos Windows.
                 return TimeZoneInfo
                     .FindSystemTimeZoneById(
                         "Central America Standard Time");
             }
-            catch (InvalidTimeZoneException)
+            catch (
+                InvalidTimeZoneException)
             {
                 return TimeZoneInfo
                     .FindSystemTimeZoneById(
