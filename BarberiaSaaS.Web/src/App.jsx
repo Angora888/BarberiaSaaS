@@ -13,6 +13,7 @@ import Agenda from "./pages/Agenda";
 import Productos from "./pages/Productos";
 import Ventas from "./pages/Ventas";
 import Reportes from "./pages/Reportes";
+import Configuracion from "./pages/Configuracion";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -108,6 +109,11 @@ function App() {
         <Route
           path="/reportes"
           element={<Reportes />}
+        />
+
+        <Route
+          path="/configuracion"
+          element={<Configuracion />}
         />
 
       </Route>
