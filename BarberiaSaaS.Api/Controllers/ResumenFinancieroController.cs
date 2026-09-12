@@ -92,12 +92,15 @@ namespace BarberiaSaaS.Api.Controllers
                         tenantId,
                         finLocal);
 
+            // ============================================================
+            // ACTIVIDAD OPERATIVA DEL DÍA
+            // ============================================================
+
             var citasQuery =
                 _context.Citas
                     .Where(x =>
                         x.TenantId == tenantId &&
-                        x.Estado ==
-                            EstadosCita.Completada &&
+                        x.Estado == EstadosCita.Completada &&
                         x.FechaInicio >= inicioUtc &&
                         x.FechaInicio < finUtc);
 
@@ -105,16 +108,14 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 citasQuery =
                     citasQuery.Where(x =>
-                        x.SucursalId ==
-                            sucursalId.Value);
+                        x.SucursalId == sucursalId.Value);
             }
 
             var ventasQuery =
                 _context.Ventas
                     .Where(x =>
                         x.TenantId == tenantId &&
-                        x.Estado ==
-                            EstadosVenta.Completada &&
+                        x.Estado == EstadosVenta.Completada &&
                         x.Fecha >= inicioUtc &&
                         x.Fecha < finUtc);
 
@@ -122,24 +123,93 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 ventasQuery =
                     ventasQuery.Where(x =>
-                        x.SucursalId ==
+                        x.SucursalId == sucursalId.Value);
+            }
+
+            // ============================================================
+            // CAJA REAL DEL DÍA
+            //
+            // Los ingresos se reconocen cuando el dinero realmente entra,
+            // usando FechaPago de los abonos. Así un saldo cobrado días
+            // después aparece en el día del abono y no en el día de la cita
+            // o de la venta original.
+            // ============================================================
+
+            var abonosQuery =
+                _context.Set<AbonoCuentaPorCobrar>()
+                    .Where(x =>
+                        x.TenantId == tenantId &&
+                        x.FechaPago >= inicioUtc &&
+                        x.FechaPago < finUtc &&
+                        x.CuentaPorCobrar.Estado !=
+                            EstadosCuentaPorCobrar.Anulada);
+
+            if (sucursalId.HasValue)
+            {
+                abonosQuery =
+                    abonosQuery.Where(x =>
+                        x.CuentaPorCobrar.SucursalId ==
                             sucursalId.Value);
             }
 
             var ingresosServicios =
+                await abonosQuery
+                    .Where(x =>
+                        x.CuentaPorCobrar.CitaId != null)
+                    .SumAsync(x =>
+                        (decimal?)x.Monto)
+                ?? 0;
+
+            var ingresosProductos =
+                await abonosQuery
+                    .Where(x =>
+                        x.CuentaPorCobrar.VentaId != null)
+                    .SumAsync(x =>
+                        (decimal?)x.Monto)
+                ?? 0;
+
+            var ingresosTotales =
+                ingresosServicios +
+                ingresosProductos;
+
+            var cantidadCobros =
+                await abonosQuery.CountAsync();
+
+            var cantidadCobrosServicios =
+                await abonosQuery
+                    .CountAsync(x =>
+                        x.CuentaPorCobrar.CitaId != null);
+
+            var cantidadCobrosProductos =
+                await abonosQuery
+                    .CountAsync(x =>
+                        x.CuentaPorCobrar.VentaId != null);
+
+            var cobrosPorMetodoPago =
+                await abonosQuery
+                    .GroupBy(x => x.MetodoPago)
+                    .Select(g => new
+                    {
+                        MetodoPago = g.Key,
+                        CantidadCobros = g.Count(),
+                        CantidadVentas = g.Count(),
+                        Total = g.Sum(x => x.Monto)
+                    })
+                    .OrderByDescending(x => x.Total)
+                    .ToListAsync();
+
+            // ============================================================
+            // MÉTRICAS OPERATIVAS / FACTURADAS
+            // ============================================================
+
+            var cantidadCitasCompletadas =
+                await citasQuery.CountAsync();
+
+            var facturadoServicios =
                 await citasQuery
                     .SumAsync(x =>
                         (decimal?)x.Precio)
                 ?? 0;
-
-            var ingresosProductos =
-                await ventasQuery
-                    .SumAsync(x =>
-                        (decimal?)x.Total)
-                ?? 0;
-
-            var cantidadCitasCompletadas =
-                await citasQuery.CountAsync();
 
             var cantidadVentas =
                 await ventasQuery.CountAsync();
@@ -156,12 +226,17 @@ namespace BarberiaSaaS.Api.Controllers
                         (decimal?)x.Descuento)
                 ?? 0;
 
+            var facturadoProductos =
+                await ventasQuery
+                    .SumAsync(x =>
+                        (decimal?)x.Total)
+                ?? 0;
+
             var costoProductosVendidos =
                 await _context.VentaDetalles
                     .Where(d =>
                         d.TenantId == tenantId &&
-                        d.Venta.Estado ==
-                            EstadosVenta.Completada &&
+                        d.Venta.Estado == EstadosVenta.Completada &&
                         d.Venta.Fecha >= inicioUtc &&
                         d.Venta.Fecha < finUtc &&
                         (!sucursalId.HasValue ||
@@ -169,81 +244,71 @@ namespace BarberiaSaaS.Api.Controllers
                             sucursalId.Value))
                     .SumAsync(d =>
                         (decimal?)
-                        (d.CostoUnitario *
-                         d.Cantidad))
+                        (d.CostoUnitario * d.Cantidad))
                 ?? 0;
 
             var utilidadBrutaProductos =
-                ingresosProductos -
+                facturadoProductos -
                 costoProductosVendidos;
-
-            var ingresosTotales =
-                ingresosServicios +
-                ingresosProductos;
-
-            var ventasPorMetodoPago =
-                await ventasQuery
-                    .GroupBy(x =>
-                        x.MetodoPago)
-                    .Select(g => new
-                    {
-                        MetodoPago =
-                            g.Key,
-                        CantidadVentas =
-                            g.Count(),
-                        Total =
-                            g.Sum(x =>
-                                x.Total)
-                    })
-                    .OrderByDescending(x =>
-                        x.Total)
-                    .ToListAsync();
 
             return Ok(new
             {
-                Fecha =
-                    fechaLocal,
+                Fecha = fechaLocal,
+                SucursalId = sucursalId,
 
-                SucursalId =
-                    sucursalId,
+                Servicios = new
+                {
+                    CantidadCitas =
+                        cantidadCitasCompletadas,
+                    Facturado =
+                        facturadoServicios,
+                    Ingresos =
+                        ingresosServicios,
+                    CantidadCobros =
+                        cantidadCobrosServicios
+                },
 
-                Servicios =
-                    new
-                    {
-                        CantidadCitas =
-                            cantidadCitasCompletadas,
+                Productos = new
+                {
+                    CantidadVentas =
+                        cantidadVentas,
+                    Subtotal =
+                        subtotalVentasProductos,
+                    Descuentos =
+                        descuentosProductos,
+                    Facturado =
+                        facturadoProductos,
+                    Ingresos =
+                        ingresosProductos,
+                    CantidadCobros =
+                        cantidadCobrosProductos,
+                    Costo =
+                        costoProductosVendidos,
+                    UtilidadBruta =
+                        utilidadBrutaProductos
+                },
 
-                        Ingresos =
-                            ingresosServicios
-                    },
-
-                Productos =
-                    new
-                    {
-                        CantidadVentas =
-                            cantidadVentas,
-
-                        Subtotal =
-                            subtotalVentasProductos,
-
-                        Descuentos =
-                            descuentosProductos,
-
-                        Ingresos =
-                            ingresosProductos,
-
-                        Costo =
-                            costoProductosVendidos,
-
-                        UtilidadBruta =
-                            utilidadBrutaProductos
-                    },
+                Caja = new
+                {
+                    CantidadCobros =
+                        cantidadCobros,
+                    IngresosServicios =
+                        ingresosServicios,
+                    IngresosProductos =
+                        ingresosProductos,
+                    IngresosTotales =
+                        ingresosTotales
+                },
 
                 IngresosTotales =
                     ingresosTotales,
 
+                CobrosPorMetodoPago =
+                    cobrosPorMetodoPago,
+
+                // Se mantiene por compatibilidad con el frontend anterior.
                 VentasPorMetodoPago =
-                    ventasPorMetodoPago
+                    cobrosPorMetodoPago
             });
         }
     }
