@@ -9,16 +9,17 @@ import {
   FaCheckCircle,
   FaClock,
   FaMoneyBillWave,
+  FaShoppingBag,
   FaUserCheck,
   FaUsers,
   FaUserTie
 } from "react-icons/fa";
 
+import api from "../services/api";
+
 import {
   useConfiguracion
 } from "../context/ConfiguracionContext";
-
-import api from "../services/api";
 
 function Dashboard() {
   const {
@@ -28,89 +29,52 @@ function Dashboard() {
     formatearMoneda
   } = useConfiguracion();
 
-  const [citasHoy, setCitasHoy] =
-    useState([]);
+  const [citasHoy, setCitasHoy] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [profesionales, setProfesionales] = useState([]);
+  const [resumenFinanciero, setResumenFinanciero] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
-  const [clientes, setClientes] =
-    useState([]);
-
-  const [profesionales, setProfesionales] =
-    useState([]);
-
-  const [cargando, setCargando] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const fechaHoy =
-    useMemo(() => {
-      return obtenerFechaActualTenant(
-        zonaHoraria
-      );
-    }, [zonaHoraria]);
+  const fechaHoy = useMemo(
+    () => obtenerFechaActualTenant(zonaHoraria),
+    [zonaHoraria]
+  );
 
   useEffect(() => {
     cargarDashboard();
-  }, [
-    fechaHoy
-  ]);
+  }, [fechaHoy]);
 
   const cargarDashboard = async () => {
     try {
       setCargando(true);
       setError("");
 
-      const desde =
-        `${fechaHoy}T00:00:00`;
-
-      const hasta =
-        `${fechaHoy}T23:59:59`;
+      const desde = `${fechaHoy}T00:00:00`;
+      const hasta = `${fechaHoy}T23:59:59`;
 
       const [
         respuestaCitas,
         respuestaClientes,
-        respuestaProfesionales
+        respuestaProfesionales,
+        respuestaResumen
       ] = await Promise.all([
-        api.get(
-          "/Citas",
-          {
-            params: {
-              desde,
-              hasta
-            }
-          }
-        ),
-        api.get(
-          "/Clientes"
-        ),
-        api.get(
-          "/Profesionales"
-        )
+        api.get("/Citas", {
+          params: { desde, hasta }
+        }),
+        api.get("/Clientes"),
+        api.get("/Profesionales"),
+        api.get("/ResumenFinanciero/diario", {
+          params: { fecha: fechaHoy }
+        })
       ]);
 
-      setCitasHoy(
-        normalizarLista(
-          respuestaCitas.data
-        )
-      );
-
-      setClientes(
-        normalizarLista(
-          respuestaClientes.data
-        )
-      );
-
-      setProfesionales(
-        normalizarLista(
-          respuestaProfesionales.data
-        )
-      );
+      setCitasHoy(normalizarLista(respuestaCitas.data));
+      setClientes(normalizarLista(respuestaClientes.data));
+      setProfesionales(normalizarLista(respuestaProfesionales.data));
+      setResumenFinanciero(respuestaResumen.data || null);
     } catch (error) {
-      console.error(
-        "Error cargando dashboard:",
-        error
-      );
+      console.error("Error cargando dashboard:", error);
 
       setError(
         error.response?.data?.mensaje ||
@@ -122,457 +86,260 @@ function Dashboard() {
     }
   };
 
-  const citasActivas =
-    useMemo(() => {
-      return citasHoy.filter(
-        (cita) =>
-          cita.estado !== "Cancelada"
-      );
-    }, [citasHoy]);
+  const citasActivas = useMemo(
+    () => citasHoy.filter((cita) => cita.estado !== "Cancelada"),
+    [citasHoy]
+  );
 
-  const citasPendientes =
-    useMemo(() => {
-      return citasActivas.filter(
-        (cita) =>
-          cita.estado === "Pendiente"
-      ).length;
-    }, [citasActivas]);
+  const citasPendientes = useMemo(
+    () => citasActivas.filter((cita) => cita.estado === "Pendiente").length,
+    [citasActivas]
+  );
 
-  const citasConfirmadas =
-    useMemo(() => {
-      return citasActivas.filter(
-        (cita) =>
-          cita.estado === "Confirmada"
-      ).length;
-    }, [citasActivas]);
+  const citasConfirmadas = useMemo(
+    () => citasActivas.filter((cita) => cita.estado === "Confirmada").length,
+    [citasActivas]
+  );
 
-  const citasCompletadas =
-    useMemo(() => {
-      return citasActivas.filter(
-        (cita) =>
-          cita.estado === "Completada"
-      ).length;
-    }, [citasActivas]);
+  const citasCompletadas = useMemo(
+    () => citasActivas.filter((cita) => cita.estado === "Completada").length,
+    [citasActivas]
+  );
 
-  const clientesAtendidos =
-    useMemo(() => {
-      const ids =
-        new Set(
-          citasActivas
-            .filter(
-              (cita) =>
-                cita.estado === "Completada"
-            )
-            .map(
-              (cita) =>
-                cita.cliente?.id ||
-                cita.clienteId
-            )
-            .filter(Boolean)
+  const clientesAtendidos = useMemo(() => {
+    const ids = new Set(
+      citasActivas
+        .filter((cita) => cita.estado === "Completada")
+        .map((cita) => cita.cliente?.id || cita.clienteId)
+        .filter(Boolean)
+    );
+
+    return ids.size;
+  }, [citasActivas]);
+
+  const profesionalesActivos = useMemo(
+    () => profesionales.filter((profesional) => profesional.activo !== false).length,
+    [profesionales]
+  );
+
+  const proximasCitas = useMemo(
+    () => citasActivas
+      .filter((cita) => ["Pendiente", "Confirmada", "EnProceso"].includes(cita.estado))
+      .sort((a, b) => obtenerFechaCita(a) - obtenerFechaCita(b))
+      .slice(0, 6),
+    [citasActivas]
+  );
+
+  const estadisticasProfesionales = useMemo(
+    () => profesionales
+      .filter((profesional) => profesional.activo !== false)
+      .map((profesional) => {
+        const citasProfesional = citasActivas.filter(
+          (cita) => Number(cita.profesional?.id || cita.profesionalId) === Number(profesional.id)
         );
 
-      return ids.size;
-    }, [citasActivas]);
+        const completadas = citasProfesional.filter(
+          (cita) => cita.estado === "Completada"
+        );
 
-  const ventasHoy =
-    useMemo(() => {
-      return citasActivas
-        .filter(
-          (cita) =>
-            cita.estado === "Completada"
-        )
-        .reduce(
-          (total, cita) =>
-            total +
-            Number(
-              cita.precio || 0
-            ),
+        const total = completadas.reduce(
+          (suma, cita) => suma + Number(cita.precio || 0),
           0
         );
-    }, [citasActivas]);
 
-  const profesionalesActivos =
-    useMemo(() => {
-      return profesionales.filter(
-        (profesional) =>
-          profesional.activo !== false
-      ).length;
-    }, [profesionales]);
+        return {
+          ...profesional,
+          cantidad: citasProfesional.length,
+          completadas: completadas.length,
+          total
+        };
+      })
+      .sort((a, b) => b.cantidad - a.cantidad),
+    [profesionales, citasActivas]
+  );
 
-  const proximasCitas =
-    useMemo(() => {
-      return citasActivas
-        .filter(
-          (cita) =>
-            [
-              "Pendiente",
-              "Confirmada",
-              "EnProceso"
-            ].includes(
-              cita.estado
-            )
-        )
-        .sort(
-          (a, b) =>
-            obtenerFechaCita(a) -
-            obtenerFechaCita(b)
-        )
-        .slice(
-          0,
-          6
-        );
-    }, [citasActivas]);
-
-  const estadisticasProfesionales =
-    useMemo(() => {
-      return profesionales
-        .filter(
-          (profesional) =>
-            profesional.activo !== false
-        )
-        .map(
-          (profesional) => {
-            const citasProfesional =
-              citasActivas.filter(
-                (cita) =>
-                  Number(
-                    cita.profesional?.id ||
-                    cita.profesionalId
-                  ) ===
-                  Number(
-                    profesional.id
-                  )
-              );
-
-            const completadas =
-              citasProfesional.filter(
-                (cita) =>
-                  cita.estado ===
-                  "Completada"
-              );
-
-            const total =
-              completadas.reduce(
-                (suma, cita) =>
-                  suma +
-                  Number(
-                    cita.precio || 0
-                  ),
-                0
-              );
-
-            return {
-              ...profesional,
-              cantidad:
-                citasProfesional.length,
-              completadas:
-                completadas.length,
-              total
-            };
-          }
-        )
-        .sort(
-          (a, b) =>
-            b.cantidad -
-            a.cantidad
-        );
-    }, [
-      profesionales,
-      citasActivas
-    ]);
+  const ingresosTotales = Number(resumenFinanciero?.ingresosTotales || 0);
+  const ingresosServicios = Number(resumenFinanciero?.servicios?.ingresos || 0);
+  const ingresosProductos = Number(resumenFinanciero?.productos?.ingresos || 0);
+  const cantidadVentasProductos = Number(resumenFinanciero?.productos?.cantidadVentas || 0);
+  const utilidadBrutaProductos = Number(resumenFinanciero?.productos?.utilidadBruta || 0);
+  const descuentosProductos = Number(resumenFinanciero?.productos?.descuentos || 0);
+  const ventasPorMetodoPago = resumenFinanciero?.ventasPorMetodoPago || [];
 
   if (cargando) {
     return (
       <div className="py-5 text-center">
-
-        <div
-          className="spinner-border"
-          role="status"
-        />
-
-        <div className="mt-3 text-muted">
-          Cargando dashboard...
-        </div>
-
+        <div className="spinner-border" role="status" />
+        <div className="mt-3 text-muted">Cargando dashboard...</div>
       </div>
     );
   }
 
   return (
     <div>
-
       <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-
         <div>
-
-          <h1 className="page-title mb-1">
-            Dashboard
-          </h1>
-
-          <p className="text-muted mb-0">
-            Resumen de {nombreNegocio}
-          </p>
-
+          <h1 className="page-title mb-1">Dashboard</h1>
+          <p className="text-muted mb-0">Resumen de {nombreNegocio}</p>
         </div>
 
         <div className="text-md-end">
-
-          <div className="small text-muted">
-            Hoy
-          </div>
-
-          <strong>
-            {formatearFechaLarga(
-              fechaHoy
-            )}
-          </strong>
-
+          <div className="small text-muted">Hoy</div>
+          <strong>{formatearFechaLarga(fechaHoy)}</strong>
         </div>
-
       </div>
 
       {error && (
-        <div className="alert alert-danger mb-4">
-          {error}
-        </div>
+        <div className="alert alert-danger mb-4">{error}</div>
       )}
 
       <div className="row g-4">
+        <div className="col-md-6 col-xl-3">
+          <DashboardMoneyCard
+            label="Ingresos de hoy"
+            valor={ingresosTotales}
+            detalle={`${citasCompletadas} cita(s) + ${cantidadVentasProductos} venta(s)`}
+            icono={<FaMoneyBillWave size={28} className="text-primary" />}
+            formatearMoneda={formatearMoneda}
+            moneda={moneda}
+          />
+        </div>
 
         <div className="col-md-6 col-xl-3">
-          <div className="dashboard-card h-100">
+          <DashboardMoneyCard
+            label="Servicios"
+            valor={ingresosServicios}
+            detalle={`${resumenFinanciero?.servicios?.cantidadCitas || 0} cita(s) completada(s)`}
+            icono={<FaCheckCircle size={28} className="text-primary" />}
+            formatearMoneda={formatearMoneda}
+            moneda={moneda}
+          />
+        </div>
 
-            <div className="d-flex align-items-center justify-content-between gap-3">
-
-              <div>
-
-                <div className="dashboard-label">
-                  Citas de hoy
-                </div>
-
-                <div className="dashboard-value">
-                  {citasActivas.length}
-                </div>
-
-                <small className="text-muted">
-                  {citasPendientes} pendientes
-                </small>
-
-              </div>
-
-              <FaCalendarAlt
-                size={28}
-                className="text-primary"
-              />
-
-            </div>
-
-          </div>
+        <div className="col-md-6 col-xl-3">
+          <DashboardMoneyCard
+            label="Productos"
+            valor={ingresosProductos}
+            detalle={`${cantidadVentasProductos} venta(s) de producto(s)`}
+            icono={<FaShoppingBag size={28} className="text-primary" />}
+            formatearMoneda={formatearMoneda}
+            moneda={moneda}
+          />
         </div>
 
         <div className="col-md-6 col-xl-3">
           <div className="dashboard-card h-100">
-
             <div className="d-flex align-items-center justify-content-between gap-3">
-
               <div>
-
-                <div className="dashboard-label">
-                  Clientes
-                </div>
-
-                <div className="dashboard-value">
-                  {clientes.length}
-                </div>
-
+                <div className="dashboard-label">Citas de hoy</div>
+                <div className="dashboard-value">{citasActivas.length}</div>
                 <small className="text-muted">
-                  {clientesAtendidos} atendidos hoy
+                  {citasPendientes} pendientes · {citasCompletadas} completadas
                 </small>
-
               </div>
 
-              <FaUsers
-                size={28}
-                className="text-primary"
-              />
-
+              <FaCalendarAlt size={28} className="text-primary" />
             </div>
-
           </div>
         </div>
-
-        <div className="col-md-6 col-xl-3">
-          <div className="dashboard-card h-100">
-
-            <div className="d-flex align-items-center justify-content-between gap-3">
-
-              <div>
-
-                <div className="dashboard-label">
-                  Profesionales
-                </div>
-
-                <div className="dashboard-value">
-                  {profesionalesActivos}
-                </div>
-
-                <small className="text-muted">
-                  activos
-                </small>
-
-              </div>
-
-              <FaUserTie
-                size={28}
-                className="text-primary"
-              />
-
-            </div>
-
-          </div>
-        </div>
-
-        <div className="col-md-6 col-xl-3">
-          <div className="dashboard-card h-100">
-
-            <div className="d-flex align-items-center justify-content-between gap-3">
-
-              <div>
-
-                <div className="dashboard-label">
-                  Ventas de hoy
-                </div>
-
-                <div className="dashboard-value">
-                  {formatearMoneda
-                    ? formatearMoneda(
-                        ventasHoy
-                      )
-                    : moneda === "CRC"
-                      ? `₡${ventasHoy.toLocaleString("es-CR")}`
-                      : `${moneda} ${ventasHoy.toLocaleString("es-CR")}`}
-                </div>
-
-                <small className="text-muted">
-                  citas completadas
-                </small>
-
-              </div>
-
-              <FaMoneyBillWave
-                size={28}
-                className="text-primary"
-              />
-
-            </div>
-
-          </div>
-        </div>
-
       </div>
 
       <div className="row g-4 mt-1">
-
-        <div className="col-lg-4">
+        <div className="col-md-6 col-xl-3">
           <div className="dashboard-card h-100">
-
-            <div className="d-flex align-items-center justify-content-between mb-4">
-
+            <div className="d-flex align-items-center justify-content-between gap-3">
               <div>
-
-                <div className="dashboard-label">
-                  Estado de citas
-                </div>
-
-                <div className="fw-bold mt-1">
-                  Resumen del día
-                </div>
-
+                <div className="dashboard-label">Clientes</div>
+                <div className="dashboard-value">{clientes.length}</div>
+                <small className="text-muted">{clientesAtendidos} atendidos hoy</small>
               </div>
 
-              <FaClock
-                size={24}
-                className="text-primary"
-              />
+              <FaUsers size={28} className="text-primary" />
+            </div>
+          </div>
+        </div>
 
+        <div className="col-md-6 col-xl-3">
+          <div className="dashboard-card h-100">
+            <div className="d-flex align-items-center justify-content-between gap-3">
+              <div>
+                <div className="dashboard-label">Profesionales</div>
+                <div className="dashboard-value">{profesionalesActivos}</div>
+                <small className="text-muted">activos</small>
+              </div>
+
+              <FaUserTie size={28} className="text-primary" />
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-6 col-xl-3">
+          <DashboardMoneyCard
+            label="Utilidad bruta productos"
+            valor={utilidadBrutaProductos}
+            detalle="Ventas menos costo de productos"
+            icono={<FaMoneyBillWave size={28} className="text-primary" />}
+            formatearMoneda={formatearMoneda}
+            moneda={moneda}
+          />
+        </div>
+
+        <div className="col-md-6 col-xl-3">
+          <DashboardMoneyCard
+            label="Descuentos productos"
+            valor={descuentosProductos}
+            detalle="Descuentos aplicados hoy"
+            icono={<FaShoppingBag size={28} className="text-primary" />}
+            formatearMoneda={formatearMoneda}
+            moneda={moneda}
+          />
+        </div>
+      </div>
+
+      <div className="row g-4 mt-1">
+        <div className="col-lg-4">
+          <div className="dashboard-card h-100">
+            <div className="d-flex align-items-center justify-content-between mb-4">
+              <div>
+                <div className="dashboard-label">Estado de citas</div>
+                <div className="fw-bold mt-1">Resumen del día</div>
+              </div>
+
+              <FaClock size={24} className="text-primary" />
             </div>
 
-            <DashboardStatusRow
-              label="Pendientes"
-              valor={citasPendientes}
-            />
-
-            <DashboardStatusRow
-              label="Confirmadas"
-              valor={citasConfirmadas}
-            />
-
-            <DashboardStatusRow
-              label="Completadas"
-              valor={citasCompletadas}
-            />
-
+            <DashboardStatusRow label="Pendientes" valor={citasPendientes} />
+            <DashboardStatusRow label="Confirmadas" valor={citasConfirmadas} />
+            <DashboardStatusRow label="Completadas" valor={citasCompletadas} />
             <DashboardStatusRow
               label="Canceladas"
-              valor={
-                citasHoy.filter(
-                  (cita) =>
-                    cita.estado ===
-                    "Cancelada"
-                ).length
-              }
+              valor={citasHoy.filter((cita) => cita.estado === "Cancelada").length}
             />
-
             <DashboardStatusRow
               label="No asistió"
-              valor={
-                citasHoy.filter(
-                  (cita) =>
-                    cita.estado ===
-                    "NoAsistio"
-                ).length
-              }
+              valor={citasHoy.filter((cita) => cita.estado === "NoAsistio").length}
             />
-
           </div>
         </div>
 
         <div className="col-lg-8">
           <div className="dashboard-card h-100">
-
             <div className="d-flex align-items-center justify-content-between mb-4">
-
               <div>
-
-                <div className="dashboard-label">
-                  Próximas citas
-                </div>
-
-                <div className="fw-bold mt-1">
-                  Agenda de hoy
-                </div>
-
+                <div className="dashboard-label">Próximas citas</div>
+                <div className="fw-bold mt-1">Agenda de hoy</div>
               </div>
 
-              <FaCheckCircle
-                size={24}
-                className="text-primary"
-              />
-
+              <FaCheckCircle size={24} className="text-primary" />
             </div>
 
             {proximasCitas.length === 0 ? (
-
               <div className="text-muted py-4 text-center">
                 No hay citas pendientes para hoy.
               </div>
-
             ) : (
-
               <div className="table-responsive">
-
                 <table className="table align-middle mb-0">
-
                   <thead>
                     <tr>
                       <th>Hora</th>
@@ -582,253 +349,183 @@ function Dashboard() {
                       <th>Estado</th>
                     </tr>
                   </thead>
-
                   <tbody>
-
-                    {proximasCitas.map(
-                      (cita) => (
-
-                        <tr key={cita.id}>
-
-                          <td className="fw-bold">
-                            {obtenerHoraCita(
-                              cita,
-                              zonaHoraria
-                            )}
-                          </td>
-
-                          <td>
-                            {obtenerNombreCliente(
-                              cita
-                            )}
-                          </td>
-
-                          <td>
-                            {obtenerNombreServicio(
-                              cita
-                            )}
-                          </td>
-
-                          <td>
-                            {obtenerNombreProfesional(
-                              cita
-                            )}
-                          </td>
-
-                          <td>
-                            <span
-                              className={
-                                obtenerClaseEstado(
-                                  cita.estado
-                                )
-                              }
-                            >
-                              {formatearEstado(
-                                cita.estado
-                              )}
-                            </span>
-                          </td>
-
-                        </tr>
-
-                      )
-                    )}
-
+                    {proximasCitas.map((cita) => (
+                      <tr key={cita.id}>
+                        <td className="fw-bold">{obtenerHoraCita(cita, zonaHoraria)}</td>
+                        <td>{obtenerNombreCliente(cita)}</td>
+                        <td>{obtenerNombreServicio(cita)}</td>
+                        <td>{obtenerNombreProfesional(cita)}</td>
+                        <td>
+                          <span className={obtenerClaseEstado(cita.estado)}>
+                            {formatearEstado(cita.estado)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
-
                 </table>
-
               </div>
-
             )}
-
           </div>
         </div>
-
       </div>
 
       <div className="row g-4 mt-1">
-
         <div className="col-lg-8">
           <div className="dashboard-card h-100">
-
             <div className="d-flex align-items-center justify-content-between mb-4">
-
               <div>
-
-                <div className="dashboard-label">
-                  Profesionales
-                </div>
-
-                <div className="fw-bold mt-1">
-                  Actividad de hoy
-                </div>
-
+                <div className="dashboard-label">Profesionales</div>
+                <div className="fw-bold mt-1">Actividad de hoy</div>
               </div>
 
-              <FaUserCheck
-                size={24}
-                className="text-primary"
-              />
-
+              <FaUserCheck size={24} className="text-primary" />
             </div>
 
             {estadisticasProfesionales.length === 0 ? (
-
               <div className="text-muted py-4 text-center">
                 No hay profesionales activos.
               </div>
-
             ) : (
-
               <div className="table-responsive">
-
                 <table className="table align-middle mb-0">
-
                   <thead>
                     <tr>
                       <th>Profesional</th>
-                      <th className="text-center">
-                        Citas
-                      </th>
-                      <th className="text-center">
-                        Completadas
-                      </th>
-                      <th className="text-end">
-                        Total
-                      </th>
+                      <th className="text-center">Citas</th>
+                      <th className="text-center">Completadas</th>
+                      <th className="text-end">Servicios</th>
                     </tr>
                   </thead>
-
                   <tbody>
-
-                    {estadisticasProfesionales.map(
-                      (profesional) => (
-
-                        <tr key={profesional.id}>
-
-                          <td>
-
-                            <div className="fw-bold">
-                              {profesional.nombre}{" "}
-                              {profesional.apellidos}
-                            </div>
-
-                            {profesional.especialidad && (
-                              <small className="text-muted">
-                                {profesional.especialidad}
-                              </small>
-                            )}
-
-                          </td>
-
-                          <td className="text-center">
-                            {profesional.cantidad}
-                          </td>
-
-                          <td className="text-center">
-                            {profesional.completadas}
-                          </td>
-
-                          <td className="text-end fw-bold">
-                            {formatearMoneda
-                              ? formatearMoneda(
-                                  profesional.total
-                                )
-                              : profesional.total}
-                          </td>
-
-                        </tr>
-
-                      )
-                    )}
-
+                    {estadisticasProfesionales.map((profesional) => (
+                      <tr key={profesional.id}>
+                        <td>
+                          <div className="fw-bold">
+                            {profesional.nombre} {profesional.apellidos}
+                          </div>
+                          {profesional.especialidad && (
+                            <small className="text-muted">{profesional.especialidad}</small>
+                          )}
+                        </td>
+                        <td className="text-center">{profesional.cantidad}</td>
+                        <td className="text-center">{profesional.completadas}</td>
+                        <td className="text-end fw-bold">
+                          {mostrarMoneda(profesional.total, formatearMoneda, moneda)}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
-
                 </table>
-
               </div>
-
             )}
-
           </div>
         </div>
 
         <div className="col-lg-4">
           <div className="dashboard-card h-100">
+            <div className="d-flex align-items-center justify-content-between mb-4">
+              <div>
+                <div className="dashboard-label">Ventas de productos</div>
+                <div className="fw-bold mt-1">Por método de pago</div>
+              </div>
 
-            <div className="dashboard-label mb-3">
-              Información del negocio
+              <FaMoneyBillWave size={24} className="text-primary" />
             </div>
 
-            <div className="dashboard-info">
-
-              <div>
-                <span>
-                  Zona horaria
-                </span>
-
-                <strong>
-                  {zonaHoraria}
-                </strong>
+            {ventasPorMetodoPago.length === 0 ? (
+              <div className="text-muted py-3 text-center">
+                No hay ventas de productos hoy.
               </div>
+            ) : (
+              ventasPorMetodoPago.map((item) => (
+                <div
+                  key={item.metodoPago}
+                  className="d-flex align-items-center justify-content-between py-2 border-bottom"
+                >
+                  <div>
+                    <div className="fw-semibold">{item.metodoPago}</div>
+                    <small className="text-muted">{item.cantidadVentas} venta(s)</small>
+                  </div>
 
+                  <strong>
+                    {mostrarMoneda(Number(item.total || 0), formatearMoneda, moneda)}
+                  </strong>
+                </div>
+              ))
+            )}
+
+            <div className="dashboard-info mt-4">
               <div>
-                <span>
-                  Moneda
-                </span>
-
-                <strong>
-                  {moneda}
-                </strong>
+                <span>Zona horaria</span>
+                <strong>{zonaHoraria}</strong>
               </div>
-
               <div>
-                <span>
-                  Fecha
-                </span>
-
-                <strong>
-                  {fechaHoy}
-                </strong>
+                <span>Moneda</span>
+                <strong>{moneda}</strong>
               </div>
-
+              <div>
+                <span>Fecha</span>
+                <strong>{fechaHoy}</strong>
+              </div>
             </div>
-
           </div>
         </div>
-
       </div>
-
     </div>
   );
 }
 
-function DashboardStatusRow({
+function DashboardMoneyCard({
   label,
-  valor
+  valor,
+  detalle,
+  icono,
+  formatearMoneda,
+  moneda
 }) {
   return (
-    <div className="d-flex align-items-center justify-content-between py-2 border-bottom">
-
-      <span className="text-muted">
-        {label}
-      </span>
-
-      <strong>
-        {valor}
-      </strong>
-
+    <div className="dashboard-card h-100">
+      <div className="d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div className="dashboard-label">{label}</div>
+          <div className="dashboard-value">
+            {mostrarMoneda(valor, formatearMoneda, moneda)}
+          </div>
+          <small className="text-muted">{detalle}</small>
+        </div>
+        {icono}
+      </div>
     </div>
   );
 }
 
-function normalizarLista(
-  data
-) {
-  if (
-    Array.isArray(data)
-  ) {
+function DashboardStatusRow({ label, valor }) {
+  return (
+    <div className="d-flex align-items-center justify-content-between py-2 border-bottom">
+      <span className="text-muted">{label}</span>
+      <strong>{valor}</strong>
+    </div>
+  );
+}
+
+function mostrarMoneda(valor, formatearMoneda, moneda) {
+  const numero = Number(valor || 0);
+
+  if (formatearMoneda) {
+    return formatearMoneda(numero);
+  }
+
+  if (moneda === "CRC") {
+    return `₡${numero.toLocaleString("es-CR")}`;
+  }
+
+  return `${moneda} ${numero.toLocaleString("es-CR")}`;
+}
+
+function normalizarLista(data) {
+  if (Array.isArray(data)) {
     return data;
   }
 
@@ -841,15 +538,8 @@ function normalizarLista(
     "citas"
   ];
 
-  for (
-    const propiedad
-    of posiblesPropiedades
-  ) {
-    if (
-      Array.isArray(
-        data?.[propiedad]
-      )
-    ) {
+  for (const propiedad of posiblesPropiedades) {
+    if (Array.isArray(data?.[propiedad])) {
       return data[propiedad];
     }
   }
@@ -857,265 +547,152 @@ function normalizarLista(
   return [];
 }
 
-function obtenerFechaActualTenant(
-  zonaHoraria
-) {
+function obtenerFechaActualTenant(zonaHoraria) {
   try {
-    const partes =
-      new Intl.DateTimeFormat(
-        "en-CA",
-        {
-          timeZone:
-            zonaHoraria ||
-            "America/Costa_Rica",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit"
-        }
-      ).formatToParts(
-        new Date()
-      );
+    const partes = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zonaHoraria || "America/Costa_Rica",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
 
-    const year =
-      partes.find(
-        (parte) =>
-          parte.type === "year"
-      )?.value;
-
-    const month =
-      partes.find(
-        (parte) =>
-          parte.type === "month"
-      )?.value;
-
-    const day =
-      partes.find(
-        (parte) =>
-          parte.type === "day"
-      )?.value;
+    const year = partes.find((parte) => parte.type === "year")?.value;
+    const month = partes.find((parte) => parte.type === "month")?.value;
+    const day = partes.find((parte) => parte.type === "day")?.value;
 
     return `${year}-${month}-${day}`;
   } catch {
-    return new Date()
-      .toISOString()
-      .slice(
-        0,
-        10
-      );
+    return new Date().toISOString().slice(0, 10);
   }
 }
 
-function obtenerFechaCita(
-  cita
-) {
-  const fechaTexto =
-    cita.fechaInicioUtc ||
-    cita.fechaInicio;
+function obtenerFechaCita(cita) {
+  const fechaTexto = cita.fechaInicioUtc || cita.fechaInicio;
 
   if (!fechaTexto) {
     return 0;
   }
 
-  let valor =
-    fechaTexto;
+  let valor = fechaTexto;
 
   if (
     typeof valor === "string" &&
     !valor.endsWith("Z") &&
-    !/[+-]\d{2}:\d{2}$/.test(
-      valor
-    )
+    !/[+-]\d{2}:\d{2}$/.test(valor)
   ) {
-    valor =
-      `${valor}Z`;
+    valor = `${valor}Z`;
   }
 
-  const fecha =
-    new Date(valor);
+  const fecha = new Date(valor);
 
-  return Number.isNaN(
-    fecha.getTime()
-  )
-    ? 0
-    : fecha.getTime();
+  return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
 }
 
-function obtenerHoraCita(
-  cita,
-  zonaHoraria
-) {
-  const fechaTexto =
-    cita.fechaInicioUtc ||
-    cita.fechaInicio;
+function obtenerHoraCita(cita, zonaHoraria) {
+  const fechaTexto = cita.fechaInicioUtc || cita.fechaInicio;
 
   if (!fechaTexto) {
     return "-";
   }
 
-  let valor =
-    fechaTexto;
+  let valor = fechaTexto;
 
   if (
     typeof valor === "string" &&
     !valor.endsWith("Z") &&
-    !/[+-]\d{2}:\d{2}$/.test(
-      valor
-    )
+    !/[+-]\d{2}:\d{2}$/.test(valor)
   ) {
-    valor =
-      `${valor}Z`;
+    valor = `${valor}Z`;
   }
 
-  const fecha =
-    new Date(valor);
+  const fecha = new Date(valor);
 
-  if (
-    Number.isNaN(
-      fecha.getTime()
-    )
-  ) {
+  if (Number.isNaN(fecha.getTime())) {
     return "-";
   }
 
   try {
-    return new Intl.DateTimeFormat(
-      "es-CR",
-      {
-        timeZone:
-          zonaHoraria ||
-          "America/Costa_Rica",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      }
-    ).format(
-      fecha
-    );
+    return new Intl.DateTimeFormat("es-CR", {
+      timeZone: zonaHoraria || "America/Costa_Rica",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).format(fecha);
   } catch {
     return "-";
   }
 }
 
-function obtenerNombreCliente(
-  cita
-) {
-  const cliente =
-    cita.cliente;
+function obtenerNombreCliente(cita) {
+  const cliente = cita.cliente;
 
   if (!cliente) {
     return "Cliente";
   }
 
-  return [
-    cliente.nombre,
-    cliente.apellidos
-  ]
+  return [cliente.nombre, cliente.apellidos]
     .filter(Boolean)
-    .join(" ") ||
-    "Cliente";
+    .join(" ") || "Cliente";
 }
 
-function obtenerNombreProfesional(
-  cita
-) {
-  const profesional =
-    cita.profesional;
+function obtenerNombreProfesional(cita) {
+  const profesional = cita.profesional;
 
   if (!profesional) {
     return "Profesional";
   }
 
-  return [
-    profesional.nombre,
-    profesional.apellidos
-  ]
+  return [profesional.nombre, profesional.apellidos]
     .filter(Boolean)
-    .join(" ") ||
-    "Profesional";
+    .join(" ") || "Profesional";
 }
 
-function obtenerNombreServicio(
-  cita
-) {
-  return (
-    cita.servicio?.nombre ||
-    cita.servicioNombre ||
-    "Servicio"
-  );
+function obtenerNombreServicio(cita) {
+  return cita.servicio?.nombre || cita.servicioNombre || "Servicio";
 }
 
-function obtenerClaseEstado(
-  estado
-) {
+function obtenerClaseEstado(estado) {
   switch (estado) {
     case "Confirmada":
       return "appointment-status confirmed";
-
     case "EnProceso":
       return "appointment-status in-progress";
-
     case "Completada":
       return "appointment-status completed";
-
     case "Cancelada":
       return "appointment-status cancelled";
-
     case "NoAsistio":
       return "appointment-status absent";
-
     default:
       return "appointment-status pending";
   }
 }
 
-function formatearEstado(
-  estado
-) {
+function formatearEstado(estado) {
   switch (estado) {
     case "EnProceso":
       return "En proceso";
-
     case "NoAsistio":
       return "No asistió";
-
     default:
       return estado || "Pendiente";
   }
 }
 
-function formatearFechaLarga(
-  fecha
-) {
+function formatearFechaLarga(fecha) {
   if (!fecha) {
     return "";
   }
 
-  const [
-    year,
-    month,
-    day
-  ] = fecha
-    .split("-")
-    .map(Number);
+  const [year, month, day] = fecha.split("-").map(Number);
+  const fechaLocal = new Date(year, month - 1, day);
 
-  const fechaLocal =
-    new Date(
-      year,
-      month - 1,
-      day
-    );
-
-  return new Intl.DateTimeFormat(
-    "es-CR",
-    {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    }
-  ).format(
-    fechaLocal
-  );
+  return new Intl.DateTimeFormat("es-CR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(fechaLocal);
 }
 
 export default Dashboard;
