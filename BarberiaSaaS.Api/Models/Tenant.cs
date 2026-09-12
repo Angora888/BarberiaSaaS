@@ -43,5 +43,11 @@
 
         public ICollection<BloqueoProfesional> BloqueosProfesionales { get; set; }
             = new List<BloqueoProfesional>();
+
+        public ICollection<CuentaPorCobrar> CuentasPorCobrar { get; set; }
+            = new List<CuentaPorCobrar>();
+
+        public ICollection<AbonoCuentaPorCobrar> AbonosCuentasPorCobrar { get; set; }
+            = new List<AbonoCuentaPorCobrar>();
     }
 }
