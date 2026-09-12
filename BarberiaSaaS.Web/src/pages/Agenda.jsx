@@ -16,6 +16,7 @@ import {
 
 import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
+import AgendaSemanaCompacta from "../components/AgendaSemanaCompacta";
 import "./Agenda.css";
 
 function Agenda() {
@@ -918,6 +919,43 @@ function Agenda() {
     setMostrarNuevaCita(true);
   };
 
+  const abrirNuevaCitaParaFechaYHora = (
+    fecha,
+    minutoInicio
+  ) => {
+    setFechaSeleccionada(
+      fecha
+    );
+
+    setError("");
+    setErrorModal("");
+    setHorariosDisponibles([]);
+
+    setFormulario({
+      clienteId: "",
+      servicioId: "",
+      servicioVarianteId: "",
+      profesionalId:
+        profesionalFiltro !== "todos"
+          ? profesionalFiltro
+          : "",
+      sucursalId:
+        sucursales.length === 1
+          ? sucursales[0].id.toString()
+          : "",
+      fecha,
+      duracionHoras: "1",
+      duracionMinutos: "0",
+      horaInicio:
+        formatearMinutosHora(
+          minutoInicio
+        ),
+      notas: ""
+    });
+
+    setMostrarNuevaCita(true);
+  };
+
   const abrirNuevaCitaDesdeAgenda = (
     profesional,
     minutoInicio
@@ -1636,6 +1674,17 @@ function Agenda() {
     );
   };
 
+  const abrirDiaSemana = (
+    fecha
+  ) => {
+    setFechaSeleccionada(
+      fecha
+    );
+    setModoAgenda(
+      "dia"
+    );
+  };
+
   // ============================================================
   // RANGO Y TÍTULO
   // ============================================================
@@ -1677,7 +1726,7 @@ function Agenda() {
 
         const mismoAnio =
           inicio.getFullYear() ===
-          fin.getFullYear();
+            fin.getFullYear();
 
         if (mismoMes) {
           return `${inicio.getDate()} - ${fin.getDate()} de ${
@@ -2020,7 +2069,8 @@ function Agenda() {
         minutoInicio,
         minutoFin,
         horas,
-        pixelesPorMinuto: 1.15
+        pixelesPorMinuto: 1.15,
+        pixelesPorMinutoSemana: 0.82
       };
     }, [
       citas,
@@ -2410,163 +2460,22 @@ function Agenda() {
 
         ) : modoAgenda === "semana" ? (
 
-          <div className="week-agenda-wrapper">
-
-            <div className="week-agenda">
-
-              {diasSemana.map(
-                (dia) => {
-
-                  const citasDia =
-                    citasSemanaPorDia.get(
-                      dia.fecha
-                    ) || [];
-
-                  const esHoy =
-                    dia.fecha ===
-                    obtenerFechaHoy();
-
-                  return (
-
-                    <section
-                      key={dia.fecha}
-                      className={
-                        esHoy
-                          ? "week-day-column today"
-                          : "week-day-column"
-                      }
-                    >
-
-                      <div className="week-day-header">
-
-                        <button
-                          type="button"
-                          className="week-day-title"
-                          onClick={() => {
-                            setFechaSeleccionada(
-                              dia.fecha
-                            );
-                            setModoAgenda(
-                              "dia"
-                            );
-                          }}
-                          title="Abrir este día"
-                        >
-                          <span>
-                            {dia.nombreCorto}
-                          </span>
-
-                          <strong>
-                            {dia.numeroDia}
-                          </strong>
-                        </button>
-
-                        <span className="week-day-count">
-                          {citasDia.length}
-                        </span>
-
-                      </div>
-
-                      <div className="week-day-body">
-
-                        <button
-                          type="button"
-                          className="week-add-appointment"
-                          onClick={() =>
-                            abrirNuevaCitaParaFecha(
-                              dia.fecha
-                            )
-                          }
-                        >
-                          <FaPlus />
-                          <span>Nueva cita</span>
-                        </button>
-
-                        {citasDia.length === 0 ? (
-
-                          <div className="week-day-empty">
-                            Sin citas
-                          </div>
-
-                        ) : (
-
-                          citasDia.map(
-                            (cita) => (
-
-                              <button
-                                key={cita.id}
-                                type="button"
-                                className={
-                                  `week-appointment ${obtenerClaseEstadoVisual(
-                                    cita.estado
-                                  )}`
-                                }
-                                onClick={() =>
-                                  abrirDetalleCita(
-                                    cita
-                                  )
-                                }
-                              >
-
-                                <div className="week-appointment-top">
-
-                                  <strong>
-                                    {obtenerHoraCita(
-                                      cita,
-                                      zonaHoraria
-                                    )}
-                                  </strong>
-
-                                  <span>
-                                    {formatearEstado(
-                                      cita.estado
-                                    )}
-                                  </span>
-
-                                </div>
-
-                                <div className="week-appointment-service">
-                                  {obtenerNombreServicio(
-                                    cita
-                                  )}
-                                </div>
-
-                                <div className="week-appointment-client">
-                                  <FaUser />
-                                  <span>
-                                    {obtenerNombreCliente(
-                                      cita
-                                    )}
-                                  </span>
-                                </div>
-
-                                <div className="week-appointment-professional">
-                                  <FaUserTie />
-                                  <span>
-                                    {obtenerNombreProfesional(
-                                      cita
-                                    )}
-                                  </span>
-                                </div>
-
-                              </button>
-
-                            )
-                          )
-
-                        )}
-
-                      </div>
-
-                    </section>
-
-                  );
-                }
-              )}
-
-            </div>
-
-          </div>
+          <AgendaSemanaCompacta
+            diasSemana={diasSemana}
+            citasSemanaPorDia={citasSemanaPorDia}
+            configuracionAgenda={configuracionAgenda}
+            zonaHoraria={zonaHoraria}
+            profesionalFiltro={profesionalFiltro}
+            obtenerMinutosCita={obtenerMinutosCita}
+            obtenerDuracionCita={obtenerDuracionCita}
+            obtenerClaseEstadoVisual={obtenerClaseEstadoVisual}
+            obtenerNombreServicio={obtenerNombreServicio}
+            obtenerNombreCliente={obtenerNombreCliente}
+            obtenerNombreProfesional={obtenerNombreProfesional}
+            abrirDetalleCita={abrirDetalleCita}
+            abrirNuevaCitaParaFechaYHora={abrirNuevaCitaParaFechaYHora}
+            abrirDia={abrirDiaSemana}
+          />
 
         ) : vistaAgenda === "visual" ? (
 
