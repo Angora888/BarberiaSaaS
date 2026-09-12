@@ -1,0 +1,75 @@
+.client-availability-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1030;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: #198754;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.client-availability-fab:hover,
+.client-availability-fab:focus {
+  background: #157347;
+  color: #ffffff;
+}
+
+.client-availability-modal {
+  max-width: 760px;
+}
+
+.client-availability-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6c757d;
+  min-height: 90px;
+}
+
+.client-availability-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(25, 135, 84, 0.08);
+  color: #3f4a43;
+  font-size: 0.92rem;
+}
+
+.client-availability-tip svg {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767.98px) {
+  .client-availability-fab {
+    right: 16px;
+    bottom: 16px;
+    padding: 12px 14px;
+  }
+
+  .client-availability-fab span {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .client-availability-fab {
+    width: 52px;
+    height: 52px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .client-availability-fab span {
+    display: none;
+  }
+}
