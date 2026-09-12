@@ -4,6 +4,7 @@ import {
   Routes
 } from "react-router-dom";
 
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
@@ -42,6 +43,12 @@ function RutaProtegida({
 function App() {
   return (
     <Routes>
+      {/* HOME PÚBLICO */}
+
+      <Route
+        path="/"
+        element={<Home />}
+      />
 
       {/* LOGIN */}
 
@@ -61,16 +68,6 @@ function App() {
           </RutaProtegida>
         }
       >
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
-            />
-          }
-        />
-
         <Route
           path="/dashboard"
           element={<Dashboard />}
@@ -115,7 +112,6 @@ function App() {
           path="/configuracion"
           element={<Configuracion />}
         />
-
       </Route>
 
       {/* RUTA DESCONOCIDA */}
@@ -124,12 +120,11 @@ function App() {
         path="*"
         element={
           <Navigate
-            to="/dashboard"
+            to="/"
             replace
           />
         }
       />
-
     </Routes>
   );
 }
