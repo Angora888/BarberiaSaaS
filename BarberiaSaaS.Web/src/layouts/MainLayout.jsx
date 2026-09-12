@@ -41,7 +41,6 @@ function MainLayout() {
   const {
     sucursales,
     sucursalId,
-    sucursalSeleccionada,
     cargandoSucursales,
     errorSucursales,
     seleccionarSucursal
@@ -222,51 +221,108 @@ function MainLayout() {
       </aside>
 
       <main className="main-content">
-        <header className="topbar">
-          <div className="d-flex flex-wrap align-items-center gap-3">
-            <div>
-              <div className="small text-muted">
-                Sucursal activa
-              </div>
-
-              <select
-                className="form-select form-select-sm"
-                style={{ minWidth: 220 }}
-                value={sucursalId}
-                onChange={(e) =>
-                  seleccionarSucursal(
-                    e.target.value
-                  )
-                }
+        <header
+          className="topbar"
+          style={{
+            justifyContent: "space-between",
+            gap: 16
+          }}
+        >
+          <div
+            className="d-flex align-items-center"
+            style={{
+              minWidth: 0,
+              flex: "1 1 auto"
+            }}
+          >
+            <div
+              className="d-flex align-items-center"
+              style={{
+                width: "100%",
+                maxWidth: 360,
+                minWidth: 0,
+                padding: "7px 12px",
+                border: "1px solid var(--border)",
+                borderRadius: 18,
+                background: "#fff",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
+              }}
+            >
+              <div
+                className="d-flex align-items-center justify-content-center"
+                style={{
+                  width: 40,
+                  height: 40,
+                  minWidth: 40,
+                  borderRadius: 14,
+                  background: "var(--soft-pink)",
+                  color: "var(--primary)",
+                  marginRight: 10
+                }}
               >
-                <option value="">
-                  Todas las sucursales
-                </option>
-
-                {sucursales.map(
-                  (sucursal) => (
-                    <option
-                      key={sucursal.id}
-                      value={sucursal.id}
-                    >
-                      {sucursal.nombre}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-
-            {sucursalSeleccionada && (
-              <div className="small text-muted d-none d-md-block">
-                <FaStore className="me-1" />
-                {sucursalSeleccionada.direccion ||
-                  "Sucursal seleccionada"}
+                <FaStore size={18} />
               </div>
-            )}
+
+              <div
+                style={{
+                  minWidth: 0,
+                  flex: 1
+                }}
+              >
+                <div
+                  className="text-muted"
+                  style={{
+                    fontSize: 11,
+                    lineHeight: 1.1,
+                    marginBottom: 2
+                  }}
+                >
+                  Sucursal
+                </div>
+
+                <select
+                  aria-label="Sucursal activa"
+                  value={sucursalId}
+                  onChange={(e) =>
+                    seleccionarSucursal(
+                      e.target.value
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    border: "none",
+                    outline: "none",
+                    boxShadow: "none",
+                    backgroundColor: "transparent",
+                    color: "#29252a",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: 0,
+                    cursor: "pointer"
+                  }}
+                >
+                  <option value="">
+                    Todas las sucursales
+                  </option>
+
+                  {sucursales.map(
+                    (sucursal) => (
+                      <option
+                        key={sucursal.id}
+                        value={sucursal.id}
+                      >
+                        {sucursal.nombre}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="topbar-user">
-            <div className="topbar-user-text">
+            <div className="topbar-user-text d-none d-md-flex">
               <strong>
                 {usuario.nombre ||
                   "Usuario"}
