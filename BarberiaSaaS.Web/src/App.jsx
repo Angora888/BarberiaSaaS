@@ -11,6 +11,7 @@ import Servicios from "./pages/Servicios";
 import Profesionales from "./pages/Profesionales";
 import Agenda from "./pages/Agenda";
 import Productos from "./pages/Productos";
+import Ventas from "./pages/Ventas";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -96,6 +97,11 @@ function App() {
         <Route
           path="/productos"
           element={<Productos />}
+        />
+
+        <Route
+          path="/ventas"
+          element={<Ventas />}
         />
 
       </Route>
