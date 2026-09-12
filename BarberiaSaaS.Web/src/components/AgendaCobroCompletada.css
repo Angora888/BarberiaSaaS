@@ -1,0 +1,199 @@
+.agenda-cobro-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(24, 20, 24, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.agenda-cobro-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(31, 24, 31, 0.22);
+}
+
+.agenda-cobro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #eee8ed;
+}
+
+.agenda-cobro-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.agenda-cobro-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--soft-pink);
+  color: var(--primary);
+  font-size: 22px;
+}
+
+.agenda-cobro-kicker {
+  margin-bottom: 2px;
+  color: #7c727a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.agenda-cobro-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+
+.agenda-cobro-body {
+  padding: 24px;
+}
+
+.agenda-cobro-loading {
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #746a72;
+}
+
+.agenda-cobro-cita-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #eee6ec;
+  border-radius: 18px;
+  background: #fcfafb;
+}
+
+.agenda-cobro-cita-card > div,
+.agenda-cobro-summary > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agenda-cobro-cita-card span,
+.agenda-cobro-summary span {
+  color: #81777f;
+  font-size: 12px;
+}
+
+.agenda-cobro-cita-card strong {
+  overflow: hidden;
+  color: #282328;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-cobro-total {
+  color: var(--primary) !important;
+  font-size: 18px;
+}
+
+.agenda-cobro-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.agenda-cobro-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #f8f5f7;
+}
+
+.agenda-cobro-summary strong {
+  font-size: 16px;
+}
+
+.agenda-cobro-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px !important;
+  font-weight: 800;
+}
+
+.agenda-cobro-status.paid {
+  background: #e8f7ef;
+  color: #1d7a4c;
+}
+
+.agenda-cobro-status.partial {
+  background: #fff3dc;
+  color: #9b6510;
+}
+
+.agenda-cobro-status.pending {
+  background: #f0edf0;
+  color: #625b61;
+}
+
+.agenda-cobro-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #eee8ed;
+}
+
+@media (max-width: 640px) {
+  .agenda-cobro-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .agenda-cobro-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .agenda-cobro-header,
+  .agenda-cobro-body {
+    padding: 18px;
+  }
+
+  .agenda-cobro-cita-card,
+  .agenda-cobro-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-cobro-footer {
+    flex-direction: column-reverse;
+  }
+
+  .agenda-cobro-footer .btn {
+    width: 100%;
+  }
+}
