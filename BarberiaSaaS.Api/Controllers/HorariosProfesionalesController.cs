@@ -69,20 +69,10 @@ namespace BarberiaSaaS.Api.Controllers
         {
             var tenantId = _tenantContext.TenantId;
 
-            if (request.DiaSemana < 0 || request.DiaSemana > 6)
+            var validacion = ValidarHorario(request);
+            if (validacion != null)
             {
-                return BadRequest(new
-                {
-                    mensaje = "DiaSemana debe estar entre 0 y 6."
-                });
-            }
-
-            if (request.HoraFin <= request.HoraInicio)
-            {
-                return BadRequest(new
-                {
-                    mensaje = "HoraFin debe ser mayor que HoraInicio."
-                });
+                return validacion;
             }
 
             var profesional = await _context.Profesionales
@@ -138,8 +128,127 @@ namespace BarberiaSaaS.Api.Controllers
                 horario.Id,
                 diaSemana = (int)horario.DiaSemana,
                 horario.HoraInicio,
-                horario.HoraFin
+                horario.HoraFin,
+                horario.Activo
             });
+        }
+
+        [HttpPut("{horarioId:int}")]
+        public async Task<IActionResult> Actualizar(
+            int profesionalId,
+            int horarioId,
+            CrearHorarioProfesionalDto request)
+        {
+            var tenantId = _tenantContext.TenantId;
+
+            var validacion = ValidarHorario(request);
+            if (validacion != null)
+            {
+                return validacion;
+            }
+
+            var horario = await _context.HorariosProfesionales
+                .FirstOrDefaultAsync(x =>
+                    x.Id == horarioId &&
+                    x.ProfesionalId == profesionalId &&
+                    x.TenantId == tenantId);
+
+            if (horario == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Horario no encontrado."
+                });
+            }
+
+            var dia = (DayOfWeek)request.DiaSemana;
+
+            var existeTraslape = await _context.HorariosProfesionales
+                .AnyAsync(x =>
+                    x.Id != horarioId &&
+                    x.TenantId == tenantId &&
+                    x.ProfesionalId == profesionalId &&
+                    x.DiaSemana == dia &&
+                    x.Activo &&
+                    request.HoraInicio < x.HoraFin &&
+                    request.HoraFin > x.HoraInicio);
+
+            if (existeTraslape)
+            {
+                return Conflict(new
+                {
+                    mensaje = "El horario se traslapa con otro horario existente."
+                });
+            }
+
+            horario.DiaSemana = dia;
+            horario.HoraInicio = request.HoraInicio;
+            horario.HoraFin = request.HoraFin;
+            horario.Activo = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "Horario actualizado correctamente.",
+                horario.Id,
+                diaSemana = (int)horario.DiaSemana,
+                horario.HoraInicio,
+                horario.HoraFin,
+                horario.Activo
+            });
+        }
+
+        [HttpDelete("{horarioId:int}")]
+        public async Task<IActionResult> Eliminar(
+            int profesionalId,
+            int horarioId)
+        {
+            var tenantId = _tenantContext.TenantId;
+
+            var horario = await _context.HorariosProfesionales
+                .FirstOrDefaultAsync(x =>
+                    x.Id == horarioId &&
+                    x.ProfesionalId == profesionalId &&
+                    x.TenantId == tenantId);
+
+            if (horario == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Horario no encontrado."
+                });
+            }
+
+            _context.HorariosProfesionales.Remove(horario);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "Horario eliminado correctamente."
+            });
+        }
+
+        private BadRequestObjectResult? ValidarHorario(
+            CrearHorarioProfesionalDto request)
+        {
+            if (request.DiaSemana < 0 || request.DiaSemana > 6)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "DiaSemana debe estar entre 0 y 6."
+                });
+            }
+
+            if (request.HoraFin <= request.HoraInicio)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "HoraFin debe ser mayor que HoraInicio."
+                });
+            }
+
+            return null;
         }
     }
 }
