@@ -19,6 +19,7 @@ import Sucursales from "./pages/Sucursales";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
+import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
 
@@ -117,6 +118,7 @@ function App() {
               <Agenda />
               <AgendaAvailabilityFeedback />
               <AgendaQuickTimeSelection />
+              <AgendaCobroCompletada />
             </>
           }
         />
