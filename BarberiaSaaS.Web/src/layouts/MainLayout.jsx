@@ -22,6 +22,10 @@ import {
   useConfiguracion
 } from "../context/ConfiguracionContext";
 
+import {
+  useSucursal
+} from "../context/SucursalContext";
+
 function MainLayout() {
   const navigate =
     useNavigate();
@@ -33,6 +37,15 @@ function MainLayout() {
     cargandoConfiguracion,
     errorConfiguracion
   } = useConfiguracion();
+
+  const {
+    sucursales,
+    sucursalId,
+    sucursalSeleccionada,
+    cargandoSucursales,
+    errorSucursales,
+    seleccionarSucursal
+  } = useSucursal();
 
   const usuario =
     JSON.parse(
@@ -50,6 +63,10 @@ function MainLayout() {
       "usuario"
     );
 
+    localStorage.removeItem(
+      "barberiaSaaS.sucursalSeleccionada"
+    );
+
     navigate("/");
   };
 
@@ -58,7 +75,10 @@ function MainLayout() {
       ?.charAt(0)
       ?.toUpperCase() || "N";
 
-  if (cargandoConfiguracion) {
+  if (
+    cargandoConfiguracion ||
+    cargandoSucursales
+  ) {
     return (
       <div className="app-loading">
         <div
@@ -203,6 +223,48 @@ function MainLayout() {
 
       <main className="main-content">
         <header className="topbar">
+          <div className="d-flex flex-wrap align-items-center gap-3">
+            <div>
+              <div className="small text-muted">
+                Sucursal activa
+              </div>
+
+              <select
+                className="form-select form-select-sm"
+                style={{ minWidth: 220 }}
+                value={sucursalId}
+                onChange={(e) =>
+                  seleccionarSucursal(
+                    e.target.value
+                  )
+                }
+              >
+                <option value="">
+                  Todas las sucursales
+                </option>
+
+                {sucursales.map(
+                  (sucursal) => (
+                    <option
+                      key={sucursal.id}
+                      value={sucursal.id}
+                    >
+                      {sucursal.nombre}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            {sucursalSeleccionada && (
+              <div className="small text-muted d-none d-md-block">
+                <FaStore className="me-1" />
+                {sucursalSeleccionada.direccion ||
+                  "Sucursal seleccionada"}
+              </div>
+            )}
+          </div>
+
           <div className="topbar-user">
             <div className="topbar-user-text">
               <strong>
@@ -230,6 +292,12 @@ function MainLayout() {
           {errorConfiguracion && (
             <div className="alert alert-warning">
               {errorConfiguracion}
+            </div>
+          )}
+
+          {errorSucursales && (
+            <div className="alert alert-warning">
+              {errorSucursales}
             </div>
           )}
 
