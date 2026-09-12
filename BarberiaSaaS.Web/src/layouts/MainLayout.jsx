@@ -49,7 +49,7 @@ function MainLayout() {
       "usuario"
     );
 
-    navigate("/login");
+    navigate("/");
   };
 
   const inicialNegocio =
