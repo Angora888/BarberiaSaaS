@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import {
+  FaBoxes,
   FaCalendarAlt,
   FaCut,
   FaHome,
@@ -48,18 +49,10 @@ function MainLayout() {
     navigate("/login");
   };
 
-  // ============================================================
-  // INICIAL DEL NEGOCIO
-  // ============================================================
-
   const inicialNegocio =
     nombreNegocio
       ?.charAt(0)
       ?.toUpperCase() || "N";
-
-  // ============================================================
-  // CARGANDO
-  // ============================================================
 
   if (cargandoConfiguracion) {
     return (
@@ -78,15 +71,8 @@ function MainLayout() {
 
   return (
     <div className="app-shell">
-
-      {/* ========================================================
-          SIDEBAR
-          ======================================================== */}
-
       <aside className="sidebar">
-
         <div className="sidebar-brand">
-
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -100,7 +86,6 @@ function MainLayout() {
           )}
 
           <div className="sidebar-brand-info">
-
             <strong>
               {nombreNegocio}
             </strong>
@@ -108,24 +93,16 @@ function MainLayout() {
             <div className="sidebar-role">
               {usuario.rol || ""}
             </div>
-
           </div>
-
         </div>
 
-        {/* MENU */}
-
         <nav className="sidebar-menu">
-
           <NavLink
             to="/dashboard"
             className="sidebar-link"
           >
             <FaHome />
-
-            <span>
-              Dashboard
-            </span>
+            <span>Dashboard</span>
           </NavLink>
 
           <NavLink
@@ -133,10 +110,7 @@ function MainLayout() {
             className="sidebar-link"
           >
             <FaCalendarAlt />
-
-            <span>
-              Agenda
-            </span>
+            <span>Agenda</span>
           </NavLink>
 
           <NavLink
@@ -144,10 +118,7 @@ function MainLayout() {
             className="sidebar-link"
           >
             <FaUsers />
-
-            <span>
-              Clientes
-            </span>
+            <span>Clientes</span>
           </NavLink>
 
           <NavLink
@@ -155,10 +126,7 @@ function MainLayout() {
             className="sidebar-link"
           >
             <FaCut />
-
-            <span>
-              Servicios
-            </span>
+            <span>Servicios</span>
           </NavLink>
 
           <NavLink
@@ -166,15 +134,17 @@ function MainLayout() {
             className="sidebar-link"
           >
             <FaUserTie />
-
-            <span>
-              Profesionales
-            </span>
+            <span>Profesionales</span>
           </NavLink>
 
+          <NavLink
+            to="/productos"
+            className="sidebar-link"
+          >
+            <FaBoxes />
+            <span>Productos</span>
+          </NavLink>
         </nav>
-
-        {/* ZONA HORARIA */}
 
         <div className="sidebar-timezone">
           <small>
@@ -186,33 +156,19 @@ function MainLayout() {
           </strong>
         </div>
 
-        {/* CERRAR SESIÓN */}
-
         <button
           className="sidebar-logout"
           onClick={cerrarSesion}
         >
           <FaSignOutAlt />
-
-          <span>
-            Cerrar sesión
-          </span>
+          <span>Cerrar sesión</span>
         </button>
-
       </aside>
 
-      {/* ========================================================
-          CONTENIDO
-          ======================================================== */}
-
       <main className="main-content">
-
         <header className="topbar">
-
           <div className="topbar-user">
-
             <div className="topbar-user-text">
-
               <strong>
                 {usuario.nombre ||
                   "Usuario"}
@@ -223,7 +179,6 @@ function MainLayout() {
                   {usuario.sucursal}
                 </span>
               )}
-
             </div>
 
             <div className="topbar-avatar">
@@ -232,13 +187,10 @@ function MainLayout() {
                 .charAt(0)
                 .toUpperCase()}
             </div>
-
           </div>
-
         </header>
 
         <div className="page-content">
-
           {errorConfiguracion && (
             <div className="alert alert-warning">
               {errorConfiguracion}
@@ -246,11 +198,8 @@ function MainLayout() {
           )}
 
           <Outlet />
-
         </div>
-
       </main>
-
     </div>
   );
 }
