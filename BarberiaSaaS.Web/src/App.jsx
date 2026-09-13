@@ -19,6 +19,7 @@ import Sucursales from "./pages/Sucursales";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import LandingPublica from "./pages/LandingPublica";
 import ManualPublico from "./pages/ManualPublico";
+import Prueba from "./pages/Prueba";
 
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
@@ -73,6 +74,13 @@ function App() {
       <Route
         path="/manual"
         element={<ManualPublico />}
+      />
+
+      {/* PRUEBA / REGISTRO PÚBLICO */}
+
+      <Route
+        path="/prueba"
+        element={<Prueba />}
       />
 
       {/* LANDING PÚBLICA POR NEGOCIO */}
