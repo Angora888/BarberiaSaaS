@@ -1033,6 +1033,34 @@ function LandingPublica() {
                       <option value={120}>
                         2 horas
                       </option>
+
+                      <option value={150}>
+                        2 horas 30 min
+                      </option>
+
+                      <option value={180}>
+                        3 horas
+                      </option>
+
+                      <option value={240}>
+                        4 horas
+                      </option>
+
+                      <option value={300}>
+                        5 horas
+                      </option>
+
+                      <option value={360}>
+                        6 horas
+                      </option>
+
+                      <option value={420}>
+                        7 horas
+                      </option>
+
+                      <option value={480}>
+                        8 horas
+                      </option>
                     </select>
                   </div>
                 </div>
