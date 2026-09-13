@@ -17,6 +17,8 @@ import Reportes from "./pages/Reportes";
 import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
+import LandingPublica from "./pages/LandingPublica";
+
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
@@ -38,7 +40,9 @@ function RutaProtegida({
   children
 }) {
   const token =
-    localStorage.getItem("token");
+    localStorage.getItem(
+      "token"
+    );
 
   if (!token) {
     return (
@@ -60,6 +64,15 @@ function App() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+      {/* LANDING PÚBLICA POR NEGOCIO */}
+
+      <Route
+        path="/negocio/:slug"
+        element={
+          <LandingPublica />
+        }
       />
 
       {/* LOGIN */}
@@ -84,7 +97,9 @@ function App() {
       >
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <Dashboard />
+          }
         />
 
         <Route
@@ -92,6 +107,7 @@ function App() {
           element={
             <>
               <Clientes />
+
               <EnviarDisponibilidadClientes />
             </>
           }
@@ -99,7 +115,9 @@ function App() {
 
         <Route
           path="/servicios"
-          element={<Servicios />}
+          element={
+            <Servicios />
+          }
         />
 
         <Route
@@ -107,6 +125,7 @@ function App() {
           element={
             <>
               <Profesionales />
+
               <HorariosProfesionalEditor />
             </>
           }
@@ -117,8 +136,11 @@ function App() {
           element={
             <>
               <Agenda />
+
               <AgendaAvailabilityFeedback />
+
               <AgendaQuickTimeSelection />
+
               <AgendaCobroCompletada />
             </>
           }
@@ -126,7 +148,9 @@ function App() {
 
         <Route
           path="/productos"
-          element={<Productos />}
+          element={
+            <Productos />
+          }
         />
 
         <Route
@@ -134,6 +158,7 @@ function App() {
           element={
             <>
               <Ventas />
+
               <VentaCobroCompletada />
             </>
           }
@@ -141,22 +166,30 @@ function App() {
 
         <Route
           path="/cuentas-por-cobrar"
-          element={<CuentasPorCobrar />}
+          element={
+            <CuentasPorCobrar />
+          }
         />
 
         <Route
           path="/reportes"
-          element={<Reportes />}
+          element={
+            <Reportes />
+          }
         />
 
         <Route
           path="/sucursales"
-          element={<Sucursales />}
+          element={
+            <Sucursales />
+          }
         />
 
         <Route
           path="/configuracion"
-          element={<Configuracion />}
+          element={
+            <Configuracion />
+          }
         />
       </Route>
 

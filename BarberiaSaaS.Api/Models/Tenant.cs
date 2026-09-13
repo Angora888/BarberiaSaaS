@@ -1,5 +1,9 @@
-﻿namespace BarberiaSaaS.Api.Models
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+
+namespace BarberiaSaaS.Api.Models
 {
+    [Index(nameof(SlugPublico), IsUnique = true)]
     public class Tenant
     {
         public int Id { get; set; }
@@ -14,9 +18,26 @@
 
         public string? Email { get; set; }
 
+        // ============================================================
+        // LANDING PÚBLICA
+        // ============================================================
+
+        [MaxLength(180)]
+        public string? SlugPublico { get; set; }
+
+        public bool LandingPublicaActiva { get; set; } = false;
+
+        // ============================================================
+        // ESTADO
+        // ============================================================
+
         public bool Activo { get; set; } = true;
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        // ============================================================
+        // RELACIONES
+        // ============================================================
 
         public ConfiguracionTenant? Configuracion { get; set; }
 
