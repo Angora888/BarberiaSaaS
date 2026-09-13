@@ -18,6 +18,7 @@ import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import LandingPublica from "./pages/LandingPublica";
+import ManualPublico from "./pages/ManualPublico";
 
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
@@ -65,6 +66,13 @@ function App() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+      {/* MANUAL PÚBLICO */}
+
+      <Route
+        path="/manual"
+        element={<ManualPublico />}
       />
 
       {/* LANDING PÚBLICA POR NEGOCIO */}
