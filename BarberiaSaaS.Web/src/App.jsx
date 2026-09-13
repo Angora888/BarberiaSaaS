@@ -25,6 +25,7 @@ import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
 import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
+import FormatoHora12 from "./components/FormatoHora12";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -89,6 +90,7 @@ function App() {
           <RutaProtegida>
             <ConfiguracionProvider>
               <SucursalProvider>
+                <FormatoHora12 />
                 <MainLayout />
               </SucursalProvider>
             </ConfiguracionProvider>
