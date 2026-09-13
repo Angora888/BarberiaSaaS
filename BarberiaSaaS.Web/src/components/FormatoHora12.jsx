@@ -36,6 +36,17 @@ function transformarTexto(texto) {
   );
 }
 
+function estaDentroDeModal(nodo) {
+  const elemento =
+    nodo?.nodeType === Node.ELEMENT_NODE
+      ? nodo
+      : nodo?.parentElement;
+
+  return Boolean(
+    elemento?.closest?.(".modal")
+  );
+}
+
 function debeIgnorarNodo(nodo) {
   const padre = nodo?.parentElement;
 
@@ -45,11 +56,28 @@ function debeIgnorarNodo(nodo) {
 
   const etiqueta = padre.tagName?.toLowerCase();
 
-  return ["script", "style", "textarea", "input"].includes(etiqueta);
+  if (
+    [
+      "script",
+      "style",
+      "textarea",
+      "input",
+      "select",
+      "option"
+    ].includes(etiqueta)
+  ) {
+    return true;
+  }
+
+  return !estaDentroDeModal(nodo);
 }
 
 function convertirNodoTexto(nodo) {
-  if (!nodo || nodo.nodeType !== Node.TEXT_NODE || debeIgnorarNodo(nodo)) {
+  if (
+    !nodo ||
+    nodo.nodeType !== Node.TEXT_NODE ||
+    debeIgnorarNodo(nodo)
+  ) {
     return;
   }
 
@@ -75,22 +103,48 @@ function recorrerNodo(raiz) {
     return;
   }
 
-  const walker = document.createTreeWalker(
-    raiz,
-    NodeFilter.SHOW_TEXT
-  );
+  const elementosModal = [];
 
-  let nodo = walker.nextNode();
-
-  while (nodo) {
-    convertirNodoTexto(nodo);
-    nodo = walker.nextNode();
+  if (raiz.matches?.(".modal")) {
+    elementosModal.push(raiz);
   }
+
+  raiz
+    .querySelectorAll?.(".modal")
+    .forEach((modal) => {
+      elementosModal.push(modal);
+    });
+
+  if (estaDentroDeModal(raiz)) {
+    elementosModal.push(raiz);
+  }
+
+  const unicos = [
+    ...new Set(elementosModal)
+  ];
+
+  unicos.forEach((elemento) => {
+    const walker = document.createTreeWalker(
+      elemento,
+      NodeFilter.SHOW_TEXT
+    );
+
+    let nodo = walker.nextNode();
+
+    while (nodo) {
+      convertirNodoTexto(nodo);
+      nodo = walker.nextNode();
+    }
+  });
 }
 
 function FormatoHora12() {
   useEffect(() => {
-    recorrerNodo(document.body);
+    document
+      .querySelectorAll(".modal")
+      .forEach((modal) => {
+        recorrerNodo(modal);
+      });
 
     let programado = false;
 
@@ -120,7 +174,9 @@ function FormatoHora12() {
             return;
           }
 
-          mutacion.addedNodes.forEach((nodo) => recorrerNodo(nodo));
+          mutacion.addedNodes.forEach((nodo) => {
+            recorrerNodo(nodo);
+          });
         });
       });
     });
