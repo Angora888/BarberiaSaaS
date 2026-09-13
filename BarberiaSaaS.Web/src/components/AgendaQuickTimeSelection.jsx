@@ -3,6 +3,42 @@ import { useEffect, useRef } from "react";
 const STORAGE_KEY =
   "barberiaSaaS.agendaHoraPreseleccionada";
 
+function normalizarHora24(valor) {
+  const texto = String(valor || "")
+    .trim()
+    .toUpperCase();
+
+  const match12 = texto.match(
+    /^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/
+  );
+
+  if (match12) {
+    let hora = Number(match12[1]);
+    const minutos = match12[2];
+    const periodo = match12[3];
+
+    if (periodo === "AM") {
+      if (hora === 12) {
+        hora = 0;
+      }
+    } else if (hora !== 12) {
+      hora += 12;
+    }
+
+    return `${String(hora).padStart(2, "0")}:${minutos}`;
+  }
+
+  const match24 = texto.match(
+    /^([01]?\d|2[0-3]):([0-5]\d)$/
+  );
+
+  if (match24) {
+    return `${String(Number(match24[1])).padStart(2, "0")}:${match24[2]}`;
+  }
+
+  return texto;
+}
+
 function AgendaQuickTimeSelection() {
   const estadoRef = useRef({
     clave: "",
@@ -143,14 +179,15 @@ function AgendaQuickTimeSelection() {
     const obtenerHoraSlot = (
       boton
     ) => {
-      return (
+      const valor =
         boton
           .querySelector("strong")
           ?.textContent
           ?.trim() ||
         boton.textContent?.trim() ||
-        ""
-      );
+        "";
+
+      return normalizarHora24(valor);
     };
 
     const intentarAplicar = () => {
@@ -161,8 +198,13 @@ function AgendaQuickTimeSelection() {
         return;
       }
 
+      const horaPendiente =
+        normalizarHora24(
+          pendiente.hora
+        );
+
       const clave =
-        `${pendiente.fecha}|${pendiente.hora}|${pendiente.creadoEn}`;
+        `${pendiente.fecha}|${horaPendiente}|${pendiente.creadoEn}`;
 
       if (
         estadoRef.current.clave !==
@@ -238,7 +280,7 @@ function AgendaQuickTimeSelection() {
           slots.find(
             (slot) =>
               obtenerHoraSlot(slot) ===
-              pendiente.hora
+              horaPendiente
           );
 
         if (slotObjetivo) {
@@ -261,10 +303,6 @@ function AgendaQuickTimeSelection() {
             `Hora ${pendiente.hora} preseleccionada desde la vista semanal.`
           );
 
-          // No eliminamos la preferencia aquí.
-          // Si el usuario cambia la duración, servicio o profesional,
-          // se vuelve a validar automáticamente la misma hora tocada
-          // originalmente en la cuadrícula semanal.
           estadoRef.current.finalizado =
             true;
 
@@ -277,8 +315,6 @@ function AgendaQuickTimeSelection() {
           "danger"
         );
 
-        // Conservamos la hora preferida para que, si el usuario vuelve
-        // a cambiar duración/servicio/profesional, pueda revalidarse.
         estadoRef.current.finalizado =
           true;
 
@@ -378,9 +414,6 @@ function AgendaQuickTimeSelection() {
 
         limpiarAvisos(modal);
 
-        // React limpia la hora/slots al cambiar duración u otros campos.
-        // Esperamos el siguiente render y volvemos a consultar la
-        // disponibilidad usando la hora que vino de la cuadrícula.
         window.setTimeout(
           intentarAplicar,
           120
@@ -435,11 +468,14 @@ function AgendaQuickTimeSelection() {
             boton
           );
 
-        // Si el usuario selecciona manualmente otra hora, respetamos
-        // esa decisión y dejamos de forzar la hora tocada en la semana.
+        const horaPendiente =
+          normalizarHora24(
+            pendiente.hora
+          );
+
         if (
           horaElegida &&
-          horaElegida !== pendiente.hora
+          horaElegida !== horaPendiente
         ) {
           limpiarPreferencia();
         }
