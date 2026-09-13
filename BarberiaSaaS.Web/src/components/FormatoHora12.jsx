@@ -36,17 +36,6 @@ function transformarTexto(texto) {
   );
 }
 
-function estaDentroDeModal(nodo) {
-  const elemento =
-    nodo?.nodeType === Node.ELEMENT_NODE
-      ? nodo
-      : nodo?.parentElement;
-
-  return Boolean(
-    elemento?.closest?.(".modal")
-  );
-}
-
 function debeIgnorarNodo(nodo) {
   const padre = nodo?.parentElement;
 
@@ -56,20 +45,13 @@ function debeIgnorarNodo(nodo) {
 
   const etiqueta = padre.tagName?.toLowerCase();
 
-  if (
-    [
-      "script",
-      "style",
-      "textarea",
-      "input",
-      "select",
-      "option"
-    ].includes(etiqueta)
-  ) {
-    return true;
-  }
-
-  return !estaDentroDeModal(nodo);
+  return [
+    "script",
+    "style",
+    "textarea",
+    "input",
+    "option"
+  ].includes(etiqueta);
 }
 
 function convertirNodoTexto(nodo) {
@@ -103,63 +85,51 @@ function recorrerNodo(raiz) {
     return;
   }
 
-  const elementosModal = [];
+  const walker = document.createTreeWalker(
+    raiz,
+    NodeFilter.SHOW_TEXT
+  );
 
-  if (raiz.matches?.(".modal")) {
-    elementosModal.push(raiz);
+  let nodo = walker.nextNode();
+
+  while (nodo) {
+    convertirNodoTexto(nodo);
+    nodo = walker.nextNode();
+  }
+}
+
+function obtenerModalNuevaCita() {
+  return Array.from(
+    document.querySelectorAll(".custom-modal")
+  ).find(
+    (modal) =>
+      modal.querySelector(
+        'select[name="servicioId"]'
+      ) &&
+      modal.querySelector(
+        'input[name="fecha"]'
+      )
+  );
+}
+
+function aplicarFormatoNuevaCita() {
+  const modal = obtenerModalNuevaCita();
+
+  if (!modal) {
+    return;
   }
 
-  raiz
-    .querySelectorAll?.(".modal")
-    .forEach((modal) => {
-      elementosModal.push(modal);
-    });
-
-  if (estaDentroDeModal(raiz)) {
-    elementosModal.push(raiz);
-  }
-
-  const unicos = [
-    ...new Set(elementosModal)
-  ];
-
-  unicos.forEach((elemento) => {
-    const walker = document.createTreeWalker(
-      elemento,
-      NodeFilter.SHOW_TEXT
-    );
-
-    let nodo = walker.nextNode();
-
-    while (nodo) {
-      convertirNodoTexto(nodo);
-      nodo = walker.nextNode();
-    }
-  });
+  recorrerNodo(modal);
 }
 
 function FormatoHora12() {
   useEffect(() => {
-    document
-      .querySelectorAll(".modal")
-      .forEach((modal) => {
-        recorrerNodo(modal);
-      });
+    aplicarFormatoNuevaCita();
 
     let programado = false;
 
-    const observer = new MutationObserver((mutaciones) => {
+    const observer = new MutationObserver(() => {
       if (programado) {
-        return;
-      }
-
-      const hayCambiosRelevantes = mutaciones.some(
-        (mutacion) =>
-          mutacion.type === "childList" ||
-          mutacion.type === "characterData"
-      );
-
-      if (!hayCambiosRelevantes) {
         return;
       }
 
@@ -167,17 +137,7 @@ function FormatoHora12() {
 
       requestAnimationFrame(() => {
         programado = false;
-
-        mutaciones.forEach((mutacion) => {
-          if (mutacion.type === "characterData") {
-            convertirNodoTexto(mutacion.target);
-            return;
-          }
-
-          mutacion.addedNodes.forEach((nodo) => {
-            recorrerNodo(nodo);
-          });
-        });
+        aplicarFormatoNuevaCita();
       });
     });
 
