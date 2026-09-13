@@ -161,7 +161,7 @@ function Login() {
                 #111827,
                 #334155
               );
-            color: #ffffff;
+            color: #ffffff !important;
             font-size: 15px;
             font-weight: 750;
             transition:
@@ -171,7 +171,7 @@ function Login() {
           }
 
           .login-button:hover:not(:disabled) {
-            color: #ffffff;
+            color: #ffffff !important;
             transform: translateY(-1px);
             box-shadow:
               0 12px 25px rgba(15, 23, 42, 0.18);
@@ -181,8 +181,28 @@ function Login() {
             transform: translateY(0);
           }
 
-          .login-button:disabled {
-            opacity: 0.65;
+          .login-button:disabled,
+          .login-button:disabled:hover,
+          .login-button:disabled:focus,
+          .login-button:disabled:active {
+            color: #ffffff !important;
+            background:
+              linear-gradient(
+                135deg,
+                #475569,
+                #64748b
+              ) !important;
+            border-color: transparent !important;
+            opacity: 1 !important;
+            cursor: wait;
+            -webkit-text-fill-color: #ffffff;
+          }
+
+          .login-spinner {
+            width: 18px;
+            height: 18px;
+            border-width: 2px;
+            vertical-align: -3px;
           }
 
           .login-divider {
@@ -294,9 +314,17 @@ function Login() {
               className="btn login-button w-100"
               disabled={cargando}
             >
-              {cargando
-                ? "Ingresando..."
-                : "Iniciar sesión"}
+              {cargando ? (
+                <span className="d-inline-flex align-items-center justify-content-center gap-2">
+                  <span
+                    className="spinner-border spinner-border-sm login-spinner"
+                    aria-hidden="true"
+                  />
+                  <span>Ingresando...</span>
+                </span>
+              ) : (
+                "Iniciar sesión"
+              )}
             </button>
           </form>
 
