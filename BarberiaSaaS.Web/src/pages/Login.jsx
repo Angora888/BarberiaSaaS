@@ -45,75 +45,269 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card shadow">
-        <div className="text-center mb-4">
-          <div className="login-logo">
-            JB
+    <>
+      <style>
+        {`
+          .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+              radial-gradient(
+                circle at top left,
+                rgba(59, 130, 246, 0.10),
+                transparent 35%
+              ),
+              radial-gradient(
+                circle at bottom right,
+                rgba(15, 23, 42, 0.08),
+                transparent 35%
+              ),
+              #f6f7f9;
+          }
+
+          .login-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 42px 38px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow:
+              0 24px 70px rgba(15, 23, 42, 0.10) !important;
+          }
+
+          .login-brand {
+            text-align: center;
+            margin-bottom: 32px;
+          }
+
+          .login-logo {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 22px;
+            background:
+              linear-gradient(
+                145deg,
+                #111827,
+                #334155
+              );
+            color: #ffffff;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            box-shadow:
+              0 14px 30px rgba(15, 23, 42, 0.18);
+          }
+
+          .login-brand h2 {
+            margin: 20px 0 5px;
+            color: #111827;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.7px;
+          }
+
+          .login-brand p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+          }
+
+          .login-form-label {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 650;
+            margin-bottom: 8px;
+          }
+
+          .login-input {
+            min-height: 52px;
+            border: 1px solid #d9dee7;
+            border-radius: 13px;
+            background: #ffffff;
+            font-size: 15px;
+            color: #111827;
+            padding-left: 15px;
+            padding-right: 15px;
+            transition:
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+          }
+
+          .login-input:focus {
+            border-color: #475569;
+            box-shadow:
+              0 0 0 4px rgba(71, 85, 105, 0.10);
+          }
+
+          .login-input::placeholder {
+            color: #a1a8b3;
+          }
+
+          .login-button {
+            min-height: 54px;
+            border: 0;
+            border-radius: 13px;
+            background:
+              linear-gradient(
+                135deg,
+                #111827,
+                #334155
+              );
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 750;
+            transition:
+              transform 0.2s ease,
+              box-shadow 0.2s ease,
+              opacity 0.2s ease;
+          }
+
+          .login-button:hover:not(:disabled) {
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow:
+              0 12px 25px rgba(15, 23, 42, 0.18);
+          }
+
+          .login-button:active:not(:disabled) {
+            transform: translateY(0);
+          }
+
+          .login-button:disabled {
+            opacity: 0.65;
+          }
+
+          .login-divider {
+            height: 1px;
+            margin: 30px 0 20px;
+            background: #edf0f4;
+          }
+
+          .login-footer {
+            margin: 0;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+          }
+
+          .login-error {
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-size: 14px;
+          }
+
+          @media (max-width: 520px) {
+            .login-page {
+              padding: 18px;
+            }
+
+            .login-card {
+              padding: 34px 24px;
+              border-radius: 20px;
+            }
+
+            .login-logo {
+              width: 68px;
+              height: 68px;
+              border-radius: 19px;
+              font-size: 23px;
+            }
+
+            .login-brand h2 {
+              font-size: 25px;
+            }
+          }
+        `}
+      </style>
+
+      <div className="login-page">
+        <div className="login-card">
+          <div className="login-brand">
+            <div className="login-logo">
+              BS
+            </div>
+
+            <h2>
+              Barberia SaaS
+            </h2>
+
+            <p>
+              Gestión para barberías, salones y centros de belleza
+            </p>
           </div>
 
-          <h2 className="mt-3 mb-1">
-            Jana Beauty Studio
-          </h2>
+          {error && (
+            <div className="alert login-error mb-4">
+              {error}
+            </div>
+          )}
 
-          <p className="text-muted">
-            Administración
+          <form onSubmit={iniciarSesion}>
+            <div className="mb-3">
+              <label className="form-label login-form-label">
+                Correo electrónico
+              </label>
+
+              <input
+                type="email"
+                className="form-control login-input"
+                value={email}
+                onChange={(e) =>
+                  setEmail(e.target.value)
+                }
+                placeholder="correo@ejemplo.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label login-form-label">
+                Contraseña
+              </label>
+
+              <input
+                type="password"
+                className="form-control login-input"
+                value={password}
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn login-button w-100"
+              disabled={cargando}
+            >
+              {cargando
+                ? "Ingresando..."
+                : "Iniciar sesión"}
+            </button>
+          </form>
+
+          <div className="login-divider" />
+
+          <p className="login-footer">
+            Barberia SaaS · Plataforma de administración
           </p>
         </div>
-
-        {error && (
-          <div className="alert alert-danger">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={iniciarSesion}>
-          <div className="mb-3">
-            <label className="form-label">
-              Correo electrónico
-            </label>
-
-            <input
-              type="email"
-              className="form-control form-control-lg"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-              placeholder="correo@ejemplo.com"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="form-label">
-              Contraseña
-            </label>
-
-            <input
-              type="password"
-              className="form-control form-control-lg"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg w-100"
-            disabled={cargando}
-          >
-            {cargando
-              ? "Ingresando..."
-              : "Iniciar sesión"}
-          </button>
-        </form>
       </div>
-    </div>
+    </>
   );
 }
 
