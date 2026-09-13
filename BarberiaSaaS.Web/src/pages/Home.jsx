@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FaArrowRight,
+  FaBookOpen,
   FaCalendarAlt,
   FaChartBar,
   FaCheckCircle,
   FaCut,
   FaMoneyBillWave,
   FaPalette,
+  FaRocket,
   FaShoppingBag,
   FaSpa,
   FaStore,
@@ -16,11 +18,9 @@ import {
 } from "react-icons/fa";
 
 function Home() {
-  const [menuAbierto, setMenuAbierto] =
-    useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
-  const estaLogueado =
-    Boolean(localStorage.getItem("token"));
+  const estaLogueado = Boolean(localStorage.getItem("token"));
 
   const irASeccion = (id) => {
     setMenuAbierto(false);
@@ -32,15 +32,13 @@ function Home() {
       });
   };
 
-  const rutaAcceso =
-    estaLogueado
-      ? "/dashboard"
-      : "/login";
+  const rutaAcceso = estaLogueado
+    ? "/dashboard"
+    : "/login";
 
-  const textoAcceso =
-    estaLogueado
-      ? "Volver al dashboard"
-      : "Iniciar sesión";
+  const textoAcceso = estaLogueado
+    ? "Volver al dashboard"
+    : "Iniciar sesión";
 
   return (
     <div className="bg-white text-dark min-vh-100">
@@ -103,18 +101,30 @@ function Home() {
               </li>
 
               <li className="nav-item">
-                <button
-                  className="nav-link border-0 bg-transparent"
-                  onClick={() => irASeccion("como-funciona")}
+                <Link
+                  to="/manual"
+                  className="nav-link"
+                  onClick={() => setMenuAbierto(false)}
                 >
-                  Cómo funciona
-                </button>
+                  Manual
+                </Link>
               </li>
 
-              <li className="nav-item ms-lg-2">
+              <li className="nav-item">
+                <Link
+                  to="/prueba"
+                  className="btn btn-dark"
+                  onClick={() => setMenuAbierto(false)}
+                >
+                  Probar gratis
+                </Link>
+              </li>
+
+              <li className="nav-item ms-lg-1">
                 <Link
                   to={rutaAcceso}
                   className="btn btn-outline-dark"
+                  onClick={() => setMenuAbierto(false)}
                 >
                   {textoAcceso}
                 </Link>
@@ -156,20 +166,30 @@ function Home() {
 
                 <div className="d-flex flex-wrap gap-3">
                   <Link
-                    to={rutaAcceso}
+                    to="/prueba"
                     className="btn btn-dark btn-lg px-4"
+                  >
+                    <FaRocket className="me-2" />
+                    Probar Barbería SaaS
+                  </Link>
+
+                  <Link
+                    to="/manual"
+                    className="btn btn-outline-dark btn-lg px-4"
+                  >
+                    <FaBookOpen className="me-2" />
+                    Manual de la aplicación
+                  </Link>
+                </div>
+
+                <div className="mt-3">
+                  <Link
+                    to={rutaAcceso}
+                    className="text-dark text-decoration-none fw-semibold"
                   >
                     {textoAcceso}
                     <FaArrowRight className="ms-2" />
                   </Link>
-
-                  <button
-                    type="button"
-                    className="btn btn-outline-dark btn-lg px-4"
-                    onClick={() => irASeccion("funciones")}
-                  >
-                    Ver funciones
-                  </button>
                 </div>
 
                 <div className="d-flex flex-wrap gap-4 mt-5 text-secondary">
@@ -405,9 +425,9 @@ function Home() {
 
             <div className="row g-4">
               {[
-                ["01", "Configura tu negocio", "Define identidad, moneda, horarios, sucursales, servicios y profesionales."],
-                ["02", "Organiza tu operación", "Registra clientes, agenda citas, administra productos y controla inventario."],
-                ["03", "Mide tus resultados", "Consulta dashboard y reportes para conocer ingresos y rendimiento del negocio."]
+                ["01", "Crea tu negocio", "Regístrate desde la prueba y tu espacio queda listo automáticamente."],
+                ["02", "Configura tu operación", "Agrega sucursales, servicios, profesionales, horarios, clientes y productos."],
+                ["03", "Empieza a trabajar", "Agenda citas, cobra servicios, vende productos y consulta tus resultados."]
               ].map(([numero, titulo, texto]) => (
                 <div className="col-md-4" key={numero}>
                   <div className="h-100 p-4 border rounded-4">
@@ -426,6 +446,74 @@ function Home() {
           </div>
         </section>
 
+        <section className="py-5 bg-light">
+          <div className="container">
+            <div className="row g-4">
+              <div className="col-lg-6">
+                <div className="bg-white border rounded-5 p-4 p-md-5 h-100 shadow-sm">
+                  <div
+                    className="d-inline-flex align-items-center justify-content-center rounded-3 text-white mb-4"
+                    style={{
+                      width: 54,
+                      height: 54,
+                      background: "#111827"
+                    }}
+                  >
+                    <FaRocket size={22} />
+                  </div>
+
+                  <h2 className="fw-bold">
+                    ¿Te gustaría hacer una prueba?
+                  </h2>
+
+                  <p className="text-secondary fs-5">
+                    Registra tu negocio en minutos y empieza a usar Barbería SaaS con tu propio usuario.
+                  </p>
+
+                  <Link
+                    to="/prueba"
+                    className="btn btn-dark btn-lg"
+                  >
+                    Crear mi negocio
+                    <FaArrowRight className="ms-2" />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="col-lg-6">
+                <div className="bg-white border rounded-5 p-4 p-md-5 h-100 shadow-sm">
+                  <div
+                    className="d-inline-flex align-items-center justify-content-center rounded-3 text-white mb-4"
+                    style={{
+                      width: 54,
+                      height: 54,
+                      background: "#c62864"
+                    }}
+                  >
+                    <FaBookOpen size={22} />
+                  </div>
+
+                  <h2 className="fw-bold">
+                    Aprende cómo funciona
+                  </h2>
+
+                  <p className="text-secondary fs-5">
+                    Consulta el manual completo de Barbería SaaS antes o después de crear tu negocio.
+                  </p>
+
+                  <Link
+                    to="/manual"
+                    className="btn btn-outline-dark btn-lg"
+                  >
+                    Ver manual
+                    <FaArrowRight className="ms-2" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="py-5">
           <div className="container">
             <div
@@ -440,16 +528,25 @@ function Home() {
                 Todo tu negocio, más organizado.
               </h2>
               <p className="lead opacity-75 mx-auto" style={{ maxWidth: 700 }}>
-                Agenda, equipo, clientes, productos, caja e información financiera
-                desde una plataforma creada para negocios de belleza y bienestar.
+                Crea tu cuenta, configura tu negocio y empieza a trabajar desde una sola plataforma.
               </p>
-              <Link
-                to={rutaAcceso}
-                className="btn btn-light btn-lg px-4 mt-2"
-              >
-                {textoAcceso}
-                <FaArrowRight className="ms-2" />
-              </Link>
+
+              <div className="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                <Link
+                  to="/prueba"
+                  className="btn btn-light btn-lg px-4"
+                >
+                  Probar Barbería SaaS
+                  <FaArrowRight className="ms-2" />
+                </Link>
+
+                <Link
+                  to="/manual"
+                  className="btn btn-outline-light btn-lg px-4"
+                >
+                  Manual de la aplicación
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -458,7 +555,17 @@ function Home() {
       <footer className="border-top bg-white">
         <div className="container py-4 d-flex flex-wrap justify-content-between gap-3 text-secondary">
           <span>© {new Date().getFullYear()} Barbería SaaS</span>
-          <span>Gestión para salones, barberías y spas</span>
+          <div className="d-flex flex-wrap gap-3">
+            <Link to="/manual" className="text-secondary text-decoration-none">
+              Manual
+            </Link>
+            <Link to="/prueba" className="text-secondary text-decoration-none">
+              Probar la aplicación
+            </Link>
+            <Link to="/login" className="text-secondary text-decoration-none">
+              Iniciar sesión
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
