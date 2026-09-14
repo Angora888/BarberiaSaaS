@@ -105,31 +105,24 @@ namespace BarberiaSaaS.Api.Controllers
                     tenantId,
                     DateTime.UtcNow);
 
-            var hoyLocal = DateTime.SpecifyKind(
+            var inicioPeriodo = DateTime.SpecifyKind(
                 ahoraLocal.Date,
                 DateTimeKind.Unspecified);
 
-            var diasHastaLunes =
-                ((int)DayOfWeek.Monday -
-                 (int)hoyLocal.DayOfWeek + 7) % 7;
+            const int cantidadDias = 15;
 
-            if (diasHastaLunes == 0)
-            {
-                diasHastaLunes = 7;
-            }
+            var finPeriodoExclusivo =
+                inicioPeriodo.AddDays(cantidadDias);
 
-            var inicioSemana = hoyLocal.AddDays(diasHastaLunes);
-            var finSemanaExclusivo = inicioSemana.AddDays(7);
-
-            var inicioSemanaUtc = await _timeZoneService
+            var inicioPeriodoUtc = await _timeZoneService
                 .LocalAUtcAsync(
                     tenantId,
-                    inicioSemana);
+                    inicioPeriodo);
 
-            var finSemanaUtc = await _timeZoneService
+            var finPeriodoUtc = await _timeZoneService
                 .LocalAUtcAsync(
                     tenantId,
-                    finSemanaExclusivo);
+                    finPeriodoExclusivo);
 
             var profesionalIds = profesionales
                 .Select(x => x.Id)
@@ -154,8 +147,8 @@ namespace BarberiaSaaS.Api.Controllers
                     x.TenantId == tenantId &&
                     profesionalIds.Contains(x.ProfesionalId) &&
                     x.Estado != EstadosCita.Cancelada &&
-                    x.FechaInicio < finSemanaUtc &&
-                    x.FechaFin > inicioSemanaUtc)
+                    x.FechaInicio < finPeriodoUtc &&
+                    x.FechaFin > inicioPeriodoUtc)
                 .Select(x => new
                 {
                     x.ProfesionalId,
@@ -168,8 +161,8 @@ namespace BarberiaSaaS.Api.Controllers
                 .Where(x =>
                     x.TenantId == tenantId &&
                     profesionalIds.Contains(x.ProfesionalId) &&
-                    x.FechaInicio < finSemanaUtc &&
-                    x.FechaFin > inicioSemanaUtc)
+                    x.FechaInicio < finPeriodoUtc &&
+                    x.FechaFin > inicioPeriodoUtc)
                 .Select(x => new
                 {
                     x.ProfesionalId,
@@ -190,9 +183,9 @@ namespace BarberiaSaaS.Api.Controllers
 
             var dias = new List<object>();
 
-            for (var indiceDia = 0; indiceDia < 7; indiceDia++)
+            for (var indiceDia = 0; indiceDia < cantidadDias; indiceDia++)
             {
-                var fechaLocal = inicioSemana.AddDays(indiceDia);
+                var fechaLocal = inicioPeriodo.AddDays(indiceDia);
                 var profesionalesDia = new List<object>();
 
                 foreach (var profesional in profesionales)
@@ -220,30 +213,37 @@ namespace BarberiaSaaS.Api.Controllers
                             var candidatoFinLocal = candidatoLocal
                                 .AddMinutes(request.DuracionMinutos);
 
-                            var candidatoInicioUtc = await _timeZoneService
-                                .LocalAUtcAsync(
-                                    tenantId,
-                                    candidatoLocal);
+                            var esHorarioPasado =
+                                fechaLocal.Date == inicioPeriodo.Date &&
+                                candidatoLocal <= ahoraLocal;
 
-                            var candidatoFinUtc = await _timeZoneService
-                                .LocalAUtcAsync(
-                                    tenantId,
-                                    candidatoFinLocal);
-
-                            var chocaConCita = citas.Any(x =>
-                                x.ProfesionalId == profesional.Id &&
-                                candidatoInicioUtc < x.FechaFin &&
-                                candidatoFinUtc > x.FechaInicio);
-
-                            var chocaConBloqueo = bloqueos.Any(x =>
-                                x.ProfesionalId == profesional.Id &&
-                                candidatoInicioUtc < x.FechaFin &&
-                                candidatoFinUtc > x.FechaInicio);
-
-                            if (!chocaConCita && !chocaConBloqueo)
+                            if (!esHorarioPasado)
                             {
-                                horasDisponibles.Add(
-                                    candidatoLocal.ToString("HH:mm"));
+                                var candidatoInicioUtc = await _timeZoneService
+                                    .LocalAUtcAsync(
+                                        tenantId,
+                                        candidatoLocal);
+
+                                var candidatoFinUtc = await _timeZoneService
+                                    .LocalAUtcAsync(
+                                        tenantId,
+                                        candidatoFinLocal);
+
+                                var chocaConCita = citas.Any(x =>
+                                    x.ProfesionalId == profesional.Id &&
+                                    candidatoInicioUtc < x.FechaFin &&
+                                    candidatoFinUtc > x.FechaInicio);
+
+                                var chocaConBloqueo = bloqueos.Any(x =>
+                                    x.ProfesionalId == profesional.Id &&
+                                    candidatoInicioUtc < x.FechaFin &&
+                                    candidatoFinUtc > x.FechaInicio);
+
+                                if (!chocaConCita && !chocaConBloqueo)
+                                {
+                                    horasDisponibles.Add(
+                                        candidatoLocal.ToString("HH:mm"));
+                                }
                             }
 
                             candidatoLocal = candidatoLocal
@@ -272,8 +272,9 @@ namespace BarberiaSaaS.Api.Controllers
 
             return Ok(new
             {
-                desde = inicioSemana.ToString("yyyy-MM-dd"),
-                hasta = inicioSemana.AddDays(6).ToString("yyyy-MM-dd"),
+                desde = inicioPeriodo.ToString("yyyy-MM-dd"),
+                hasta = inicioPeriodo.AddDays(cantidadDias - 1).ToString("yyyy-MM-dd"),
+                cantidadDias,
                 duracionMinutos = request.DuracionMinutos,
                 duracionSlotMinutos = duracionSlot,
                 servicioId = request.ServicioId,
