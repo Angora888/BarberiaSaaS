@@ -24,6 +24,7 @@ import Prueba from "./pages/Prueba";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
+import AgendaWhatsAppFormato12 from "./components/AgendaWhatsAppFormato12";
 import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
@@ -168,6 +169,8 @@ function App() {
               <AgendaQuickTimeSelection />
 
               <AgendaCobroCompletada />
+
+              <AgendaWhatsAppFormato12 />
             </>
           }
         />
