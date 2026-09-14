@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
+const WHATSAPP_ADMIN = "50660662375";
+
 function Login() {
   const navigate = useNavigate();
 
@@ -10,6 +12,7 @@ function Login() {
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [negocioInactivo, setNegocioInactivo] = useState(false);
 
   const iniciarSesion = async (e) => {
     e.preventDefault();
@@ -17,6 +20,7 @@ function Login() {
     try {
       setCargando(true);
       setError("");
+      setNegocioInactivo(false);
 
       const response = await api.post("/Auth/login", {
         email,
@@ -35,13 +39,40 @@ function Login() {
 
       navigate("/dashboard");
     } catch (error) {
-      setError(
+      const mensaje =
         error.response?.data?.mensaje ||
-          "No fue posible iniciar sesión."
+        "No fue posible iniciar sesión.";
+
+      const estaInactivo =
+        mensaje === "El negocio se encuentra inactivo.";
+
+      setNegocioInactivo(estaInactivo);
+
+      setError(
+        estaInactivo
+          ? "Tu membresía se encuentra inactiva. Contacta al administrador para reactivar el acceso a Barberia SaaS."
+          : mensaje
       );
     } finally {
       setCargando(false);
     }
+  };
+
+  const renovarMembresia = () => {
+    const mensaje = [
+      "¡Hola! 👋",
+      "Quiero renovar mi membresía de Barberia SaaS. ✨",
+      "",
+      `Mi correo registrado es: ${email.trim()}`,
+      "",
+      "¿Me puedes ayudar con la reactivación de mi cuenta? 😊"
+    ].join("\n");
+
+    window.open(
+      `https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
@@ -226,6 +257,38 @@ function Login() {
             font-size: 14px;
           }
 
+          .login-renewal {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #fecaca;
+          }
+
+          .login-renewal-text {
+            margin-bottom: 10px;
+            color: #7f1d1d;
+            font-size: 13px;
+          }
+
+          .login-whatsapp-button {
+            width: 100%;
+            min-height: 44px;
+            border: 0;
+            border-radius: 11px;
+            background: #128c7e;
+            color: #ffffff;
+            font-weight: 700;
+            transition:
+              transform 0.2s ease,
+              box-shadow 0.2s ease;
+          }
+
+          .login-whatsapp-button:hover {
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow:
+              0 8px 18px rgba(18, 140, 126, 0.22);
+          }
+
           @media (max-width: 520px) {
             .login-page {
               padding: 18px;
@@ -268,7 +331,23 @@ function Login() {
 
           {error && (
             <div className="alert login-error mb-4">
-              {error}
+              <div>{error}</div>
+
+              {negocioInactivo && (
+                <div className="login-renewal">
+                  <div className="login-renewal-text">
+                    ¿Deseas continuar utilizando Barberia SaaS? Escríbenos y te ayudamos a reactivar tu membresía.
+                  </div>
+
+                  <button
+                    type="button"
+                    className="login-whatsapp-button"
+                    onClick={renovarMembresia}
+                  >
+                    💬 Contactar al administrador por WhatsApp
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
