@@ -28,6 +28,7 @@ import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
 import ClienteContactPicker from "./components/ClienteContactPicker";
+import PaginaPublicaCard from "./components/PaginaPublicaCard";
 import FormatoHora12 from "./components/FormatoHora12";
 
 import MainLayout from "./layouts/MainLayout";
@@ -117,7 +118,11 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <Dashboard />
+            <>
+              <Dashboard />
+
+              <PaginaPublicaCard modo="dashboard" />
+            </>
           }
         />
 
@@ -209,7 +214,11 @@ function App() {
         <Route
           path="/configuracion"
           element={
-            <Configuracion />
+            <>
+              <Configuracion />
+
+              <PaginaPublicaCard modo="configuracion" />
+            </>
           }
         />
       </Route>
