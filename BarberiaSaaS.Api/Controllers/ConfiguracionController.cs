@@ -42,6 +42,8 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Identificacion,
                     x.Telefono,
                     x.Email,
+                    x.SlugPublico,
+                    x.LandingPublicaActiva,
 
                     Configuracion = x.Configuracion == null
                         ? null
