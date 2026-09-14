@@ -25,6 +25,8 @@ import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback"
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
 import AgendaWhatsAppFormato12 from "./components/AgendaWhatsAppFormato12";
+import EditarCitaSidecar from "./components/EditarCitaSidecar";
+import ReservaPublicaSidecar from "./components/ReservaPublicaSidecar";
 import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
@@ -91,7 +93,10 @@ function App() {
       <Route
         path="/negocio/:slug"
         element={
-          <LandingPublica />
+          <>
+            <LandingPublica />
+            <ReservaPublicaSidecar />
+          </>
         }
       />
 
@@ -171,6 +176,8 @@ function App() {
               <AgendaCobroCompletada />
 
               <AgendaWhatsAppFormato12 />
+
+              <EditarCitaSidecar />
             </>
           }
         />
