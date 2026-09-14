@@ -254,7 +254,7 @@ function EnviarDisponibilidadClientes() {
       setError(
         error.response?.data?.mensaje ||
         error.response?.data?.title ||
-        "No fue posible consultar la disponibilidad de la próxima semana."
+        "No fue posible consultar la disponibilidad de los próximos 15 días."
       );
     } finally {
       setEnviando(false);
@@ -282,7 +282,7 @@ function EnviarDisponibilidadClientes() {
                 </h4>
 
                 <p className="text-muted mb-0">
-                  Consulta la próxima semana y abre WhatsApp con los horarios disponibles.
+                  Consulta desde hoy los próximos 15 días y abre WhatsApp con los horarios disponibles.
                 </p>
               </div>
 
@@ -489,7 +489,7 @@ function EnviarDisponibilidadClientes() {
                       <div className="client-availability-tip">
                         <FaCalendarCheck />
                         <span>
-                          Se revisan automáticamente horarios normales, citas existentes y bloqueos de lunes a domingo de la próxima semana.
+                          Se revisan automáticamente los próximos 15 días desde hoy, incluyendo esta semana y la siguiente, tomando en cuenta horarios normales, citas existentes y bloqueos.
                         </span>
                       </div>
                     </div>
@@ -548,7 +548,7 @@ function construirMensaje(
   const lineas = [
     `Hola ${nombreCliente} 😊`,
     "",
-    `Te compartimos la disponibilidad de *${negocio}* para la próxima semana para *${servicio.nombre}*${
+    `Te compartimos la disponibilidad de *${negocio}* para los próximos 15 días para *${servicio.nombre}*${
       profesional
         ? ` con *${profesional.nombre} ${profesional.apellidos || ""}*`
         : ""
@@ -578,7 +578,7 @@ function construirMensaje(
 
   if (diasConDisponibilidad.length === 0) {
     lineas.push(
-      "Por el momento no tenemos espacios disponibles esa semana para este servicio."
+      "Por el momento no tenemos espacios disponibles en los próximos 15 días para este servicio."
     );
   } else {
     diasConDisponibilidad.forEach(
