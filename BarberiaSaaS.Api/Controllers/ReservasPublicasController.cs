@@ -47,13 +47,17 @@ namespace BarberiaSaaS.Api.Controllers
             var telefonoNormalizado =
                 NormalizarTelefono(request.Telefono);
 
-            if (telefonoNormalizado.Length < 8)
+            if (telefonoNormalizado.Length != 8)
             {
                 return BadRequest(new
                 {
-                    mensaje = "Ingresa un número de teléfono válido."
+                    mensaje = "Ingresa exactamente 8 dígitos en el teléfono."
                 });
             }
+
+            var telefonoFormatoCostaRica =
+                FormatearTelefonoCostaRica(
+                    telefonoNormalizado);
 
             if (request.ServicioId <= 0 ||
                 request.ProfesionalId <= 0 ||
@@ -265,13 +269,17 @@ namespace BarberiaSaaS.Api.Controllers
                     TenantId = tenantId,
                     Nombre = nombrePartes.Nombre,
                     Apellidos = nombrePartes.Apellidos,
-                    Telefono = telefonoNormalizado,
+                    Telefono = telefonoFormatoCostaRica,
                     Activo = true,
                     FechaCreacion = DateTime.UtcNow
                 };
 
                 _context.Clientes.Add(cliente);
                 clienteCreado = true;
+            }
+            else if (cliente.Telefono != telefonoFormatoCostaRica)
+            {
+                cliente.Telefono = telefonoFormatoCostaRica;
             }
 
             var cita = new Cita
@@ -333,6 +341,12 @@ namespace BarberiaSaaS.Api.Controllers
             }
 
             return digitos;
+        }
+
+        private static string FormatearTelefonoCostaRica(
+            string telefonoNormalizado)
+        {
+            return $"+506{telefonoNormalizado}";
         }
 
         private static (string Nombre, string Apellidos) SepararNombre(
