@@ -96,6 +96,41 @@ function filtrarRespuestaPorSucursal(
   return response;
 }
 
+function emitirEventoDetalleCita(response) {
+  const config = response?.config;
+
+  if (!config || !esGet(config)) {
+    return;
+  }
+
+  const ruta = obtenerRuta(config);
+  const match = ruta.match(
+    /^\/citas\/(\d+)$/
+  );
+
+  if (!match) {
+    return;
+  }
+
+  const citaId = Number(match[1]);
+
+  if (!Number.isFinite(citaId)) {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "barberiaSaaS:citaDetalle",
+      {
+        detail: {
+          citaId,
+          cita: response.data
+        }
+      }
+    )
+  );
+}
+
 function emitirEventoCitaCompletada(response) {
   const config = response?.config;
 
@@ -250,6 +285,10 @@ api.interceptors.response.use(
   (response) => {
     const sucursalId =
       obtenerSucursalSeleccionada();
+
+    emitirEventoDetalleCita(
+      response
+    );
 
     emitirEventoCitaCompletada(
       response
