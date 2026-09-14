@@ -70,6 +70,29 @@ function obtenerFechaHoraLocal(
   }
 }
 
+function formatearDuracion(
+  duracionMinutos
+) {
+  const total =
+    Number(duracionMinutos) || 0;
+
+  const horas =
+    Math.floor(total / 60);
+
+  const minutos =
+    total % 60;
+
+  if (horas > 0 && minutos > 0) {
+    return `${horas} h ${minutos} min`;
+  }
+
+  if (horas > 0) {
+    return `${horas} h`;
+  }
+
+  return `${minutos} min`;
+}
+
 function EditarCitaSidecar() {
   const { zonaHoraria } = useConfiguracion();
 
@@ -101,7 +124,8 @@ function EditarCitaSidecar() {
       sucursalId: "",
       fecha: "",
       hora: "",
-      duracionMinutos: "60",
+      duracionHoras: "1",
+      duracionMinutos: "0",
       notas: ""
     });
 
@@ -208,6 +232,20 @@ function EditarCitaSidecar() {
       formulario.servicioId
     ]);
 
+  const duracionTotalMinutos =
+    useMemo(() => {
+      const horas =
+        Number(formulario.duracionHoras) || 0;
+
+      const minutos =
+        Number(formulario.duracionMinutos) || 0;
+
+      return horas * 60 + minutos;
+    }, [
+      formulario.duracionHoras,
+      formulario.duracionMinutos
+    ]);
+
   const abrir = async () => {
     if (!cita) {
       return;
@@ -217,6 +255,9 @@ function EditarCitaSidecar() {
       cita.fechaInicio,
       zonaHoraria
     );
+
+    const duracionActual =
+      Number(cita.duracionMinutos) || 60;
 
     setFormulario({
       servicioId:
@@ -231,8 +272,16 @@ function EditarCitaSidecar() {
         String(cita.sucursal?.id || ""),
       fecha: local.fecha,
       hora: local.hora,
+      duracionHoras:
+        String(
+          Math.floor(
+            duracionActual / 60
+          )
+        ),
       duracionMinutos:
-        String(cita.duracionMinutos || 60),
+        String(
+          duracionActual % 60
+        ),
       notas: cita.notas || ""
     });
 
@@ -321,7 +370,7 @@ function EditarCitaSidecar() {
       !formulario.sucursalId ||
       !formulario.fecha ||
       !formulario.hora ||
-      Number(formulario.duracionMinutos) <= 0
+      duracionTotalMinutos <= 0
     ) {
       setError(
         "Completa todos los campos requeridos."
@@ -351,7 +400,7 @@ function EditarCitaSidecar() {
           fechaInicio:
             `${formulario.fecha}T${formulario.hora}:00`,
           duracionMinutos:
-            Number(formulario.duracionMinutos),
+            duracionTotalMinutos,
           notas:
             formulario.notas?.trim() ||
             null
@@ -554,7 +603,7 @@ function EditarCitaSidecar() {
                       </select>
                     </div>
 
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">
                         Fecha *
                       </label>
@@ -568,7 +617,7 @@ function EditarCitaSidecar() {
                       />
                     </div>
 
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">
                         Hora *
                       </label>
@@ -582,20 +631,69 @@ function EditarCitaSidecar() {
                       />
                     </div>
 
-                    <div className="col-md-4">
+                    <div className="col-12">
                       <label className="form-label">
-                        Duración (min) *
+                        Duración estimada *
                       </label>
-                      <input
-                        type="number"
-                        name="duracionMinutos"
-                        className="form-control"
-                        value={formulario.duracionMinutos}
-                        onChange={cambiarCampo}
-                        min="15"
-                        step="15"
-                        required
-                      />
+
+                      <div className="row g-2">
+                        <div className="col-6">
+                          <div className="input-group">
+                            <select
+                              name="duracionHoras"
+                              className="form-select"
+                              value={formulario.duracionHoras}
+                              onChange={cambiarCampo}
+                            >
+                              {Array.from(
+                                { length: 13 },
+                                (_, indice) => indice
+                              ).map((hora) => (
+                                <option
+                                  key={hora}
+                                  value={hora}
+                                >
+                                  {hora}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="input-group-text">
+                              h
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="col-6">
+                          <div className="input-group">
+                            <select
+                              name="duracionMinutos"
+                              className="form-select"
+                              value={formulario.duracionMinutos}
+                              onChange={cambiarCampo}
+                            >
+                              {[0, 15, 30, 45].map(
+                                (minuto) => (
+                                  <option
+                                    key={minuto}
+                                    value={minuto}
+                                  >
+                                    {String(minuto).padStart(2, "0")}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                            <span className="input-group-text">
+                              min
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="form-text">
+                        Duración seleccionada: {formatearDuracion(
+                          duracionTotalMinutos
+                        )}
+                      </div>
                     </div>
 
                     <div className="col-12">
