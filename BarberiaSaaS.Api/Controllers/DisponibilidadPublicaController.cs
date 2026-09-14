@@ -209,8 +209,18 @@ namespace BarberiaSaaS.Api.Controllers
             }
 
             // ========================================================
-            // FECHA INICIAL LOCAL
+            // FECHA / HORA ACTUAL LOCAL Y FECHA INICIAL LOCAL
             // ========================================================
+
+            var ahoraLocal =
+                await _timeZoneService
+                    .UtcALocalAsync(
+                        tenantId,
+                        DateTime.UtcNow);
+
+            ahoraLocal = DateTime.SpecifyKind(
+                ahoraLocal,
+                DateTimeKind.Unspecified);
 
             DateTime fechaInicialLocal;
 
@@ -223,12 +233,6 @@ namespace BarberiaSaaS.Api.Controllers
             }
             else
             {
-                var ahoraLocal =
-                    await _timeZoneService
-                        .UtcALocalAsync(
-                            tenantId,
-                            DateTime.UtcNow);
-
                 fechaInicialLocal =
                     DateTime.SpecifyKind(
                         ahoraLocal.Date,
@@ -405,6 +409,22 @@ namespace BarberiaSaaS.Api.Controllers
                                 candidatoLocal
                                     .AddMinutes(
                                         duracionMinutos);
+
+                            // En la landing pública nunca mostramos
+                            // espacios cuyo inicio ya quedó en el pasado.
+                            // Esto se evalúa con la zona horaria del negocio.
+                            var estaEnElPasado =
+                                candidatoLocal < ahoraLocal;
+
+                            if (estaEnElPasado)
+                            {
+                                candidatoLocal =
+                                    candidatoLocal
+                                        .AddMinutes(
+                                            duracionSlot);
+
+                                continue;
+                            }
 
                             var candidatoInicioUtc =
                                 await _timeZoneService
