@@ -20,6 +20,7 @@ import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import LandingPublica from "./pages/LandingPublica";
 import ManualPublico from "./pages/ManualPublico";
 import Prueba from "./pages/Prueba";
+import ConfirmarRegistro from "./pages/ConfirmarRegistro";
 
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
@@ -34,6 +35,7 @@ import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClien
 import ClienteContactPicker from "./components/ClienteContactPicker";
 import PaginaPublicaCard from "./components/PaginaPublicaCard";
 import FormatoHora12 from "./components/FormatoHora12";
+import TurnstileRegistro from "./components/TurnstileRegistro";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -86,7 +88,19 @@ function App() {
 
       <Route
         path="/prueba"
-        element={<Prueba />}
+        element={
+          <>
+            <Prueba />
+            <TurnstileRegistro />
+          </>
+        }
+      />
+
+      {/* CONFIRMACIÓN DE REGISTRO */}
+
+      <Route
+        path="/confirmarcreacion/:token"
+        element={<ConfirmarRegistro />}
       />
 
       {/* LANDING PÚBLICA POR NEGOCIO */}
