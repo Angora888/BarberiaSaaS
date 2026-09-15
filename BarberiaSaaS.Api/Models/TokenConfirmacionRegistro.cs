@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace BarberiaSaaS.Api.Models
 {
+    [Table("TokensConfirmacionRegistro")]
     [Index(nameof(TokenHash), IsUnique = true)]
     public class TokenConfirmacionRegistro
     {
