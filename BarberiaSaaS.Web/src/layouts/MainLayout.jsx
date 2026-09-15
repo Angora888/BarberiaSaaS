@@ -81,6 +81,59 @@ function MainLayout() {
       ?.charAt(0)
       ?.toUpperCase() || "N";
 
+  const obtenerPartesFecha = (
+    fecha,
+    zona
+  ) => {
+    try {
+      const partes =
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:
+              zona ||
+              "America/Costa_Rica",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+          }
+        ).formatToParts(fecha);
+
+      const year = Number(
+        partes.find(
+          (parte) =>
+            parte.type === "year"
+        )?.value
+      );
+
+      const month = Number(
+        partes.find(
+          (parte) =>
+            parte.type === "month"
+        )?.value
+      );
+
+      const day = Number(
+        partes.find(
+          (parte) =>
+            parte.type === "day"
+        )?.value
+      );
+
+      if (!year || !month || !day) {
+        return null;
+      }
+
+      return {
+        year,
+        month,
+        day
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const calcularDiasUsandoApp = () => {
     if (!tenant?.fechaCreacion) {
       return null;
@@ -95,15 +148,46 @@ function MainLayout() {
     }
 
     const ahora = new Date();
-    const diferencia =
-      ahora.getTime() -
-      fechaCreacion.getTime();
+
+    const fechaCreacionLocal =
+      obtenerPartesFecha(
+        fechaCreacion,
+        zonaHoraria
+      );
+
+    const fechaActualLocal =
+      obtenerPartesFecha(
+        ahora,
+        zonaHoraria
+      );
+
+    if (
+      !fechaCreacionLocal ||
+      !fechaActualLocal
+    ) {
+      return null;
+    }
+
+    const inicioCreacion = Date.UTC(
+      fechaCreacionLocal.year,
+      fechaCreacionLocal.month - 1,
+      fechaCreacionLocal.day
+    );
+
+    const inicioHoy = Date.UTC(
+      fechaActualLocal.year,
+      fechaActualLocal.month - 1,
+      fechaActualLocal.day
+    );
+
+    const diferenciaDias = Math.floor(
+      (inicioHoy - inicioCreacion) /
+      86400000
+    );
 
     return Math.max(
       1,
-      Math.floor(
-        diferencia / 86400000
-      ) + 1
+      diferenciaDias + 1
     );
   };
 
