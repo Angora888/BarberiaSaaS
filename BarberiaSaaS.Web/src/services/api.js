@@ -3,6 +3,9 @@ import axios from "axios";
 const SUCURSAL_STORAGE_KEY =
   "barberiaSaaS.sucursalSeleccionada";
 
+const TURNSTILE_STORAGE_KEY =
+  "barberiaSaaS.turnstileRegistro";
+
 const api = axios.create({
   baseURL:
     import.meta.env.VITE_API_URL ||
@@ -242,6 +245,26 @@ api.interceptors.request.use(
         `Bearer ${token}`;
     }
 
+    const ruta = obtenerRuta(config);
+    const metodo = String(
+      config?.method || "get"
+    ).toLowerCase();
+
+    if (
+      ruta === "/auth/registrar-negocio" &&
+      metodo === "post"
+    ) {
+      const turnstileToken =
+        sessionStorage.getItem(
+          TURNSTILE_STORAGE_KEY
+        ) || "";
+
+      config.data = {
+        ...(config.data || {}),
+        turnstileToken
+      };
+    }
+
     const sucursalId =
       obtenerSucursalSeleccionada();
 
@@ -249,9 +272,6 @@ api.interceptors.request.use(
       sucursalId &&
       esGet(config)
     ) {
-      const ruta =
-        obtenerRuta(config);
-
       if (
         debeAgregarSucursalComoParametro(
           ruta
@@ -311,7 +331,11 @@ api.interceptors.response.use(
         SUCURSAL_STORAGE_KEY
       );
 
-      window.location.href = "/login";
+      const ruta = obtenerRuta(error.config);
+
+      if (ruta !== "/auth/login") {
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);
