@@ -1,10 +1,14 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.DTOs;
 using BarberiaSaaS.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,13 +20,16 @@ namespace BarberiaSaaS.Api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public AuthController(
             AppDbContext context,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         // =========================================================
@@ -30,6 +37,7 @@ namespace BarberiaSaaS.Api.Controllers
         // =========================================================
 
         [HttpPost("registrar-negocio")]
+        [EnableRateLimiting("RegistroPublico")]
         public async Task<IActionResult> RegistrarNegocio(
             RegistrarTenantDto request)
         {
@@ -44,11 +52,26 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            if (string.IsNullOrWhiteSpace(request.TurnstileToken))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "Completa la verificación de seguridad antes de continuar."
+                });
+            }
+
+            if (!await ValidarTurnstileAsync(request.TurnstileToken))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La verificación de seguridad no fue válida o expiró. Intenta nuevamente."
+                });
+            }
+
             var email = request.Email
                 .Trim()
                 .ToLowerInvariant();
 
-            // Evita que el mismo email se registre en más de un negocio
             var emailExiste = await _context.Usuarios
                 .AnyAsync(x =>
                     x.Email.ToLower() == email);
@@ -66,32 +89,26 @@ namespace BarberiaSaaS.Api.Controllers
 
             try
             {
+                var ahora = DateTime.UtcNow;
+
                 // =====================================================
-                // TENANT
+                // TENANT PENDIENTE DE CONFIRMACIÓN
                 // =====================================================
 
                 var tenant = new Tenant
                 {
                     Nombre = request.NombreNegocio.Trim(),
-
-                    NombreComercial =
-                        request.NombreNegocio.Trim(),
-
-                    Identificacion =
-                        request.Identificacion?.Trim(),
-
-                    Telefono =
-                        request.Telefono?.Trim(),
-
+                    NombreComercial = request.NombreNegocio.Trim(),
+                    Identificacion = request.Identificacion?.Trim(),
+                    Telefono = request.Telefono?.Trim(),
                     Email = email,
-
-                    Activo = true,
-
-                    FechaCreacion = DateTime.UtcNow
+                    Activo = false,
+                    EmailConfirmado = false,
+                    FechaActivacion = null,
+                    FechaCreacion = ahora
                 };
 
                 _context.Tenants.Add(tenant);
-
                 await _context.SaveChangesAsync();
 
                 // =====================================================
@@ -101,37 +118,22 @@ namespace BarberiaSaaS.Api.Controllers
                 var configuracion = new ConfiguracionTenant
                 {
                     TenantId = tenant.Id,
-
                     LogoUrl = null,
-
                     ColorPrimario = "#C62864",
-
                     ColorSecundario = "#F8E7EE",
-
                     ColorFondo = "#FFFFFF",
-
                     Moneda = "CRC",
-
                     ZonaHoraria = "America/Costa_Rica",
-
                     Idioma = "es",
-
                     DuracionSlotMinutos = 15,
-
                     PermitirReservaOnline = true,
-
                     MostrarPrecios = true,
-
                     RequiereDeposito = false,
-
                     PorcentajeDeposito = 0,
-
-                    WhatsApp =
-                        request.Telefono?.Trim()
+                    WhatsApp = request.Telefono?.Trim()
                 };
 
-                _context.ConfiguracionesTenant.Add(
-                    configuracion);
+                _context.ConfiguracionesTenant.Add(configuracion);
 
                 // =====================================================
                 // SUCURSAL PRINCIPAL
@@ -140,21 +142,14 @@ namespace BarberiaSaaS.Api.Controllers
                 var sucursal = new Sucursal
                 {
                     TenantId = tenant.Id,
-
                     Nombre = "Sucursal Principal",
-
-                    Telefono =
-                        request.Telefono?.Trim(),
-
+                    Telefono = request.Telefono?.Trim(),
                     Email = email,
-
                     Activa = true,
-
-                    FechaCreacion = DateTime.UtcNow
+                    FechaCreacion = ahora
                 };
 
                 _context.Sucursales.Add(sucursal);
-
                 await _context.SaveChangesAsync();
 
                 // =====================================================
@@ -164,69 +159,144 @@ namespace BarberiaSaaS.Api.Controllers
                 var usuario = new Usuario
                 {
                     TenantId = tenant.Id,
-
                     SucursalId = sucursal.Id,
-
-                    Nombre =
-                        request.NombrePropietario.Trim(),
-
-                    Apellidos =
-                        request.ApellidosPropietario?.Trim()
+                    Nombre = request.NombrePropietario.Trim(),
+                    Apellidos = request.ApellidosPropietario?.Trim()
                         ?? string.Empty,
-
                     Email = email,
-
-                    PasswordHash =
-                        BCrypt.Net.BCrypt.HashPassword(
-                            request.Password),
-
-                    Rol =
-                        RolesUsuario.Propietario,
-
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(
+                        request.Password),
+                    Rol = RolesUsuario.Propietario,
                     Activo = true,
-
-                    FechaCreacion =
-                        DateTime.UtcNow
+                    FechaCreacion = ahora
                 };
 
                 _context.Usuarios.Add(usuario);
-
                 await _context.SaveChangesAsync();
 
+                // =====================================================
+                // TOKEN DE CONFIRMACIÓN - SOLO GUARDAMOS EL HASH
+                // =====================================================
+
+                var tokenPlano = GenerarTokenConfirmacion();
+                var tokenHash = CalcularSha256(tokenPlano);
+
+                var tokenConfirmacion = new TokenConfirmacionRegistro
+                {
+                    TenantId = tenant.Id,
+                    TokenHash = tokenHash,
+                    FechaCreacion = ahora,
+                    FechaExpiracion = ahora.AddMinutes(30),
+                    FechaUso = null
+                };
+
+                _context.Set<TokenConfirmacionRegistro>()
+                    .Add(tokenConfirmacion);
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                var correoEnviado = await EnviarCorreoConfirmacionAsync(
+                    tenant,
+                    usuario,
+                    tokenPlano);
+
+                if (!correoEnviado)
+                {
+                    return StatusCode(
+                        StatusCodes.Status502BadGateway,
+                        new
+                        {
+                            mensaje = "El negocio quedó registrado, pero no pudimos enviar el correo de confirmación. Intenta reenviar la confirmación en unos minutos.",
+                            requiereConfirmacion = true,
+                            email
+                        });
+                }
 
                 return Ok(new
                 {
-                    mensaje =
-                        "Negocio registrado correctamente.",
-
-                    tenantId =
-                        tenant.Id,
-
-                    sucursalId =
-                        sucursal.Id,
-
-                    usuarioId =
-                        usuario.Id,
-
-                    negocio =
-                        tenant.Nombre,
-
-                    propietario =
-                        $"{usuario.Nombre} {usuario.Apellidos}"
-                        .Trim(),
-
-                    usuario.Email,
-
-                    usuario.Rol
+                    mensaje = "Negocio registrado. Revisa tu correo para confirmar y activar tu cuenta.",
+                    requiereConfirmacion = true,
+                    email,
+                    negocio = tenant.Nombre
                 });
             }
             catch
             {
-                await transaction.RollbackAsync();
+                if (transaction.GetDbTransaction().Connection != null)
+                {
+                    await transaction.RollbackAsync();
+                }
 
                 throw;
             }
+        }
+
+        // =========================================================
+        // CONFIRMAR REGISTRO
+        // =========================================================
+
+        [HttpPost("confirmar-registro")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> ConfirmarRegistro(
+            ConfirmarRegistroDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Token))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación no es válido."
+                });
+            }
+
+            var tokenHash = CalcularSha256(request.Token.Trim());
+            var ahora = DateTime.UtcNow;
+
+            var token = await _context
+                .Set<TokenConfirmacionRegistro>()
+                .Include(x => x.Tenant)
+                .FirstOrDefaultAsync(x =>
+                    x.TokenHash == tokenHash);
+
+            if (token == null)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación no es válido."
+                });
+            }
+
+            if (token.FechaUso.HasValue ||
+                token.Tenant.EmailConfirmado)
+            {
+                return Ok(new
+                {
+                    mensaje = "Este negocio ya fue confirmado.",
+                    confirmado = true
+                });
+            }
+
+            if (token.FechaExpiracion < ahora)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación expiró. Solicita uno nuevo.",
+                    expirado = true
+                });
+            }
+
+            token.FechaUso = ahora;
+            token.Tenant.EmailConfirmado = true;
+            token.Tenant.Activo = true;
+            token.Tenant.FechaActivacion = ahora;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "¡Correo confirmado! Tu negocio ya está activo y tu período de prueba comienza hoy.",
+                confirmado = true
+            });
         }
 
         // =========================================================
@@ -242,8 +312,7 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 return BadRequest(new
                 {
-                    mensaje =
-                        "Email y contraseña son requeridos."
+                    mensaje = "Email y contraseña son requeridos."
                 });
             }
 
@@ -262,93 +331,208 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 return Unauthorized(new
                 {
-                    mensaje =
-                        "Email o contraseña incorrectos."
+                    mensaje = "Email o contraseña incorrectos."
                 });
             }
 
-            var passwordValido =
-                BCrypt.Net.BCrypt.Verify(
-                    request.Password,
-                    usuario.PasswordHash);
+            var passwordValido = BCrypt.Net.BCrypt.Verify(
+                request.Password,
+                usuario.PasswordHash);
 
             if (!passwordValido)
             {
                 return Unauthorized(new
                 {
-                    mensaje =
-                        "Email o contraseña incorrectos."
+                    mensaje = "Email o contraseña incorrectos."
                 });
             }
 
-            // Verificamos que el negocio siga activo
+            if (!usuario.Tenant.EmailConfirmado)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "Debes confirmar tu correo electrónico antes de iniciar sesión.",
+                    requiereConfirmacion = true
+                });
+            }
+
             if (!usuario.Tenant.Activo)
             {
                 return Unauthorized(new
                 {
-                    mensaje =
-                        "El negocio se encuentra inactivo."
+                    mensaje = "El negocio se encuentra inactivo."
                 });
             }
 
-            // Generar JWT
-            var token =
-                GenerarToken(usuario);
+            var token = GenerarToken(usuario);
 
-            // Registrar último acceso
-            usuario.UltimoAcceso =
-                DateTime.UtcNow;
-
+            usuario.UltimoAcceso = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 token,
-
                 usuario = new
                 {
                     usuario.Id,
-
                     usuario.Nombre,
-
                     usuario.Apellidos,
-
                     usuario.Email,
-
                     usuario.Rol,
-
                     usuario.TenantId,
-
                     usuario.SucursalId,
-
-                    negocio =
-                        usuario.Tenant.Nombre,
-
-                    sucursal =
-                        usuario.Sucursal?.Nombre
+                    negocio = usuario.Tenant.Nombre,
+                    sucursal = usuario.Sucursal?.Nombre
                 }
             });
+        }
+
+        // =========================================================
+        // TURNSTILE
+        // =========================================================
+
+        private async Task<bool> ValidarTurnstileAsync(string token)
+        {
+            var secretKey = _configuration["Turnstile:SecretKey"];
+
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                throw new InvalidOperationException(
+                    "Turnstile:SecretKey no está configurado.");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+
+            var form = new Dictionary<string, string>
+            {
+                ["secret"] = secretKey,
+                ["response"] = token
+            };
+
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            if (!string.IsNullOrWhiteSpace(remoteIp))
+            {
+                form["remoteip"] = remoteIp;
+            }
+
+            using var response = await client.PostAsync(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                new FormUrlEncodedContent(form));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var resultado = await response.Content
+                .ReadFromJsonAsync<TurnstileVerificationResponse>();
+
+            return resultado?.Success == true;
+        }
+
+        // =========================================================
+        // RESEND
+        // =========================================================
+
+        private async Task<bool> EnviarCorreoConfirmacionAsync(
+            Tenant tenant,
+            Usuario usuario,
+            string tokenPlano)
+        {
+            var apiKey = _configuration["Resend:ApiKey"];
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new InvalidOperationException(
+                    "Resend:ApiKey no está configurado.");
+            }
+
+            var from = _configuration["Resend:FromEmail"];
+
+            if (string.IsNullOrWhiteSpace(from))
+            {
+                from = "Barberia SaaS <onboarding@resend.dev>";
+            }
+
+            var frontendUrl =
+                _configuration["App:FrontendUrl"]
+                ?? "https://barberiasaas.vercel.app";
+
+            var enlace =
+                $"{frontendUrl.TrimEnd('/')}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
+
+            var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
+            var negocio = System.Net.WebUtility.HtmlEncode(tenant.Nombre);
+
+            var html = $"""
+                <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
+                  <h1 style="color:#111827">¡Bienvenido a Barberia SaaS!</h1>
+                  <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para crear <strong>{negocio}</strong>.</p>
+                  <p>Confirma tu correo para activar el negocio y comenzar tu período de prueba.</p>
+                  <p style="margin:32px 0">
+                    <a href="{enlace}" style="background:#c62864;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Confirmar mi negocio</a>
+                  </p>
+                  <p>Este enlace vence en <strong>30 minutos</strong> y solo puede utilizarse una vez.</p>
+                  <p style="color:#6b7280;font-size:13px">Si no realizaste este registro, puedes ignorar este correo.</p>
+                </div>
+                """;
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue(
+                    "Bearer",
+                    apiKey);
+
+            var payload = new
+            {
+                from,
+                to = new[] { usuario.Email },
+                subject = "Confirma tu negocio en Barberia SaaS",
+                html
+            };
+
+            using var response = await client.PostAsJsonAsync(
+                "https://api.resend.com/emails",
+                payload);
+
+            return response.IsSuccessStatusCode;
+        }
+
+        // =========================================================
+        // TOKEN DE CONFIRMACIÓN
+        // =========================================================
+
+        private static string GenerarTokenConfirmacion()
+        {
+            return Convert.ToHexString(
+                    RandomNumberGenerator.GetBytes(32))
+                .ToLowerInvariant();
+        }
+
+        private static string CalcularSha256(string valor)
+        {
+            return Convert.ToHexString(
+                    SHA256.HashData(
+                        Encoding.UTF8.GetBytes(valor)))
+                .ToLowerInvariant();
         }
 
         // =========================================================
         // GENERAR JWT
         // =========================================================
 
-        private string GenerarToken(
-            Usuario usuario)
+        private string GenerarToken(Usuario usuario)
         {
-            var jwtKey =
-                _configuration["Jwt:Key"]
+            var jwtKey = _configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException(
                     "Jwt:Key no está configurado.");
 
-            var issuer =
-                _configuration["Jwt:Issuer"]
+            var issuer = _configuration["Jwt:Issuer"]
                 ?? throw new InvalidOperationException(
                     "Jwt:Issuer no está configurado.");
 
-            var audience =
-                _configuration["Jwt:Audience"]
+            var audience = _configuration["Jwt:Audience"]
                 ?? throw new InvalidOperationException(
                     "Jwt:Audience no está configurado.");
 
@@ -357,64 +541,58 @@ namespace BarberiaSaaS.Api.Controllers
                 new Claim(
                     JwtRegisteredClaimNames.Sub,
                     usuario.Id.ToString()),
-
                 new Claim(
                     ClaimTypes.NameIdentifier,
                     usuario.Id.ToString()),
-
                 new Claim(
                     ClaimTypes.Name,
                     usuario.Nombre),
-
                 new Claim(
                     ClaimTypes.Email,
                     usuario.Email),
-
                 new Claim(
                     ClaimTypes.Role,
                     usuario.Rol),
-
                 new Claim(
                     "TenantId",
                     usuario.TenantId.ToString())
             };
 
-            // La sucursal puede ser null
             if (usuario.SucursalId.HasValue)
             {
                 claims.Add(
                     new Claim(
                         "SucursalId",
-                        usuario.SucursalId.Value.ToString())
-                );
+                        usuario.SucursalId.Value.ToString()));
             }
 
-            var key =
-                new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(jwtKey));
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey));
 
-            var credentials =
-                new SigningCredentials(
-                    key,
-                    SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256);
 
-            var token =
-                new JwtSecurityToken(
-                    issuer: issuer,
-
-                    audience: audience,
-
-                    claims: claims,
-
-                    expires:
-                        DateTime.UtcNow.AddHours(8),
-
-                    signingCredentials:
-                        credentials
-                );
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler()
                 .WriteToken(token);
+        }
+
+        public class ConfirmarRegistroDto
+        {
+            public string Token { get; set; } = string.Empty;
+        }
+
+        private sealed class TurnstileVerificationResponse
+        {
+            [JsonPropertyName("success")]
+            public bool Success { get; set; }
         }
     }
 }
