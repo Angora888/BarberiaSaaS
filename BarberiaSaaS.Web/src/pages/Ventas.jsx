@@ -50,7 +50,7 @@ function Ventas() {
     useState("Efectivo");
 
   const [descuento, setDescuento] =
-    useState("0");
+    useState("");
 
   const [notas, setNotas] =
     useState("");
@@ -399,7 +399,7 @@ function Ventas() {
 
       setCarrito([]);
       setClienteId("");
-      setDescuento("0");
+      setDescuento("");
       setNotas("");
 
       await Promise.all([

@@ -562,9 +562,13 @@ function Prueba() {
                 ¡Listo! Tu negocio ya fue registrado.
               </h1>
 
-              <p className="lead text-secondary mb-4">
+              <p className="lead text-secondary mb-2">
                 Revisa tu correo electrónico y confirma tu cuenta para activar el negocio y comenzar tu período de prueba.
               </p>
+
+              <div className="alert alert-warning py-2 px-3 mb-4" role="alert">
+                <strong>¿No ves el correo?</strong> Revisa también tu carpeta de Spam o Correo no deseado.
+              </div>
 
               <div className="trial-credential text-start mb-4">
                 <div className="small text-secondary mb-1">

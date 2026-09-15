@@ -160,6 +160,14 @@ function AgendaSemanaCompacta({
             const citasDia =
               citasSemanaPorDia.get(dia.fecha) || [];
 
+            const citasVisibles =
+              citasDia.filter(
+                (cita) =>
+                  String(cita.estado || "")
+                    .trim()
+                    .toLowerCase() !== "cancelada"
+              );
+
             const esHoy =
               dia.fecha === obtenerFechaHoyCompacto();
 
@@ -197,7 +205,7 @@ function AgendaSemanaCompacta({
                   }
                 )}
 
-                {citasDia.map((cita) => {
+                {citasVisibles.map((cita) => {
                   const minutoInicio =
                     obtenerMinutosCita(
                       cita,
@@ -250,7 +258,7 @@ function AgendaSemanaCompacta({
                   );
                 })}
 
-                {citasDia.length === 0 && (
+                {citasVisibles.length === 0 && (
                   <div className="compact-week-empty-hint">
                     <FaPlus />
                   </div>

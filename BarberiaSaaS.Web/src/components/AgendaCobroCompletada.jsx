@@ -26,7 +26,7 @@ function AgendaCobroCompletada() {
   const [mensaje, setMensaje] = useState("");
 
   const [formulario, setFormulario] = useState({
-    descuento: "0",
+    descuento: "",
     montoPagado: "",
     metodoPago: "SINPE Movil",
     notas: ""
@@ -61,7 +61,7 @@ function AgendaCobroCompletada() {
 
         setCita(citaActual);
         setFormulario({
-          descuento: "0",
+          descuento: "",
           montoPagado:
             precio.toString(),
           metodoPago: "SINPE Movil",
@@ -190,7 +190,7 @@ function AgendaCobroCompletada() {
     setError("");
     setMensaje("");
     setFormulario({
-      descuento: "0",
+      descuento: "",
       montoPagado: "",
       metodoPago: "SINPE Movil",
       notas: ""
