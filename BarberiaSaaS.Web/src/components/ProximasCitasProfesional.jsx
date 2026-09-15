@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   FaCalendarAlt,
   FaTimes
@@ -142,6 +143,97 @@ function ProximasCitasProfesional({
     }
   };
 
+  const modal = mostrar ? (
+    <div
+      className="proximas-citas-backdrop"
+      onClick={cerrar}
+    >
+      <div
+        className="proximas-citas-modal"
+        onClick={(e) =>
+          e.stopPropagation()
+        }
+      >
+        <div className="proximas-citas-header">
+          <div className="proximas-citas-heading">
+            <div className="text-muted proximas-citas-eyebrow">
+              Próximas citas
+            </div>
+
+            <h4>
+              {profesional.nombre}{" "}
+              {profesional.apellidos || ""}
+            </h4>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-light btn-sm proximas-citas-close"
+            onClick={cerrar}
+            aria-label="Cerrar"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        <div className="proximas-citas-body">
+          {cargando ? (
+            <div className="text-center text-muted py-5">
+              <div
+                className="spinner-border spinner-border-sm me-2"
+                role="status"
+              />
+              Cargando próximas citas...
+            </div>
+          ) : error ? (
+            <div className="alert alert-danger mb-0">
+              {error}
+            </div>
+          ) : citas.length === 0 ? (
+            <div className="text-center py-5">
+              <FaCalendarAlt
+                size={30}
+                className="text-muted mb-3"
+              />
+
+              <h6 className="mb-1">
+                Sin citas próximas
+              </h6>
+
+              <div className="text-muted small">
+                Este profesional no tiene citas futuras registradas.
+              </div>
+            </div>
+          ) : (
+            <div className="proximas-citas-lista">
+              {citas.map((cita) => (
+                <div
+                  key={cita.id}
+                  className="proximas-citas-item"
+                >
+                  <div className="proximas-citas-cliente">
+                    {nombreCliente(cita)}
+                  </div>
+
+                  <div className="proximas-citas-servicio">
+                    {cita.servicio?.nombre ||
+                      "Servicio"}
+                  </div>
+
+                  <div className="text-muted proximas-citas-fecha">
+                    {formatearFechaHora(
+                      cita.fechaInicio
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <button
@@ -153,192 +245,11 @@ function ProximasCitasProfesional({
         Próximas citas
       </button>
 
-      {mostrar && (
-        <div
-          className="modal-backdrop-custom"
-          onClick={cerrar}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 2000,
-            background:
-              "rgba(15, 23, 42, 0.48)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 18
-          }}
-        >
-          <div
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-            style={{
-              width: "100%",
-              maxWidth: 560,
-              maxHeight: "82vh",
-              overflow: "hidden",
-              background: "#fff",
-              borderRadius: 22,
-              boxShadow:
-                "0 24px 70px rgba(15, 23, 42, 0.22)"
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent:
-                  "space-between",
-                gap: 16,
-                padding: "20px 22px",
-                borderBottom:
-                  "1px solid #edf0f4"
-              }}
-            >
-              <div>
-                <div
-                  className="text-muted"
-                  style={{
-                    fontSize: 13
-                  }}
-                >
-                  Próximas citas
-                </div>
-
-                <h4
-                  style={{
-                    margin: "2px 0 0",
-                    fontWeight: 800
-                  }}
-                >
-                  {profesional.nombre}{" "}
-                  {profesional.apellidos || ""}
-                </h4>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-light btn-sm"
-                onClick={cerrar}
-                aria-label="Cerrar"
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 12
-                }}
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <div
-              style={{
-                maxHeight: "calc(82vh - 82px)",
-                overflowY: "auto",
-                padding: 18
-              }}
-            >
-              {cargando ? (
-                <div
-                  className="text-center text-muted py-5"
-                >
-                  <div
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                  />
-                  Cargando próximas citas...
-                </div>
-              ) : error ? (
-                <div className="alert alert-danger mb-0">
-                  {error}
-                </div>
-              ) : citas.length === 0 ? (
-                <div
-                  className="text-center py-5"
-                >
-                  <FaCalendarAlt
-                    size={30}
-                    className="text-muted mb-3"
-                  />
-
-                  <h6 className="mb-1">
-                    Sin citas próximas
-                  </h6>
-
-                  <div className="text-muted small">
-                    Este profesional no tiene citas futuras registradas.
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {citas.map((cita) => (
-                    <div
-                      key={cita.id}
-                      style={{
-                        padding: "16px 4px",
-                        borderBottom:
-                          "1px solid #edf0f4"
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent:
-                            "space-between",
-                          alignItems:
-                            "flex-start",
-                          gap: 14
-                        }}
-                      >
-                        <div
-                          style={{
-                            minWidth: 0
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontWeight: 800,
-                              fontSize: 16,
-                              color: "#1f2937"
-                            }}
-                          >
-                            {nombreCliente(cita)}
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: 3,
-                              fontWeight: 700,
-                              color:
-                                "var(--primary)"
-                            }}
-                          >
-                            {cita.servicio?.nombre ||
-                              "Servicio"}
-                          </div>
-
-                          <div
-                            className="text-muted"
-                            style={{
-                              marginTop: 5,
-                              fontSize: 14
-                            }}
-                          >
-                            {formatearFechaHora(
-                              cita.fechaInicio
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {modal &&
+        createPortal(
+          modal,
+          document.body
+        )}
     </>
   );
 }
