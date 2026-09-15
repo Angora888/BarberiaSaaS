@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 
 import api from "../services/api";
+import ProximasCitasProfesional from "./ProximasCitasProfesional";
 
 function BloqueosProfesional({
   profesional
@@ -37,10 +38,6 @@ function BloqueosProfesional({
       horaFin: "17:00",
       motivo: ""
     });
-
-  // ============================================================
-  // CARGAR
-  // ============================================================
 
   useEffect(() => {
     if (profesional?.id) {
@@ -71,10 +68,6 @@ function BloqueosProfesional({
     }
   };
 
-  // ============================================================
-  // FORMULARIO
-  // ============================================================
-
   const cambiarCampo = (e) => {
     const {
       name,
@@ -88,10 +81,6 @@ function BloqueosProfesional({
       })
     );
   };
-
-  // ============================================================
-  // CREAR
-  // ============================================================
 
   const guardarBloqueo =
     async (e) => {
@@ -155,10 +144,6 @@ function BloqueosProfesional({
       }
     };
 
-  // ============================================================
-  // ELIMINAR
-  // ============================================================
-
   const eliminarBloqueo =
     async (bloqueo) => {
       const confirmar =
@@ -192,23 +177,11 @@ function BloqueosProfesional({
       }
     };
 
-  // ============================================================
-  // FORMATEAR FECHA LOCAL
-  // ============================================================
-
   const formatearFecha =
     (fecha) => {
       if (!fecha) {
         return "";
       }
-
-      /*
-       * El backend ya nos devuelve
-       * fechaInicioLocal/fechaFinLocal.
-       *
-       * Aquí NO hacemos conversión de
-       * zona horaria nuevamente.
-       */
 
       const texto =
         fecha.substring(0, 16);
@@ -227,12 +200,13 @@ function BloqueosProfesional({
       return `${day}/${month}/${year} ${parteHora}`;
     };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
     <div className="professional-blocks">
+      <div className="mb-3">
+        <ProximasCitasProfesional
+          profesional={profesional}
+        />
+      </div>
 
       <div className="schedule-section-title">
         <FaBan />
@@ -255,20 +229,14 @@ function BloqueosProfesional({
         </div>
       )}
 
-      {/* FORMULARIO */}
-
       <div className="schedule-form-card">
-
         <form
           onSubmit={
             guardarBloqueo
           }
         >
-
           <div className="row g-3 align-items-end">
-
             <div className="col-md-3">
-
               <label className="form-label">
                 Fecha
               </label>
@@ -285,11 +253,9 @@ function BloqueosProfesional({
                 }
                 required
               />
-
             </div>
 
             <div className="col-md-2">
-
               <label className="form-label">
                 Desde
               </label>
@@ -306,11 +272,9 @@ function BloqueosProfesional({
                 }
                 required
               />
-
             </div>
 
             <div className="col-md-2">
-
               <label className="form-label">
                 Hasta
               </label>
@@ -327,11 +291,9 @@ function BloqueosProfesional({
                 }
                 required
               />
-
             </div>
 
             <div className="col-md-3">
-
               <label className="form-label">
                 Motivo
               </label>
@@ -348,11 +310,9 @@ function BloqueosProfesional({
                 }
                 placeholder="Ej. Cita médica"
               />
-
             </div>
 
             <div className="col-md-2">
-
               <button
                 type="submit"
                 className="btn btn-primary w-100"
@@ -366,29 +326,18 @@ function BloqueosProfesional({
                   ? "..."
                   : "Bloquear"}
               </button>
-
             </div>
-
           </div>
-
         </form>
-
       </div>
 
-      {/* LISTA */}
-
       <div className="mt-4">
-
         {cargando ? (
-
           <div className="empty-state">
             Cargando bloqueos...
           </div>
-
         ) : bloqueos.length === 0 ? (
-
           <div className="schedule-empty">
-
             <FaCalendarAlt
               size={26}
             />
@@ -401,29 +350,22 @@ function BloqueosProfesional({
               El profesional no tiene
               ausencias registradas.
             </span>
-
           </div>
-
         ) : (
-
           <div className="block-list">
-
             {bloqueos.map(
               (bloqueo) => (
-
                 <div
                   className="block-row"
                   key={
                     bloqueo.id
                   }
                 >
-
                   <div className="block-icon">
                     <FaBan />
                   </div>
 
                   <div className="block-info">
-
                     <strong>
                       {bloqueo.motivo ||
                         "No disponible"}
@@ -438,7 +380,6 @@ function BloqueosProfesional({
                         bloqueo.fechaFinLocal
                       )}
                     </span>
-
                   </div>
 
                   <button
@@ -457,18 +398,12 @@ function BloqueosProfesional({
                   >
                     <FaTrash />
                   </button>
-
                 </div>
-
               )
             )}
-
           </div>
-
         )}
-
       </div>
-
     </div>
   );
 }
