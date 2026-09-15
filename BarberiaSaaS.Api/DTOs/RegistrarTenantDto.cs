@@ -1,4 +1,4 @@
-﻿namespace BarberiaSaaS.Api.DTOs
+namespace BarberiaSaaS.Api.DTOs
 {
     public class RegistrarTenantDto
     {
@@ -17,5 +17,9 @@
         public string Email { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
+
+        // Token generado por Cloudflare Turnstile en el formulario público.
+        // El backend siempre lo valida con Cloudflare antes de crear el negocio.
+        public string TurnstileToken { get; set; } = string.Empty;
     }
 }
