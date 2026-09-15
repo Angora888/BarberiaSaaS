@@ -178,7 +178,9 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .AllowAnyOrigin()
+                .WithOrigins(
+                    "https://barberiasaas.com",
+                    "https://barberiasaas.vercel.app")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
