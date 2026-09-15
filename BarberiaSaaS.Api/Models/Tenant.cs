@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace BarberiaSaaS.Api.Models
@@ -28,10 +28,19 @@ namespace BarberiaSaaS.Api.Models
         public bool LandingPublicaActiva { get; set; } = false;
 
         // ============================================================
-        // ESTADO
+        // ESTADO / ACTIVACIÓN
         // ============================================================
 
         public bool Activo { get; set; } = true;
+
+        // Los tenants existentes se consideran confirmados. Los nuevos
+        // registros públicos se crean explícitamente con false hasta que
+        // el propietario confirme el correo.
+        public bool EmailConfirmado { get; set; } = true;
+
+        // Marca el momento en que comenzó realmente el acceso/prueba.
+        // Para tenants existentes la migración la inicializa con FechaCreacion.
+        public DateTime? FechaActivacion { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
@@ -70,5 +79,8 @@ namespace BarberiaSaaS.Api.Models
 
         public ICollection<AbonoCuentaPorCobrar> AbonosCuentasPorCobrar { get; set; }
             = new List<AbonoCuentaPorCobrar>();
+
+        public ICollection<TokenConfirmacionRegistro> TokensConfirmacionRegistro { get; set; }
+            = new List<TokenConfirmacionRegistro>();
     }
 }
