@@ -1,0 +1,9 @@
+/* Cancelled appointments stay in the database/history, but must not occupy space in the active daily agenda. */
+.visual-appointment.visual-cancelled {
+  display: none !important;
+}
+
+/* Also keep them out of the daily list view. */
+.appointment-card:has(.appointment-status.cancelled) {
+  display: none !important;
+}
