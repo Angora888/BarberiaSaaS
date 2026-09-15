@@ -1,6 +1,7 @@
 import {
   NavLink,
   Outlet,
+  useLocation,
   useNavigate
 } from "react-router-dom";
 
@@ -16,7 +17,8 @@ import {
   FaSignOutAlt,
   FaStore,
   FaUsers,
-  FaUserTie
+  FaUserTie,
+  FaWhatsapp
 } from "react-icons/fa";
 
 import {
@@ -31,7 +33,11 @@ function MainLayout() {
   const navigate =
     useNavigate();
 
+  const location =
+    useLocation();
+
   const {
+    tenant,
     nombreNegocio,
     logoUrl,
     zonaHoraria,
@@ -74,6 +80,67 @@ function MainLayout() {
     nombreNegocio
       ?.charAt(0)
       ?.toUpperCase() || "N";
+
+  const calcularDiasUsandoApp = () => {
+    if (!tenant?.fechaCreacion) {
+      return null;
+    }
+
+    const fechaCreacion = new Date(
+      tenant.fechaCreacion
+    );
+
+    if (Number.isNaN(fechaCreacion.getTime())) {
+      return null;
+    }
+
+    const ahora = new Date();
+    const diferencia =
+      ahora.getTime() -
+      fechaCreacion.getTime();
+
+    return Math.max(
+      1,
+      Math.floor(
+        diferencia / 86400000
+      ) + 1
+    );
+  };
+
+  const diasUsandoApp =
+    calcularDiasUsandoApp();
+
+  const diasRestantesPrueba =
+    diasUsandoApp !== null &&
+    diasUsandoApp < 31
+      ? 31 - diasUsandoApp
+      : 0;
+
+  const mostrarAvisoPrueba =
+    location.pathname === "/dashboard" &&
+    diasUsandoApp !== null;
+
+  const contactarAdministrador = () => {
+    const mensaje = [
+      "¡Hola! 👋",
+      "Quiero continuar utilizando Barberia SaaS. ✨",
+      "",
+      `Mi negocio es: ${nombreNegocio}`,
+      usuario.email
+        ? `Mi correo registrado es: ${usuario.email}`
+        : "",
+      "",
+      "¿Me puedes ayudar con mi membresía? 😊"
+    ]
+      .filter((linea) => linea !== "")
+      .join("\n");
+
+    window.open(
+      `https://wa.me/50660662375?text=${encodeURIComponent(mensaje)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   if (
     cargandoConfiguracion ||
@@ -363,6 +430,68 @@ function MainLayout() {
           {errorSucursales && (
             <div className="alert alert-warning">
               {errorSucursales}
+            </div>
+          )}
+
+          {mostrarAvisoPrueba && (
+            <div
+              className="mb-4"
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 20,
+                padding: "18px 20px",
+                background: "linear-gradient(135deg, var(--soft-pink), #ffffff)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.04)"
+              }}
+            >
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                  <div
+                    className="text-uppercase fw-bold mb-1"
+                    style={{
+                      color: "var(--primary)",
+                      fontSize: 12,
+                      letterSpacing: 1.2
+                    }}
+                  >
+                    Barberia SaaS
+                  </div>
+
+                  <div
+                    className="fw-bold"
+                    style={{
+                      fontSize: 20
+                    }}
+                  >
+                    Días usando la App: {diasUsandoApp}
+                  </div>
+
+                  {diasUsandoApp < 31 && (
+                    <div className="text-muted mt-1">
+                      Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita.
+                      {" "}Si deseas continuar utilizando Barberia SaaS,
+                      puedes contactar al administrador.
+                    </div>
+                  )}
+                </div>
+
+                {diasUsandoApp < 31 && (
+                  <button
+                    type="button"
+                    className="btn btn-success d-inline-flex align-items-center gap-2"
+                    onClick={contactarAdministrador}
+                    style={{
+                      borderRadius: 14,
+                      padding: "10px 16px",
+                      fontWeight: 700,
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    <FaWhatsapp size={20} />
+                    Contactar administrador
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
