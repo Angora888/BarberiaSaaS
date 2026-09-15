@@ -541,8 +541,7 @@ function Prueba() {
                       </button>
 
                       <p className="small text-secondary text-center mt-3 mb-0">
-                        Al registrarte podrás ingresar inmediatamente con el correo y
-                        contraseña que acabas de crear.
+                        Te enviaremos un correo de confirmación a la dirección proporcionada. Debes confirmar tu correo para activar tu negocio y comenzar el período de prueba.
                       </p>
                     </form>
                   </div>
@@ -564,8 +563,7 @@ function Prueba() {
               </h1>
 
               <p className="lead text-secondary mb-4">
-                Ya puedes entrar a Barbería SaaS y comenzar a configurar y probar
-                todas las herramientas de la aplicación.
+                Revisa tu correo electrónico y confirma tu cuenta para activar el negocio y comenzar tu período de prueba.
               </p>
 
               <div className="trial-credential text-start mb-4">
@@ -577,14 +575,14 @@ function Prueba() {
                 </div>
 
                 <div className="small text-secondary mb-1">
-                  Correo para iniciar sesión
+                  Correo registrado
                 </div>
                 <div className="fw-bold text-break">
                   {registro.email}
                 </div>
 
                 <div className="small text-secondary mt-3">
-                  Utiliza la contraseña que acabas de crear.
+                  Después de confirmar el correo podrás iniciar sesión con la contraseña que acabas de crear.
                 </div>
               </div>
 
