@@ -9,6 +9,7 @@ public interface IPayPalService
     Task<PayPalCatalogSetupResult> EnsureMonthlyPlanAsync(CancellationToken cancellationToken = default);
     PayPalClientConfig GetClientConfig();
     Task<PayPalSubscriptionResult> GetSubscriptionAsync(string subscriptionId, CancellationToken cancellationToken = default);
+    Task<bool> VerifyWebhookAsync(IHeaderDictionary headers, JsonElement webhookEvent, CancellationToken cancellationToken = default);
 }
 
 public sealed record PayPalCatalogSetupResult(string ProductId, string PlanId, string PlanStatus, string Mode);
@@ -65,6 +66,36 @@ public sealed class PayPalService : IPayPalService
             throw new InvalidOperationException("La suscripción no pertenece al plan configurado de Barbería SaaS.");
 
         return new PayPalSubscriptionResult(id, status, planId, nextBillingTime, payerEmail);
+    }
+
+    public async Task<bool> VerifyWebhookAsync(IHeaderDictionary headers, JsonElement webhookEvent, CancellationToken cancellationToken = default)
+    {
+        var webhookId = _configuration["PAYPAL_WEBHOOK_ID"];
+        if (string.IsNullOrWhiteSpace(webhookId))
+            throw new InvalidOperationException("PAYPAL_WEBHOOK_ID debe estar configurado.");
+
+        string Header(string name) => headers[name].FirstOrDefault() ?? string.Empty;
+        var payload = new
+        {
+            auth_algo = Header("PAYPAL-AUTH-ALGO"),
+            cert_url = Header("PAYPAL-CERT-URL"),
+            transmission_id = Header("PAYPAL-TRANSMISSION-ID"),
+            transmission_sig = Header("PAYPAL-TRANSMISSION-SIG"),
+            transmission_time = Header("PAYPAL-TRANSMISSION-TIME"),
+            webhook_id = webhookId,
+            webhook_event = webhookEvent
+        };
+
+        if (string.IsNullOrWhiteSpace(payload.auth_algo) || string.IsNullOrWhiteSpace(payload.cert_url) ||
+            string.IsNullOrWhiteSpace(payload.transmission_id) || string.IsNullOrWhiteSpace(payload.transmission_sig) ||
+            string.IsNullOrWhiteSpace(payload.transmission_time))
+            return false;
+
+        var accessToken = await GetAccessTokenAsync(cancellationToken);
+        var json = await SendJsonAsync(HttpMethod.Post, "/v1/notifications/verify-webhook-signature", accessToken, payload, cancellationToken);
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.TryGetProperty("verification_status", out var status) &&
+               string.Equals(status.GetString(), "SUCCESS", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<PayPalCatalogSetupResult> EnsureMonthlyPlanAsync(CancellationToken cancellationToken = default)
