@@ -12,6 +12,7 @@ import {
 
 import api from "../services/api";
 import ProximasCitasProfesional from "./ProximasCitasProfesional";
+import HistorialCitasProfesional from "./HistorialCitasProfesional";
 
 function BloqueosProfesional({
   profesional
@@ -202,8 +203,12 @@ function BloqueosProfesional({
 
   return (
     <div className="professional-blocks">
-      <div className="mb-3">
+      <div className="mb-3 d-flex flex-wrap gap-2">
         <ProximasCitasProfesional
+          profesional={profesional}
+        />
+
+        <HistorialCitasProfesional
           profesional={profesional}
         />
       </div>
