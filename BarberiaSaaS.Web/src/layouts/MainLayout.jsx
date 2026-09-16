@@ -11,6 +11,7 @@ import {
   FaCashRegister,
   FaChartBar,
   FaCog,
+  FaCreditCard,
   FaCut,
   FaFileInvoiceDollar,
   FaHome,
@@ -30,11 +31,8 @@ import {
 } from "../context/SucursalContext";
 
 function MainLayout() {
-  const navigate =
-    useNavigate();
-
-  const location =
-    useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     tenant,
@@ -53,156 +51,70 @@ function MainLayout() {
     seleccionarSucursal
   } = useSucursal();
 
-  const usuario =
-    JSON.parse(
-      localStorage.getItem(
-        "usuario"
-      ) || "{}"
-    );
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const cerrarSesion = () => {
-    localStorage.removeItem(
-      "token"
-    );
-
-    localStorage.removeItem(
-      "usuario"
-    );
-
-    localStorage.removeItem(
-      "barberiaSaaS.sucursalSeleccionada"
-    );
-
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("barberiaSaaS.sucursalSeleccionada");
     navigate("/");
   };
 
-  const inicialNegocio =
-    nombreNegocio
-      ?.charAt(0)
-      ?.toUpperCase() || "N";
+  const inicialNegocio = nombreNegocio?.charAt(0)?.toUpperCase() || "N";
 
-  const obtenerPartesFecha = (
-    fecha,
-    zona
-  ) => {
+  const obtenerPartesFecha = (fecha, zona) => {
     try {
-      const partes =
-        new Intl.DateTimeFormat(
-          "en-CA",
-          {
-            timeZone:
-              zona ||
-              "America/Costa_Rica",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-          }
-        ).formatToParts(fecha);
+      const partes = new Intl.DateTimeFormat("en-CA", {
+        timeZone: zona || "America/Costa_Rica",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(fecha);
 
-      const year = Number(
-        partes.find(
-          (parte) =>
-            parte.type === "year"
-        )?.value
-      );
+      const year = Number(partes.find((parte) => parte.type === "year")?.value);
+      const month = Number(partes.find((parte) => parte.type === "month")?.value);
+      const day = Number(partes.find((parte) => parte.type === "day")?.value);
 
-      const month = Number(
-        partes.find(
-          (parte) =>
-            parte.type === "month"
-        )?.value
-      );
-
-      const day = Number(
-        partes.find(
-          (parte) =>
-            parte.type === "day"
-        )?.value
-      );
-
-      if (!year || !month || !day) {
-        return null;
-      }
-
-      return {
-        year,
-        month,
-        day
-      };
+      if (!year || !month || !day) return null;
+      return { year, month, day };
     } catch {
       return null;
     }
   };
 
   const calcularDiasUsandoApp = () => {
-    if (!tenant?.fechaCreacion) {
-      return null;
-    }
+    if (!tenant?.fechaCreacion) return null;
 
-    const fechaCreacion = new Date(
-      tenant.fechaCreacion
-    );
-
-    if (Number.isNaN(fechaCreacion.getTime())) {
-      return null;
-    }
+    const fechaCreacion = new Date(tenant.fechaCreacion);
+    if (Number.isNaN(fechaCreacion.getTime())) return null;
 
     const ahora = new Date();
+    const fechaCreacionLocal = obtenerPartesFecha(fechaCreacion, zonaHoraria);
+    const fechaActualLocal = obtenerPartesFecha(ahora, zonaHoraria);
 
-    const fechaCreacionLocal =
-      obtenerPartesFecha(
-        fechaCreacion,
-        zonaHoraria
-      );
-
-    const fechaActualLocal =
-      obtenerPartesFecha(
-        ahora,
-        zonaHoraria
-      );
-
-    if (
-      !fechaCreacionLocal ||
-      !fechaActualLocal
-    ) {
-      return null;
-    }
+    if (!fechaCreacionLocal || !fechaActualLocal) return null;
 
     const inicioCreacion = Date.UTC(
       fechaCreacionLocal.year,
       fechaCreacionLocal.month - 1,
       fechaCreacionLocal.day
     );
-
     const inicioHoy = Date.UTC(
       fechaActualLocal.year,
       fechaActualLocal.month - 1,
       fechaActualLocal.day
     );
 
-    const diferenciaDias = Math.floor(
-      (inicioHoy - inicioCreacion) /
-      86400000
-    );
-
-    return Math.max(
-      1,
-      diferenciaDias + 1
-    );
+    const diferenciaDias = Math.floor((inicioHoy - inicioCreacion) / 86400000);
+    return Math.max(1, diferenciaDias + 1);
   };
 
-  const diasUsandoApp =
-    calcularDiasUsandoApp();
-
+  const diasUsandoApp = calcularDiasUsandoApp();
   const diasRestantesPrueba =
-    diasUsandoApp !== null &&
-    diasUsandoApp < 31
-      ? 31 - diasUsandoApp
-      : 0;
+    diasUsandoApp !== null && diasUsandoApp < 31 ? 31 - diasUsandoApp : 0;
 
   const mostrarAvisoPrueba =
-    location.pathname === "/dashboard" &&
-    diasUsandoApp !== null;
+    location.pathname === "/dashboard" && diasUsandoApp !== null;
 
   const contactarAdministrador = () => {
     const mensaje = [
@@ -210,9 +122,7 @@ function MainLayout() {
       "Quiero continuar utilizando Barberia SaaS. ✨",
       "",
       `Mi negocio es: ${nombreNegocio}`,
-      usuario.email
-        ? `Mi correo registrado es: ${usuario.email}`
-        : "",
+      usuario.email ? `Mi correo registrado es: ${usuario.email}` : "",
       "",
       "¿Me puedes ayudar con mi membresía? 😊"
     ]
@@ -226,20 +136,11 @@ function MainLayout() {
     );
   };
 
-  if (
-    cargandoConfiguracion ||
-    cargandoSucursales
-  ) {
+  if (cargandoConfiguracion || cargandoSucursales) {
     return (
       <div className="app-loading">
-        <div
-          className="spinner-border"
-          role="status"
-        />
-
-        <div className="mt-3">
-          Cargando negocio...
-        </div>
+        <div className="spinner-border" role="status" />
+        <div className="mt-3">Cargando negocio...</div>
       </div>
     );
   }
@@ -255,126 +156,72 @@ function MainLayout() {
               className="sidebar-logo-image"
             />
           ) : (
-            <div className="sidebar-logo">
-              {inicialNegocio}
-            </div>
+            <div className="sidebar-logo">{inicialNegocio}</div>
           )}
 
           <div className="sidebar-brand-info">
-            <strong>
-              {nombreNegocio}
-            </strong>
-
-            <div className="sidebar-role">
-              {usuario.rol || ""}
-            </div>
+            <strong>{nombreNegocio}</strong>
+            <div className="sidebar-role">{usuario.rol || ""}</div>
           </div>
         </div>
 
         <nav className="sidebar-menu">
-          <NavLink
-            to="/dashboard"
-            className="sidebar-link"
-          >
+          <NavLink to="/dashboard" className="sidebar-link">
             <FaHome />
             <span>Dashboard</span>
           </NavLink>
-
-          <NavLink
-            to="/agenda"
-            className="sidebar-link"
-          >
+          <NavLink to="/agenda" className="sidebar-link">
             <FaCalendarAlt />
             <span>Agenda</span>
           </NavLink>
-
-          <NavLink
-            to="/clientes"
-            className="sidebar-link"
-          >
+          <NavLink to="/clientes" className="sidebar-link">
             <FaUsers />
             <span>Clientes</span>
           </NavLink>
-
-          <NavLink
-            to="/servicios"
-            className="sidebar-link"
-          >
+          <NavLink to="/servicios" className="sidebar-link">
             <FaCut />
             <span>Servicios</span>
           </NavLink>
-
-          <NavLink
-            to="/profesionales"
-            className="sidebar-link"
-          >
+          <NavLink to="/profesionales" className="sidebar-link">
             <FaUserTie />
             <span>Profesionales</span>
           </NavLink>
-
-          <NavLink
-            to="/productos"
-            className="sidebar-link"
-          >
+          <NavLink to="/productos" className="sidebar-link">
             <FaBoxes />
             <span>Productos</span>
           </NavLink>
-
-          <NavLink
-            to="/ventas"
-            className="sidebar-link"
-          >
+          <NavLink to="/ventas" className="sidebar-link">
             <FaCashRegister />
             <span>Ventas / Caja</span>
           </NavLink>
-
-          <NavLink
-            to="/cuentas-por-cobrar"
-            className="sidebar-link"
-          >
+          <NavLink to="/cuentas-por-cobrar" className="sidebar-link">
             <FaFileInvoiceDollar />
             <span>Cuentas por cobrar</span>
           </NavLink>
-
-          <NavLink
-            to="/reportes"
-            className="sidebar-link"
-          >
+          <NavLink to="/reportes" className="sidebar-link">
             <FaChartBar />
             <span>Reportes</span>
           </NavLink>
-
-          <NavLink
-            to="/sucursales"
-            className="sidebar-link"
-          >
+          <NavLink to="/sucursales" className="sidebar-link">
             <FaStore />
             <span>Sucursales</span>
           </NavLink>
-
-          <NavLink
-            to="/configuracion"
-            className="sidebar-link"
-          >
+          <NavLink to="/mi-suscripcion" className="sidebar-link">
+            <FaCreditCard />
+            <span>Mi suscripción</span>
+          </NavLink>
+          <NavLink to="/configuracion" className="sidebar-link">
             <FaCog />
             <span>Configuración</span>
           </NavLink>
         </nav>
 
         <div className="sidebar-timezone">
-          <small>
-            Zona horaria
-          </small>
-
-          <strong>
-            {zonaHoraria}
-          </strong>
+          <small>Zona horaria</small>
+          <strong>{zonaHoraria}</strong>
         </div>
 
-        <button
-          className="sidebar-logout"
-          onClick={cerrarSesion}
-        >
+        <button className="sidebar-logout" onClick={cerrarSesion}>
           <FaSignOutAlt />
           <span>Cerrar sesión</span>
         </button>
@@ -383,17 +230,11 @@ function MainLayout() {
       <main className="main-content">
         <header
           className="topbar"
-          style={{
-            justifyContent: "space-between",
-            gap: 16
-          }}
+          style={{ justifyContent: "space-between", gap: 16 }}
         >
           <div
             className="d-flex align-items-center"
-            style={{
-              minWidth: 0,
-              flex: "1 1 auto"
-            }}
+            style={{ minWidth: 0, flex: "1 1 auto" }}
           >
             <div
               className="d-flex align-items-center"
@@ -423,19 +264,10 @@ function MainLayout() {
                 <FaStore size={18} />
               </div>
 
-              <div
-                style={{
-                  minWidth: 0,
-                  flex: 1
-                }}
-              >
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div
                   className="text-muted"
-                  style={{
-                    fontSize: 11,
-                    lineHeight: 1.1,
-                    marginBottom: 2
-                  }}
+                  style={{ fontSize: 11, lineHeight: 1.1, marginBottom: 2 }}
                 >
                   Sucursal
                 </div>
@@ -443,11 +275,7 @@ function MainLayout() {
                 <select
                   aria-label="Sucursal activa"
                   value={sucursalId}
-                  onChange={(e) =>
-                    seleccionarSucursal(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => seleccionarSucursal(e.target.value)}
                   style={{
                     width: "100%",
                     minWidth: 0,
@@ -462,20 +290,12 @@ function MainLayout() {
                     cursor: "pointer"
                   }}
                 >
-                  <option value="">
-                    Todas las sucursales
-                  </option>
-
-                  {sucursales.map(
-                    (sucursal) => (
-                      <option
-                        key={sucursal.id}
-                        value={sucursal.id}
-                      >
-                        {sucursal.nombre}
-                      </option>
-                    )
-                  )}
+                  <option value="">Todas las sucursales</option>
+                  {sucursales.map((sucursal) => (
+                    <option key={sucursal.id} value={sucursal.id}>
+                      {sucursal.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -483,38 +303,21 @@ function MainLayout() {
 
           <div className="topbar-user">
             <div className="topbar-user-text d-none d-md-flex">
-              <strong>
-                {usuario.nombre ||
-                  "Usuario"}
-              </strong>
-
-              {usuario.sucursal && (
-                <span>
-                  {usuario.sucursal}
-                </span>
-              )}
+              <strong>{usuario.nombre || "Usuario"}</strong>
+              {usuario.sucursal && <span>{usuario.sucursal}</span>}
             </div>
-
             <div className="topbar-avatar">
-              {(usuario.nombre ||
-                "U")
-                .charAt(0)
-                .toUpperCase()}
+              {(usuario.nombre || "U").charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
 
         <div className="page-content">
           {errorConfiguracion && (
-            <div className="alert alert-warning">
-              {errorConfiguracion}
-            </div>
+            <div className="alert alert-warning">{errorConfiguracion}</div>
           )}
-
           {errorSucursales && (
-            <div className="alert alert-warning">
-              {errorSucursales}
-            </div>
+            <div className="alert alert-warning">{errorSucursales}</div>
           )}
 
           {mostrarAvisoPrueba && (
@@ -540,21 +343,13 @@ function MainLayout() {
                   >
                     Barberia SaaS
                   </div>
-
-                  <div
-                    className="fw-bold"
-                    style={{
-                      fontSize: 20
-                    }}
-                  >
+                  <div className="fw-bold" style={{ fontSize: 20 }}>
                     Días usando la App: {diasUsandoApp}
                   </div>
-
                   {diasUsandoApp < 31 && (
                     <div className="text-muted mt-1">
-                      Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita.
-                      {" "}Si deseas continuar utilizando Barberia SaaS,
-                      puedes contactar al administrador.
+                      Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita.{" "}
+                      Si deseas continuar utilizando Barberia SaaS, puedes contactar al administrador.
                     </div>
                   )}
                 </div>
