@@ -1,3 +1,4 @@
+using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ namespace BarberiaSaaS.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/paypal")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RolesUsuario.SuperAdmin + "," + RolesUsuario.Propietario)]
 public sealed class PayPalAdminController : ControllerBase
 {
     private readonly IPayPalService _payPalService;
