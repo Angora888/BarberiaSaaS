@@ -13,7 +13,9 @@ function cargarPayPalSdk(clientId, mode) {
     }
     const script = document.createElement("script");
     script.dataset.barberiasaasPaypal = "true";
-    const host = String(mode).toLowerCase() === "sandbox" ? "https://www.sandbox.paypal.com" : "https://www.paypal.com";
+    const host = String(mode).toLowerCase() === "sandbox"
+      ? "https://www.sandbox.paypal.com"
+      : "https://www.paypal.com";
     script.src = `${host}/sdk/js?client-id=${encodeURIComponent(clientId)}&components=buttons&vault=true&intent=subscription&currency=USD`;
     script.async = true;
     script.onload = () => resolve(window.paypal);
@@ -28,52 +30,129 @@ export default function MiSuscripcion() {
   const [cargando, setCargando] = useState(true);
   const [suscripcion, setSuscripcion] = useState(null);
   const paypalRef = useRef(null);
-  const usuario = useMemo(() => JSON.parse(localStorage.getItem("usuario") || "{}"), []);
+  const usuario = useMemo(
+    () => JSON.parse(localStorage.getItem("usuario") || "{}"),
+    []
+  );
 
   useEffect(() => {
     let activo = true;
-    api.get("/paypal/subscription-config")
-      .then(({ data }) => { if (activo) setConfig(data); })
-      .catch((err) => { if (activo) setError(err.response?.data?.message || "No se pudo cargar la configuración de PayPal."); })
-      .finally(() => { if (activo) setCargando(false); });
+
+    const cargar = async () => {
+      try {
+        const [{ data: configData }, { data: currentData }] = await Promise.all([
+          api.get("/paypal/subscription-config"),
+          api.get("/paypal/subscription-current")
+        ]);
+
+        if (!activo) return;
+        setConfig(configData);
+
+        if (currentData?.hasSubscription) {
+          setSuscripcion(currentData);
+          return;
+        }
+
+        // Compatibilidad con la primera prueba Sandbox: si la suscripción se
+        // aprobó antes de habilitar persistencia, la verificamos una vez y el
+        // backend la guarda en el tenant actual.
+        const subscriptionIdAnterior = localStorage.getItem(
+          "barberiaSaaS.paypalSubscriptionId"
+        );
+
+        if (subscriptionIdAnterior) {
+          try {
+            const { data } = await api.get(
+              `/paypal/subscriptions/${encodeURIComponent(subscriptionIdAnterior)}`
+            );
+            if (activo) setSuscripcion(data);
+          } catch {
+            localStorage.removeItem("barberiaSaaS.paypalSubscriptionId");
+          }
+        }
+      } catch (err) {
+        if (activo) {
+          setError(
+            err.response?.data?.message ||
+              "No se pudo cargar la configuración de la suscripción."
+          );
+        }
+      } finally {
+        if (activo) setCargando(false);
+      }
+    };
+
+    cargar();
     return () => { activo = false; };
   }, []);
 
   useEffect(() => {
-    if (!config || !paypalRef.current || suscripcion) return;
+    if (!config || !paypalRef.current || suscripcion || cargando) return;
+
     let cancelado = false;
     let buttons;
+
     cargarPayPalSdk(config.clientId, config.mode)
       .then((paypal) => {
         if (cancelado || !paypalRef.current) return;
         paypalRef.current.innerHTML = "";
+
         buttons = paypal.Buttons({
           style: { shape: "rect", layout: "vertical", label: "subscribe" },
-          createSubscription: (_data, actions) => actions.subscription.create({ plan_id: config.planId }),
+          createSubscription: (_data, actions) =>
+            actions.subscription.create({ plan_id: config.planId }),
           onApprove: async (data) => {
             try {
-              const respuesta = await api.get(`/paypal/subscriptions/${encodeURIComponent(data.subscriptionID)}`);
+              const respuesta = await api.get(
+                `/paypal/subscriptions/${encodeURIComponent(data.subscriptionID)}`
+              );
               setSuscripcion(respuesta.data);
-              localStorage.setItem("barberiaSaaS.paypalSubscriptionId", data.subscriptionID);
+              localStorage.setItem(
+                "barberiaSaaS.paypalSubscriptionId",
+                data.subscriptionID
+              );
               setError("");
             } catch (err) {
-              setError(err.response?.data?.message || "PayPal aprobó la suscripción, pero no pudimos verificarla. Contacta al administrador.");
+              setError(
+                err.response?.data?.message ||
+                  "PayPal aprobó la suscripción, pero no pudimos verificarla. Contacta al administrador."
+              );
             }
           },
-          onError: () => setError("PayPal no pudo completar la suscripción. Intenta nuevamente.")
+          onError: () =>
+            setError("PayPal no pudo completar la suscripción. Intenta nuevamente.")
         });
+
         return buttons.render(paypalRef.current);
       })
-      .catch((err) => { if (!cancelado) setError(err.message || "No se pudo cargar PayPal."); });
-    return () => { cancelado = true; try { buttons?.close?.(); } catch { /* noop */ } };
-  }, [config, suscripcion]);
+      .catch((err) => {
+        if (!cancelado) setError(err.message || "No se pudo cargar PayPal.");
+      });
+
+    return () => {
+      cancelado = true;
+      try { buttons?.close?.(); } catch { /* noop */ }
+    };
+  }, [config, suscripcion, cargando]);
+
+  const estado = suscripcion?.status || "UNKNOWN";
+  const proximoCobro = suscripcion?.nextBillingTime
+    ? new Date(suscripcion.nextBillingTime).toLocaleString("es-CR")
+    : null;
 
   return (
     <div className="container-fluid px-0" style={{ maxWidth: 980 }}>
       <div className="mb-4">
-        <div className="text-uppercase fw-bold" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barbería SaaS</div>
+        <div
+          className="text-uppercase fw-bold"
+          style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}
+        >
+          Barbería SaaS
+        </div>
         <h2 className="fw-bold mb-1">Mi suscripción</h2>
-        <p className="text-muted mb-0">Administra el plan de tu negocio y mantén activo el acceso a Barbería SaaS.</p>
+        <p className="text-muted mb-0">
+          Administra el plan de tu negocio y mantén activo el acceso a Barbería SaaS.
+        </p>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
@@ -87,7 +166,10 @@ export default function MiSuscripcion() {
                   <span className="badge rounded-pill text-bg-light mb-2">PLAN MENSUAL</span>
                   <h3 className="fw-bold mb-0">Barbería SaaS</h3>
                 </div>
-                <div className="text-end"><span className="fw-bold" style={{ fontSize: 34 }}>$10</span><span className="text-muted"> USD/mes</span></div>
+                <div className="text-end">
+                  <span className="fw-bold" style={{ fontSize: 34 }}>$10</span>
+                  <span className="text-muted"> USD/mes</span>
+                </div>
               </div>
 
               <div className="d-grid gap-3 mb-4">
@@ -97,19 +179,28 @@ export default function MiSuscripcion() {
                 <div><FaCheckCircle className="me-2" style={{ color: "var(--primary)" }} />Renovación automática mensual con PayPal</div>
               </div>
 
-              {cargando && <div className="text-muted">Preparando PayPal...</div>}
+              {cargando && <div className="text-muted">Consultando tu suscripción...</div>}
 
-              {suscripcion ? (
+              {!cargando && suscripcion ? (
                 <div className="alert alert-success mb-0" style={{ borderRadius: 16 }}>
-                  <div className="fw-bold mb-1"><FaCheckCircle className="me-2" />¡Suscripción confirmada!</div>
-                  <div>Estado PayPal: <strong>{suscripcion.status}</strong></div>
+                  <div className="fw-bold mb-1">
+                    <FaCheckCircle className="me-2" />¡Suscripción confirmada!
+                  </div>
+                  <div>Estado PayPal: <strong>{estado}</strong></div>
                   <div className="small mt-1">ID: {suscripcion.subscriptionId}</div>
+                  {proximoCobro && (
+                    <div className="small mt-1">Próxima renovación: {proximoCobro}</div>
+                  )}
                 </div>
-              ) : (
+              ) : !cargando ? (
                 <div ref={paypalRef} style={{ minHeight: 48 }} />
-              )}
+              ) : null}
 
-              {config?.mode === "Sandbox" && <div className="small text-muted mt-3">Modo de prueba PayPal Sandbox. No se cobrará dinero real.</div>}
+              {config?.mode === "Sandbox" && (
+                <div className="small text-muted mt-3">
+                  Modo de prueba PayPal Sandbox. No se cobrará dinero real.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -117,17 +208,32 @@ export default function MiSuscripcion() {
         <div className="col-lg-5">
           <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: 22 }}>
             <div className="card-body p-4">
-              <div className="d-flex align-items-center gap-3 mb-3"><FaPaypal size={28} /><div><div className="fw-bold">Pago seguro con PayPal</div><div className="small text-muted">Renovación mensual automática</div></div></div>
-              <p className="text-muted mb-0">PayPal procesa el pago. Barbería SaaS no almacena los datos de tu tarjeta ni tu contraseña de PayPal.</p>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <FaPaypal size={28} />
+                <div>
+                  <div className="fw-bold">Pago seguro con PayPal</div>
+                  <div className="small text-muted">Renovación mensual automática</div>
+                </div>
+              </div>
+              <p className="text-muted mb-0">
+                PayPal procesa el pago. Barbería SaaS no almacena los datos de tu tarjeta ni tu contraseña de PayPal.
+              </p>
             </div>
           </div>
+
           <div className="card border-0 shadow-sm" style={{ borderRadius: 22 }}>
             <div className="card-body p-4">
-              <div className="d-flex align-items-center gap-2 fw-bold mb-2"><FaLock /> Tu cuenta</div>
-              <div className="small text-muted">Negocio</div><div className="fw-semibold mb-2">{usuario.negocio || "Tu negocio"}</div>
-              <div className="small text-muted">Correo</div><div className="fw-semibold text-break">{usuario.email || "—"}</div>
+              <div className="d-flex align-items-center gap-2 fw-bold mb-2">
+                <FaLock /> Tu cuenta
+              </div>
+              <div className="small text-muted">Negocio</div>
+              <div className="fw-semibold mb-2">{usuario.negocio || "Tu negocio"}</div>
+              <div className="small text-muted">Correo</div>
+              <div className="fw-semibold text-break">{usuario.email || "—"}</div>
               <hr />
-              <div className="d-flex align-items-center gap-2 small text-muted"><FaCreditCard /> Puedes cancelar la renovación desde PayPal.</div>
+              <div className="d-flex align-items-center gap-2 small text-muted">
+                <FaCreditCard /> Puedes cancelar la renovación desde PayPal.
+              </div>
             </div>
           </div>
         </div>
