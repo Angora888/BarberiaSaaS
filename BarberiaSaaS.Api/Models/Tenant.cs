@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BarberiaSaaS.Api.Models
 {
     [Index(nameof(SlugPublico), IsUnique = true)]
+    [Index(nameof(PayPalSubscriptionId), IsUnique = true)]
     public class Tenant
     {
         public int Id { get; set; }
@@ -43,6 +44,26 @@ namespace BarberiaSaaS.Api.Models
         public DateTime? FechaActivacion { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        // ============================================================
+        // SUSCRIPCIÓN PAYPAL
+        // ============================================================
+
+        [MaxLength(100)]
+        public string? PayPalSubscriptionId { get; set; }
+
+        [MaxLength(100)]
+        public string? PayPalPlanId { get; set; }
+
+        [MaxLength(50)]
+        public string? PayPalSubscriptionStatus { get; set; }
+
+        [MaxLength(180)]
+        public string? PayPalPayerEmail { get; set; }
+
+        public DateTime? PayPalNextBillingTime { get; set; }
+
+        public DateTime? PayPalSubscriptionUpdatedAt { get; set; }
 
         // ============================================================
         // RELACIONES
