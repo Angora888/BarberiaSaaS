@@ -34,7 +34,6 @@ namespace BarberiaSaaS.Api.Models
         public DateTime? PayPalNextBillingTime { get; set; }
         public DateTime? PayPalSubscriptionUpdatedAt { get; set; }
 
-        // Accesos administrados fuera de PayPal (SINPE, efectivo, cortesía, etc.).
         [MaxLength(30)]
         public string? MetodoSuscripcion { get; set; }
         public DateTime? SuscripcionHasta { get; set; }
@@ -49,6 +48,7 @@ namespace BarberiaSaaS.Api.Models
         public ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();
         public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
         public ICollection<Cita> Citas { get; set; } = new List<Cita>();
+        public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
         public ICollection<HorarioProfesional> HorariosProfesionales { get; set; } = new List<HorarioProfesional>();
         public ICollection<BloqueoProfesional> BloqueosProfesionales { get; set; } = new List<BloqueoProfesional>();
         public ICollection<CuentaPorCobrar> CuentasPorCobrar { get; set; } = new List<CuentaPorCobrar>();
