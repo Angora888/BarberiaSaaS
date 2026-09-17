@@ -10,10 +10,7 @@ public sealed class SaasAccessMiddleware
     private const int TrialDays = 31;
     private readonly RequestDelegate _next;
 
-    public SaasAccessMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    public SaasAccessMiddleware(RequestDelegate next) => _next = next;
 
     public async Task InvokeAsync(HttpContext context, AppDbContext dbContext)
     {
@@ -37,14 +34,16 @@ public sealed class SaasAccessMiddleware
             return;
         }
 
-        var tenant = await dbContext.Tenants
-            .AsNoTracking()
+        var tenant = await dbContext.Tenants.AsNoTracking()
             .Where(x => x.Id == tenantId)
             .Select(x => new
             {
                 x.FechaActivacion,
                 x.FechaCreacion,
-                x.PayPalSubscriptionStatus
+                x.PayPalSubscriptionStatus,
+                x.MetodoSuscripcion,
+                x.SuscripcionHasta,
+                x.AccesoCortesia
             })
             .FirstOrDefaultAsync(context.RequestAborted);
 
@@ -54,15 +53,15 @@ public sealed class SaasAccessMiddleware
             return;
         }
 
+        var now = DateTime.UtcNow;
         var trialStart = tenant.FechaActivacion ?? tenant.FechaCreacion;
         var trialEndsAt = trialStart.AddDays(TrialDays);
-        var trialActive = DateTime.UtcNow < trialEndsAt;
-        var subscriptionActive = string.Equals(
-            tenant.PayPalSubscriptionStatus,
-            "ACTIVE",
-            StringComparison.OrdinalIgnoreCase);
+        var trialActive = now < trialEndsAt;
+        var paypalActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+        var manualActive = tenant.SuscripcionHasta.HasValue && now < tenant.SuscripcionHasta.Value;
+        var courtesyActive = tenant.AccesoCortesia;
 
-        if (trialActive || subscriptionActive)
+        if (trialActive || paypalActive || manualActive || courtesyActive)
         {
             await _next(context);
             return;
@@ -72,8 +71,10 @@ public sealed class SaasAccessMiddleware
         await context.Response.WriteAsJsonAsync(new
         {
             code = "SUBSCRIPTION_REQUIRED",
-            message = "Tu período de prueba terminó. Activa tu suscripción para continuar usando Barbería SaaS.",
-            trialEndsAt
+            message = "Tu acceso a Barbería SaaS requiere una suscripción activa.",
+            trialEndsAt,
+            metodoSuscripcion = tenant.MetodoSuscripcion,
+            suscripcionHasta = tenant.SuscripcionHasta
         }, context.RequestAborted);
     }
 
@@ -81,6 +82,7 @@ public sealed class SaasAccessMiddleware
     {
         return path.StartsWithSegments("/api/paypal", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/api/auth", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWithSegments("/api/admin/suscripciones", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase);
     }
 }
