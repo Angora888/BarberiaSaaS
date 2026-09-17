@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaLock, FaPaypal } from "react-icons/fa";
+import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaLock, FaPaypal, FaWhatsapp } from "react-icons/fa";
 import api from "../services/api";
+
+const ADMIN_WHATSAPP = "50660662375";
+const ADMIN_WHATSAPP_MESSAGE = "Hola, me gustaría seguir usando Barbería SaaS. ¿Me puedes ayudar a reactivar mi suscripción?";
 
 function cargarPayPalSdk(clientId, mode) {
   return new Promise((resolve, reject) => {
@@ -35,6 +38,12 @@ export default function MiSuscripcion() {
     () => JSON.parse(localStorage.getItem("usuario") || "{}"),
     []
   );
+
+  const whatsappAdministrador = useMemo(() => {
+    const negocio = usuario.negocio || "mi negocio";
+    const mensaje = `${ADMIN_WHATSAPP_MESSAGE}\n\nNegocio: ${negocio}\nCorreo: ${usuario.email || "—"}`;
+    return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+  }, [usuario]);
 
   useEffect(() => {
     let activo = true;
@@ -211,14 +220,28 @@ export default function MiSuscripcion() {
                   </div>
 
                   {!mostrarPago && (
-                    <button
-                      type="button"
-                      className="btn btn-primary w-100 fw-semibold py-2"
-                      style={{ borderRadius: 12 }}
-                      onClick={() => setMostrarPago(true)}
-                    >
-                      <FaPaypal className="me-2" />Volver a suscribirme
-                    </button>
+                    <div className="d-grid gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary w-100 fw-semibold py-2"
+                        style={{ borderRadius: 12 }}
+                        onClick={() => setMostrarPago(true)}
+                      >
+                        <FaPaypal className="me-2" />Volver a suscribirme
+                      </button>
+
+                      <div className="text-center small text-muted">o</div>
+
+                      <a
+                        href={whatsappAdministrador}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-success w-100 fw-semibold py-2"
+                        style={{ borderRadius: 12 }}
+                      >
+                        <FaWhatsapp className="me-2" />Contactar al administrador
+                      </a>
+                    </div>
                   )}
                 </>
               )}
