@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaCheckCircle, FaCreditCard, FaLock, FaPaypal } from "react-icons/fa";
+import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaLock, FaPaypal } from "react-icons/fa";
 import api from "../services/api";
 
 function cargarPayPalSdk(clientId, mode) {
@@ -29,6 +29,7 @@ export default function MiSuscripcion() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
   const [suscripcion, setSuscripcion] = useState(null);
+  const [mostrarPago, setMostrarPago] = useState(false);
   const paypalRef = useRef(null);
   const usuario = useMemo(
     () => JSON.parse(localStorage.getItem("usuario") || "{}"),
@@ -53,9 +54,6 @@ export default function MiSuscripcion() {
           return;
         }
 
-        // Compatibilidad con la primera prueba Sandbox: si la suscripción se
-        // aprobó antes de habilitar persistencia, la verificamos una vez y el
-        // backend la guarda en el tenant actual.
         const subscriptionIdAnterior = localStorage.getItem(
           "barberiaSaaS.paypalSubscriptionId"
         );
@@ -86,8 +84,13 @@ export default function MiSuscripcion() {
     return () => { activo = false; };
   }, []);
 
+  const estado = String(suscripcion?.status || "UNKNOWN").toUpperCase();
+  const suscripcionActiva = estado === "ACTIVE";
+  const suscripcionInactiva = Boolean(suscripcion) && !suscripcionActiva;
+  const debeMostrarPayPal = !cargando && (!suscripcion || (suscripcionInactiva && mostrarPago));
+
   useEffect(() => {
-    if (!config || !paypalRef.current || suscripcion || cargando) return;
+    if (!config || !paypalRef.current || !debeMostrarPayPal) return;
 
     let cancelado = false;
     let buttons;
@@ -107,6 +110,7 @@ export default function MiSuscripcion() {
                 `/paypal/subscriptions/${encodeURIComponent(data.subscriptionID)}`
               );
               setSuscripcion(respuesta.data);
+              setMostrarPago(false);
               localStorage.setItem(
                 "barberiaSaaS.paypalSubscriptionId",
                 data.subscriptionID
@@ -133,9 +137,8 @@ export default function MiSuscripcion() {
       cancelado = true;
       try { buttons?.close?.(); } catch { /* noop */ }
     };
-  }, [config, suscripcion, cargando]);
+  }, [config, debeMostrarPayPal]);
 
-  const estado = suscripcion?.status || "UNKNOWN";
   const proximoCobro = suscripcion?.nextBillingTime
     ? new Date(suscripcion.nextBillingTime).toLocaleString("es-CR")
     : null;
@@ -181,10 +184,10 @@ export default function MiSuscripcion() {
 
               {cargando && <div className="text-muted">Consultando tu suscripción...</div>}
 
-              {!cargando && suscripcion ? (
+              {!cargando && suscripcionActiva && (
                 <div className="alert alert-success mb-0" style={{ borderRadius: 16 }}>
                   <div className="fw-bold mb-1">
-                    <FaCheckCircle className="me-2" />¡Suscripción confirmada!
+                    <FaCheckCircle className="me-2" />¡Suscripción activa!
                   </div>
                   <div>Estado PayPal: <strong>{estado}</strong></div>
                   <div className="small mt-1">ID: {suscripcion.subscriptionId}</div>
@@ -192,9 +195,39 @@ export default function MiSuscripcion() {
                     <div className="small mt-1">Próxima renovación: {proximoCobro}</div>
                   )}
                 </div>
-              ) : !cargando ? (
-                <div ref={paypalRef} style={{ minHeight: 48 }} />
-              ) : null}
+              )}
+
+              {!cargando && suscripcionInactiva && (
+                <>
+                  <div className="alert alert-warning mb-3" style={{ borderRadius: 16 }}>
+                    <div className="fw-bold mb-1">
+                      <FaExclamationTriangle className="me-2" />Suscripción cancelada o inactiva
+                    </div>
+                    <div>Estado PayPal: <strong>{estado}</strong></div>
+                    <div className="small mt-1">ID: {suscripcion.subscriptionId}</div>
+                    <div className="small mt-2">
+                      Tu plan ya no tiene renovación automática. Puedes volver a suscribirte cuando quieras.
+                    </div>
+                  </div>
+
+                  {!mostrarPago && (
+                    <button
+                      type="button"
+                      className="btn btn-primary w-100 fw-semibold py-2"
+                      style={{ borderRadius: 12 }}
+                      onClick={() => setMostrarPago(true)}
+                    >
+                      <FaPaypal className="me-2" />Volver a suscribirme
+                    </button>
+                  )}
+                </>
+              )}
+
+              {debeMostrarPayPal && (
+                <div className={suscripcionInactiva ? "mt-3" : ""}>
+                  <div ref={paypalRef} style={{ minHeight: 48 }} />
+                </div>
+              )}
 
               {config?.mode === "Sandbox" && (
                 <div className="small text-muted mt-3">
@@ -232,7 +265,9 @@ export default function MiSuscripcion() {
               <div className="fw-semibold text-break">{usuario.email || "—"}</div>
               <hr />
               <div className="d-flex align-items-center gap-2 small text-muted">
-                <FaCreditCard /> Puedes cancelar la renovación desde PayPal.
+                <FaCreditCard /> {suscripcionActiva
+                  ? "Puedes cancelar la renovación desde PayPal."
+                  : "Puedes activar nuevamente tu plan desde esta página."}
               </div>
             </div>
           </div>
