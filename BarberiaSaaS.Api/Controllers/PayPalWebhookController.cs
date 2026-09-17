@@ -77,29 +77,48 @@ public sealed class PayPalWebhookController : ControllerBase
                 return Ok(new { received = true, ignored = true });
             }
 
+            // PayPal puede dejar de devolver next_billing_time después de cancelar.
+            // Conservamos la fecha que ya teníamos: representa el límite del período
+            // que estaba vigente antes de la cancelación y evita cortar acceso antes de tiempo.
+            var paidThroughBeforeUpdate = tenant.PayPalNextBillingTime;
             var subscription = await _payPalService.GetSubscriptionAsync(subscriptionId, cancellationToken);
+            var nextBillingFromPayPal = ParsePayPalDate(subscription.NextBillingTime);
 
             tenant.PayPalPlanId = subscription.PlanId;
             tenant.PayPalSubscriptionStatus = subscription.Status;
             tenant.PayPalPayerEmail = subscription.PayerEmail;
-            tenant.PayPalNextBillingTime = ParsePayPalDate(subscription.NextBillingTime);
-            tenant.PayPalSubscriptionUpdatedAt = DateTime.UtcNow;
 
+            if (nextBillingFromPayPal.HasValue)
+            {
+                tenant.PayPalNextBillingTime = nextBillingFromPayPal;
+            }
+            else if (!string.Equals(subscription.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+            {
+                tenant.PayPalNextBillingTime = null;
+            }
+            else
+            {
+                tenant.PayPalNextBillingTime = paidThroughBeforeUpdate;
+            }
+
+            tenant.PayPalSubscriptionUpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "Webhook PayPal {EventType} procesado. Tenant {TenantId}, Subscription {SubscriptionId}, Status {Status}.",
+                "Webhook PayPal {EventType} procesado. Tenant {TenantId}, Subscription {SubscriptionId}, Status {Status}, PaidThrough {PaidThrough}.",
                 eventType,
                 tenant.Id,
                 subscriptionId,
-                subscription.Status);
+                subscription.Status,
+                tenant.PayPalNextBillingTime);
 
             return Ok(new
             {
                 received = true,
                 eventType,
                 subscriptionId,
-                status = subscription.Status
+                status = subscription.Status,
+                paidThrough = tenant.PayPalNextBillingTime
             });
         }
         catch (JsonException ex)
