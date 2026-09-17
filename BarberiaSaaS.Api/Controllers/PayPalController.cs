@@ -44,32 +44,37 @@ public sealed class PayPalController : ControllerBase
         var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
         if (tenant is null) return NotFound(new { message = "No se encontró el negocio." });
 
+        var now = DateTime.UtcNow;
         var trialStart = tenant.FechaActivacion ?? tenant.FechaCreacion;
         var trialEndsAt = trialStart.AddDays(TrialDays);
-        var trialActive = DateTime.UtcNow < trialEndsAt;
-        var subscriptionActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
-        var accessAllowed = trialActive || subscriptionActive;
-        var trialDaysRemaining = trialActive ? Math.Max(1, (int)Math.Ceiling((trialEndsAt - DateTime.UtcNow).TotalDays)) : 0;
+        var trialActive = now < trialEndsAt;
+        var paypalActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+        var manualActive = tenant.SuscripcionHasta.HasValue && now < tenant.SuscripcionHasta.Value;
+        var courtesyActive = tenant.AccesoCortesia;
+        var accessAllowed = trialActive || paypalActive || manualActive || courtesyActive;
+        var trialDaysRemaining = trialActive ? Math.Max(1, (int)Math.Ceiling((trialEndsAt - now).TotalDays)) : 0;
 
-        if (string.IsNullOrWhiteSpace(tenant.PayPalSubscriptionId))
-        {
-            return Ok(new
-            {
-                hasSubscription = false,
-                accessAllowed,
-                trialActive,
-                trialDaysRemaining,
-                trialEndsAt
-            });
-        }
+        string accessSource;
+        if (courtesyActive) accessSource = "Cortesia";
+        else if (paypalActive) accessSource = "PayPal";
+        else if (manualActive) accessSource = tenant.MetodoSuscripcion ?? "Manual";
+        else if (trialActive) accessSource = "Prueba";
+        else accessSource = "SinAcceso";
 
         return Ok(new
         {
-            hasSubscription = true,
+            hasSubscription = !string.IsNullOrWhiteSpace(tenant.PayPalSubscriptionId),
             accessAllowed,
+            accessSource,
             trialActive,
             trialDaysRemaining,
             trialEndsAt,
+            paypalActive,
+            manualActive,
+            courtesyActive,
+            metodoSuscripcion = tenant.MetodoSuscripcion,
+            suscripcionHasta = tenant.SuscripcionHasta,
+            notaSuscripcion = tenant.NotaSuscripcion,
             subscriptionId = tenant.PayPalSubscriptionId,
             status = tenant.PayPalSubscriptionStatus,
             planId = tenant.PayPalPlanId,
