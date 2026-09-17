@@ -1,0 +1,123 @@
+/* Mobile-only refinements for the daily visual agenda.
+   Kept separate from Agenda.css to avoid changing desktop/week layouts. */
+
+@media (max-width: 700px) {
+  .agenda-content-visual {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .visual-agenda-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Use less horizontal space for the sticky time gutter. */
+  .visual-agenda-header,
+  .visual-agenda-body {
+    grid-template-columns:
+      58px
+      repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .visual-agenda-time-header,
+  .visual-agenda-time-column {
+    min-width: 58px;
+    width: 58px;
+  }
+
+  .visual-agenda-time-header {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 9px;
+  }
+
+  .visual-agenda-time-label {
+    padding-right: 6px;
+    font-size: 9px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .visual-agenda-professional-header,
+  .visual-agenda-professional-column {
+    min-width: 180px;
+  }
+
+  .visual-agenda-professional-header {
+    gap: 7px;
+    padding: 10px 8px;
+  }
+
+  .visual-agenda-professional-avatar {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .visual-agenda-professional-header > div:last-child {
+    min-width: 0;
+  }
+
+  .visual-agenda-professional-header strong,
+  .visual-agenda-professional-header span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Give appointments more usable room and make their hierarchy clearer. */
+  .visual-appointment {
+    left: 4px;
+    right: 4px;
+    gap: 1px;
+    padding: 6px 7px;
+    border-left-width: 3px;
+    border-radius: 9px;
+  }
+
+  .visual-appointment-time {
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .visual-appointment strong {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .visual-appointment span {
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .visual-appointment small {
+    margin-top: 1px;
+    font-size: 8px;
+    line-height: 1.1;
+  }
+}
+
+/* On narrow phones, preserve readable appointment cards and scroll horizontally
+   only when there is more than one professional visible. */
+@media (max-width: 430px) {
+  .visual-agenda-header,
+  .visual-agenda-body {
+    grid-template-columns:
+      54px
+      repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  .visual-agenda-time-header,
+  .visual-agenda-time-column {
+    min-width: 54px;
+    width: 54px;
+  }
+
+  .visual-agenda-professional-header,
+  .visual-agenda-professional-column {
+    min-width: 170px;
+  }
+}
