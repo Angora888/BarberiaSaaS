@@ -49,14 +49,18 @@ public sealed class PayPalController : ControllerBase
         var trialEndsAt = trialStart.AddDays(TrialDays);
         var trialActive = now < trialEndsAt;
         var paypalActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+        var paypalPaidThrough = string.Equals(tenant.PayPalSubscriptionStatus, "CANCELLED", StringComparison.OrdinalIgnoreCase)
+            && tenant.PayPalNextBillingTime.HasValue
+            && now < tenant.PayPalNextBillingTime.Value;
         var manualActive = tenant.SuscripcionHasta.HasValue && now < tenant.SuscripcionHasta.Value;
         var courtesyActive = tenant.AccesoCortesia;
-        var accessAllowed = trialActive || paypalActive || manualActive || courtesyActive;
+        var accessAllowed = trialActive || paypalActive || paypalPaidThrough || manualActive || courtesyActive;
         var trialDaysRemaining = trialActive ? Math.Max(1, (int)Math.Ceiling((trialEndsAt - now).TotalDays)) : 0;
 
         string accessSource;
         if (courtesyActive) accessSource = "Cortesia";
         else if (paypalActive) accessSource = "PayPal";
+        else if (paypalPaidThrough) accessSource = "PayPalCanceladoConPeriodoVigente";
         else if (manualActive) accessSource = tenant.MetodoSuscripcion ?? "Manual";
         else if (trialActive) accessSource = "Prueba";
         else accessSource = "SinAcceso";
@@ -70,6 +74,8 @@ public sealed class PayPalController : ControllerBase
             trialDaysRemaining,
             trialEndsAt,
             paypalActive,
+            paypalPaidThrough,
+            paypalAccessUntil = paypalPaidThrough ? tenant.PayPalNextBillingTime : null,
             manualActive,
             courtesyActive,
             metodoSuscripcion = tenant.MetodoSuscripcion,
@@ -100,11 +106,21 @@ public sealed class PayPalController : ControllerBase
             if (subscriptionOwner is not null)
                 return Conflict(new { message = "Esta suscripción ya está asociada a otro negocio." });
 
+            var paidThroughBeforeUpdate = tenant.PayPalNextBillingTime;
+            var nextBillingFromPayPal = ParsePayPalDate(result.NextBillingTime);
+
             tenant.PayPalSubscriptionId = result.SubscriptionId;
             tenant.PayPalPlanId = result.PlanId;
             tenant.PayPalSubscriptionStatus = result.Status;
             tenant.PayPalPayerEmail = result.PayerEmail;
-            tenant.PayPalNextBillingTime = ParsePayPalDate(result.NextBillingTime);
+
+            if (nextBillingFromPayPal.HasValue)
+                tenant.PayPalNextBillingTime = nextBillingFromPayPal;
+            else if (string.Equals(result.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+                tenant.PayPalNextBillingTime = paidThroughBeforeUpdate;
+            else
+                tenant.PayPalNextBillingTime = null;
+
             tenant.PayPalSubscriptionUpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
             return Ok(result);
