@@ -10,24 +10,21 @@ namespace BarberiaSaaS.Api.Services
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<NotificacionesWorker> _logger;
 
-        public NotificacionesWorker(
-            IServiceScopeFactory scopeFactory,
-            ILogger<NotificacionesWorker> logger)
+        public NotificacionesWorker(IServiceScopeFactory scopeFactory, ILogger<NotificacionesWorker> logger)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
         }
 
-        protected override async Task ExecuteAsync(
-            CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Pequeña espera inicial para no competir con el arranque de la API.
             await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
+                    await SincronizarRecordatoriosAsync(stoppingToken);
                     await ProcesarPendientesAsync(stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -43,21 +40,112 @@ namespace BarberiaSaaS.Api.Services
             }
         }
 
-        private async Task ProcesarPendientesAsync(
-            CancellationToken cancellationToken)
+        private async Task SincronizarRecordatoriosAsync(CancellationToken cancellationToken)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var notificaciones = context.Set<Notificacion>();
+            var ahora = DateTime.UtcNow;
+            var limite = ahora.AddDays(60);
+
+            // Solo traemos citas con cliente activo Y email presente. Un cliente sin
+            // email ni siquiera entra al proceso y por tanto no genera filas basura.
+            var citas = await context.Citas
+                .AsNoTracking()
+                .Include(x => x.Cliente)
+                .Where(x =>
+                    x.FechaInicio > ahora.AddHours(24) &&
+                    x.FechaInicio <= limite &&
+                    x.Cliente.Activo &&
+                    x.Cliente.Email != null &&
+                    x.Cliente.Email != "" &&
+                    x.Estado != EstadosCita.Cancelada &&
+                    x.Estado != EstadosCita.Completada &&
+                    x.Estado != EstadosCita.NoAsistio)
+                .ToListAsync(cancellationToken);
+
+            foreach (var cita in citas)
+            {
+                var email = NotificacionCitaService.NormalizarEmail(cita.Cliente.Email);
+                if (email == null) continue;
+
+                var programadaPara = cita.FechaInicio.AddHours(-24);
+                if (programadaPara <= ahora) continue;
+
+                var existente = await notificaciones.FirstOrDefaultAsync(x =>
+                    x.CitaId == cita.Id &&
+                    x.Canal == CanalesNotificacion.Email &&
+                    x.Tipo == TiposNotificacion.RecordatorioCita24H,
+                    cancellationToken);
+
+                if (existente == null)
+                {
+                    notificaciones.Add(new Notificacion
+                    {
+                        TenantId = cita.TenantId,
+                        CitaId = cita.Id,
+                        ClienteId = cita.ClienteId,
+                        Canal = CanalesNotificacion.Email,
+                        Tipo = TiposNotificacion.RecordatorioCita24H,
+                        Destino = email,
+                        ProgramadaPara = programadaPara,
+                        Estado = EstadosNotificacion.Pendiente,
+                        FechaCreacion = ahora
+                    });
+                }
+                else if (existente.Estado != EstadosNotificacion.Enviada &&
+                         (existente.ProgramadaPara != programadaPara ||
+                          !string.Equals(existente.Destino, email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    existente.Destino = email;
+                    existente.ProgramadaPara = programadaPara;
+                    existente.Estado = EstadosNotificacion.Pendiente;
+                    existente.Intentos = 0;
+                    existente.UltimoError = null;
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Citas canceladas/reprogramadas a menos de 24h o clientes que perdieron
+            // su email quedan cancelados antes de que el proceso de envío los tome.
+            var activas = await notificaciones
+                .Where(x =>
+                    (x.Estado == EstadosNotificacion.Pendiente || x.Estado == EstadosNotificacion.Reintento) &&
+                    x.CitaId != null)
+                .Include(x => x.Cita!)
+                .Include(x => x.Cliente)
+                .ToListAsync(cancellationToken);
+
+            foreach (var n in activas)
+            {
+                var emailActual = NotificacionCitaService.NormalizarEmail(n.Cliente.Email);
+                if (n.Cita == null ||
+                    n.Cita.Estado == EstadosCita.Cancelada ||
+                    n.Cita.Estado == EstadosCita.Completada ||
+                    n.Cita.Estado == EstadosCita.NoAsistio ||
+                    n.Cita.FechaInicio.AddHours(-24) <= ahora ||
+                    emailActual == null)
+                {
+                    n.Estado = EstadosNotificacion.Cancelada;
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        private async Task ProcesarPendientesAsync(CancellationToken cancellationToken)
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
             var timeZoneService = scope.ServiceProvider.GetRequiredService<ITimeZoneService>();
-
+            var notificaciones = context.Set<Notificacion>();
             var ahora = DateTime.UtcNow;
 
-            var ids = await context.Notificaciones
-                .AsNoTracking()
+            var ids = await notificaciones.AsNoTracking()
                 .Where(x =>
-                    (x.Estado == EstadosNotificacion.Pendiente ||
-                     x.Estado == EstadosNotificacion.Reintento) &&
+                    (x.Estado == EstadosNotificacion.Pendiente || x.Estado == EstadosNotificacion.Reintento) &&
                     x.ProgramadaPara <= ahora &&
                     x.Intentos < 3)
                 .OrderBy(x => x.ProgramadaPara)
@@ -66,14 +154,7 @@ namespace BarberiaSaaS.Api.Services
                 .ToListAsync(cancellationToken);
 
             foreach (var id in ids)
-            {
-                await ProcesarUnaAsync(
-                    context,
-                    emailService,
-                    timeZoneService,
-                    id,
-                    cancellationToken);
-            }
+                await ProcesarUnaAsync(context, emailService, timeZoneService, id, cancellationToken);
         }
 
         private async Task ProcesarUnaAsync(
@@ -83,22 +164,18 @@ namespace BarberiaSaaS.Api.Services
             int id,
             CancellationToken cancellationToken)
         {
-            var notificacion = await context.Notificaciones
+            var notificaciones = context.Set<Notificacion>();
+            var notificacion = await notificaciones
                 .Include(x => x.Tenant)
                 .Include(x => x.Cliente)
-                .Include(x => x.Cita!)
-                    .ThenInclude(x => x.Profesional)
-                .Include(x => x.Cita!)
-                    .ThenInclude(x => x.Servicio)
-                .Include(x => x.Cita!)
-                    .ThenInclude(x => x.ServicioVariante)
-                .Include(x => x.Cita!)
-                    .ThenInclude(x => x.Sucursal)
+                .Include(x => x.Cita!).ThenInclude(x => x.Profesional)
+                .Include(x => x.Cita!).ThenInclude(x => x.Servicio)
+                .Include(x => x.Cita!).ThenInclude(x => x.ServicioVariante)
+                .Include(x => x.Cita!).ThenInclude(x => x.Sucursal)
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (notificacion == null ||
-                (notificacion.Estado != EstadosNotificacion.Pendiente &&
-                 notificacion.Estado != EstadosNotificacion.Reintento))
+                (notificacion.Estado != EstadosNotificacion.Pendiente && notificacion.Estado != EstadosNotificacion.Reintento))
                 return;
 
             if (notificacion.Cita == null ||
@@ -111,13 +188,9 @@ namespace BarberiaSaaS.Api.Services
                 return;
             }
 
-            // Segunda barrera contra basura: aunque exista un registro viejo,
-            // nunca enviamos si el cliente ya no tiene email válido/no coincide.
-            if (string.IsNullOrWhiteSpace(notificacion.Cliente.Email) ||
-                !string.Equals(
-                    notificacion.Cliente.Email.Trim(),
-                    notificacion.Destino,
-                    StringComparison.OrdinalIgnoreCase))
+            var emailActual = NotificacionCitaService.NormalizarEmail(notificacion.Cliente.Email);
+            if (emailActual == null ||
+                !string.Equals(emailActual, notificacion.Destino, StringComparison.OrdinalIgnoreCase))
             {
                 notificacion.Estado = EstadosNotificacion.Cancelada;
                 notificacion.UltimoError = "El cliente no tiene un email vigente para este recordatorio.";
@@ -132,47 +205,20 @@ namespace BarberiaSaaS.Api.Services
             try
             {
                 var cita = notificacion.Cita;
-                var fechaLocal = await timeZoneService.UtcALocalAsync(
-                    notificacion.TenantId,
-                    cita.FechaInicio);
-
-                var negocio =
-                    notificacion.Tenant.NombreComercial ??
-                    notificacion.Tenant.Nombre;
-
-                var cliente = string.Join(
-                    " ",
-                    new[] { notificacion.Cliente.Nombre, notificacion.Cliente.Apellidos }
-                        .Where(x => !string.IsNullOrWhiteSpace(x)));
-
-                var profesional = string.Join(
-                    " ",
-                    new[] { cita.Profesional.Nombre, cita.Profesional.Apellidos }
-                        .Where(x => !string.IsNullOrWhiteSpace(x)));
-
-                var servicio = cita.ServicioVariante == null
-                    ? cita.Servicio.Nombre
-                    : $"{cita.Servicio.Nombre} - {cita.ServicioVariante.Nombre}";
-
+                var fechaLocal = await timeZoneService.UtcALocalAsync(notificacion.TenantId, cita.FechaInicio);
+                var negocio = notificacion.Tenant.NombreComercial ?? notificacion.Tenant.Nombre;
+                var cliente = string.Join(" ", new[] { notificacion.Cliente.Nombre, notificacion.Cliente.Apellidos }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                var profesional = string.Join(" ", new[] { cita.Profesional.Nombre, cita.Profesional.Apellidos }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                var servicio = cita.ServicioVariante == null ? cita.Servicio.Nombre : $"{cita.Servicio.Nombre} - {cita.ServicioVariante.Nombre}";
                 var cultura = new System.Globalization.CultureInfo("es-CR");
                 var fechaTexto = fechaLocal.ToString("dddd d 'de' MMMM 'de' yyyy", cultura);
                 var horaTexto = fechaLocal.ToString("h:mm tt", cultura);
 
-                var asunto = $"Recordatorio de tu cita en {negocio}";
-                var html = CrearHtml(
-                    negocio,
-                    cliente,
-                    fechaTexto,
-                    horaTexto,
-                    servicio,
-                    profesional,
-                    cita.Sucursal.Nombre);
-
                 await emailService.EnviarAsync(
                     notificacion.Destino,
                     negocio,
-                    asunto,
-                    html,
+                    $"Recordatorio de tu cita en {negocio}",
+                    CrearHtml(negocio, cliente, fechaTexto, horaTexto, servicio, profesional, cita.Sucursal.Nombre),
                     cancellationToken);
 
                 notificacion.Estado = EstadosNotificacion.Enviada;
@@ -182,30 +228,16 @@ namespace BarberiaSaaS.Api.Services
             }
             catch (Exception ex)
             {
-                notificacion.Estado = notificacion.Intentos >= 3
-                    ? EstadosNotificacion.Fallida
-                    : EstadosNotificacion.Reintento;
-
-                notificacion.UltimoError = ex.Message.Length > 2000
-                    ? ex.Message[..2000]
-                    : ex.Message;
-
+                notificacion.Estado = notificacion.Intentos >= 3 ? EstadosNotificacion.Fallida : EstadosNotificacion.Reintento;
+                notificacion.UltimoError = ex.Message.Length > 2000 ? ex.Message[..2000] : ex.Message;
                 await context.SaveChangesAsync(cancellationToken);
                 _logger.LogError(ex, "Falló notificación {NotificacionId}.", id);
             }
         }
 
-        private static string CrearHtml(
-            string negocio,
-            string cliente,
-            string fecha,
-            string hora,
-            string servicio,
-            string profesional,
-            string sucursal)
+        private static string CrearHtml(string negocio, string cliente, string fecha, string hora, string servicio, string profesional, string sucursal)
         {
             static string E(string value) => WebUtility.HtmlEncode(value);
-
             return $"""
                 <!doctype html>
                 <html lang="es">
