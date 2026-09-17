@@ -41,6 +41,7 @@ public sealed class SaasAccessMiddleware
                 x.FechaActivacion,
                 x.FechaCreacion,
                 x.PayPalSubscriptionStatus,
+                x.PayPalNextBillingTime,
                 x.MetodoSuscripcion,
                 x.SuscripcionHasta,
                 x.AccesoCortesia
@@ -58,10 +59,13 @@ public sealed class SaasAccessMiddleware
         var trialEndsAt = trialStart.AddDays(TrialDays);
         var trialActive = now < trialEndsAt;
         var paypalActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+        var paypalPaidThrough = string.Equals(tenant.PayPalSubscriptionStatus, "CANCELLED", StringComparison.OrdinalIgnoreCase)
+            && tenant.PayPalNextBillingTime.HasValue
+            && now < tenant.PayPalNextBillingTime.Value;
         var manualActive = tenant.SuscripcionHasta.HasValue && now < tenant.SuscripcionHasta.Value;
         var courtesyActive = tenant.AccesoCortesia;
 
-        if (trialActive || paypalActive || manualActive || courtesyActive)
+        if (trialActive || paypalActive || paypalPaidThrough || manualActive || courtesyActive)
         {
             await _next(context);
             return;
@@ -73,6 +77,7 @@ public sealed class SaasAccessMiddleware
             code = "SUBSCRIPTION_REQUIRED",
             message = "Tu acceso a Barbería SaaS requiere una suscripción activa.",
             trialEndsAt,
+            paypalPaidThrough = tenant.PayPalNextBillingTime,
             metodoSuscripcion = tenant.MetodoSuscripcion,
             suscripcionHasta = tenant.SuscripcionHasta
         }, context.RequestAborted);
