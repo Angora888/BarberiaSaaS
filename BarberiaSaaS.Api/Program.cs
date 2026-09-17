@@ -18,6 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IPayPalService, PayPalService>();
+builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
+builder.Services.AddScoped<INotificacionCitaService, NotificacionCitaService>();
+builder.Services.AddHostedService<NotificacionesWorker>();
 
 // ============================================================
 // POSTGRESQL
