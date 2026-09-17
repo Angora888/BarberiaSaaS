@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -34,10 +35,49 @@ import TurnstileRegistro from "./components/TurnstileRegistro";
 import MainLayout from "./layouts/MainLayout";
 import { ConfiguracionProvider } from "./context/ConfiguracionContext";
 import { SucursalProvider } from "./context/SucursalContext";
+import api from "./services/api";
 
 function RutaProtegida({ children }) {
   const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
+  const location = useLocation();
+  const [estadoAcceso, setEstadoAcceso] = useState("cargando");
+
+  useEffect(() => {
+    let activo = true;
+
+    if (!token) {
+      setEstadoAcceso("sin-token");
+      return () => { activo = false; };
+    }
+
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (usuario.rol === "SuperAdmin" || location.pathname === "/mi-suscripcion") {
+      setEstadoAcceso("permitido");
+      return () => { activo = false; };
+    }
+
+    setEstadoAcceso("cargando");
+    api.get("/paypal/subscription-current")
+      .then(({ data }) => {
+        if (activo) setEstadoAcceso(data?.accessAllowed ? "permitido" : "bloqueado");
+      })
+      .catch(() => {
+        if (activo) setEstadoAcceso("permitido");
+      });
+
+    return () => { activo = false; };
+  }, [token, location.pathname]);
+
+  if (!token || estadoAcceso === "sin-token") return <Navigate to="/login" replace />;
+  if (estadoAcceso === "cargando") {
+    return (
+      <div className="app-loading">
+        <div className="spinner-border" role="status" />
+        <div className="mt-3">Validando acceso...</div>
+      </div>
+    );
+  }
+  if (estadoAcceso === "bloqueado") return <Navigate to="/mi-suscripcion" replace />;
   return children;
 }
 
