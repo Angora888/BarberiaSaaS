@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaLock, FaPaypal, FaWhatsapp } from "react-icons/fa";
+import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaGift, FaLock, FaPaypal, FaWhatsapp } from "react-icons/fa";
 import api from "../services/api";
 
 const ADMIN_WHATSAPP = "50660662375";
@@ -58,7 +58,7 @@ export default function MiSuscripcion() {
         if (!activo) return;
         setConfig(configData);
 
-        if (currentData?.hasSubscription) {
+        if (currentData?.hasSubscription || currentData?.accessAllowed) {
           setSuscripcion(currentData);
           return;
         }
@@ -95,8 +95,11 @@ export default function MiSuscripcion() {
 
   const estado = String(suscripcion?.status || "UNKNOWN").toUpperCase();
   const suscripcionActiva = estado === "ACTIVE";
-  const suscripcionInactiva = Boolean(suscripcion) && !suscripcionActiva;
-  const debeMostrarPayPal = !cargando && (!suscripcion || (suscripcionInactiva && mostrarPago));
+  const suscripcionInactiva = Boolean(suscripcion?.subscriptionId) && !suscripcionActiva;
+  const accesoManualActivo = Boolean(suscripcion?.manualActive);
+  const accesoCortesiaActivo = Boolean(suscripcion?.courtesyActive);
+  const metodoManual = suscripcion?.metodoSuscripcion || "Pago manual";
+  const debeMostrarPayPal = !cargando && (!suscripcion?.subscriptionId || (suscripcionInactiva && mostrarPago));
 
   useEffect(() => {
     if (!config || !paypalRef.current || !debeMostrarPayPal) return;
@@ -151,6 +154,9 @@ export default function MiSuscripcion() {
   const proximoCobro = suscripcion?.nextBillingTime
     ? new Date(suscripcion.nextBillingTime).toLocaleString("es-CR")
     : null;
+  const accesoHasta = suscripcion?.suscripcionHasta
+    ? new Date(suscripcion.suscripcionHasta).toLocaleString("es-CR")
+    : null;
 
   return (
     <div className="container-fluid px-0" style={{ maxWidth: 980 }}>
@@ -193,6 +199,23 @@ export default function MiSuscripcion() {
 
               {cargando && <div className="text-muted">Consultando tu suscripción...</div>}
 
+              {!cargando && accesoCortesiaActivo && (
+                <div className="alert alert-success mb-3" style={{ borderRadius: 16 }}>
+                  <div className="fw-bold mb-1"><FaGift className="me-2" />¡Acceso activo por cortesía!</div>
+                  <div>Puedes seguir utilizando Barbería SaaS sin pago mientras la cortesía esté activa.</div>
+                  {suscripcion?.notaSuscripcion && <div className="small mt-2">Nota: {suscripcion.notaSuscripcion}</div>}
+                </div>
+              )}
+
+              {!cargando && accesoManualActivo && !accesoCortesiaActivo && (
+                <div className="alert alert-success mb-3" style={{ borderRadius: 16 }}>
+                  <div className="fw-bold mb-1"><FaCheckCircle className="me-2" />¡Acceso activo!</div>
+                  <div>Pago registrado por <strong>{metodoManual}</strong>.</div>
+                  {accesoHasta && <div className="small mt-1">Acceso disponible hasta: <strong>{accesoHasta}</strong></div>}
+                  {suscripcion?.notaSuscripcion && <div className="small mt-2">Nota: {suscripcion.notaSuscripcion}</div>}
+                </div>
+              )}
+
               {!cargando && suscripcionActiva && (
                 <div className="alert alert-success mb-0" style={{ borderRadius: 16 }}>
                   <div className="fw-bold mb-1">
@@ -210,12 +233,12 @@ export default function MiSuscripcion() {
                 <>
                   <div className="alert alert-warning mb-3" style={{ borderRadius: 16 }}>
                     <div className="fw-bold mb-1">
-                      <FaExclamationTriangle className="me-2" />Suscripción cancelada o inactiva
+                      <FaExclamationTriangle className="me-2" />Suscripción PayPal cancelada o inactiva
                     </div>
                     <div>Estado PayPal: <strong>{estado}</strong></div>
                     <div className="small mt-1">ID: {suscripcion.subscriptionId}</div>
                     <div className="small mt-2">
-                      Tu plan ya no tiene renovación automática. Puedes volver a suscribirte cuando quieras.
+                      Tu plan ya no tiene renovación automática por PayPal.{(accesoManualActivo || accesoCortesiaActivo) ? " Tu acceso a Barbería SaaS continúa activo por el método indicado arriba." : " Puedes volver a suscribirte cuando quieras."}
                     </div>
                   </div>
 
@@ -289,8 +312,12 @@ export default function MiSuscripcion() {
               <hr />
               <div className="d-flex align-items-center gap-2 small text-muted">
                 <FaCreditCard /> {suscripcionActiva
-                  ? "Puedes cancelar la renovación desde PayPal."
-                  : "Puedes activar nuevamente tu plan desde esta página."}
+                  ? "Tu renovación automática está activa con PayPal."
+                  : accesoCortesiaActivo
+                    ? "Tu acceso está activo por cortesía."
+                    : accesoManualActivo
+                      ? `Tu acceso está activo por ${metodoManual}.`
+                      : "Puedes activar nuevamente tu plan desde esta página."}
               </div>
             </div>
           </div>
