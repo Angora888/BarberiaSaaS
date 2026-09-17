@@ -11,14 +11,12 @@ namespace BarberiaSaaS.Api.Controllers;
 [Authorize]
 public sealed class PayPalController : ControllerBase
 {
+    private const int TrialDays = 31;
     private readonly IPayPalService _payPalService;
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
 
-    public PayPalController(
-        IPayPalService payPalService,
-        AppDbContext context,
-        ITenantContext tenantContext)
+    public PayPalController(IPayPalService payPalService, AppDbContext context, ITenantContext tenantContext)
     {
         _payPalService = payPalService;
         _context = context;
@@ -31,14 +29,7 @@ public sealed class PayPalController : ControllerBase
         try
         {
             var config = _payPalService.GetClientConfig();
-            return Ok(new
-            {
-                config.ClientId,
-                config.PlanId,
-                config.Mode,
-                price = "10.00",
-                currency = "USD"
-            });
+            return Ok(new { config.ClientId, config.PlanId, config.Mode, price = "10.00", currency = "USD" });
         }
         catch (InvalidOperationException ex)
         {
@@ -50,62 +41,57 @@ public sealed class PayPalController : ControllerBase
     public async Task<IActionResult> GetCurrentSubscription(CancellationToken cancellationToken)
     {
         var tenantId = _tenantContext.TenantId;
-        var tenant = await _context.Tenants
-            .AsNoTracking()
-            .Where(x => x.Id == tenantId)
-            .Select(x => new
+        var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+        if (tenant is null) return NotFound(new { message = "No se encontró el negocio." });
+
+        var trialStart = tenant.FechaActivacion ?? tenant.FechaCreacion;
+        var trialEndsAt = trialStart.AddDays(TrialDays);
+        var trialActive = DateTime.UtcNow < trialEndsAt;
+        var subscriptionActive = string.Equals(tenant.PayPalSubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+        var accessAllowed = trialActive || subscriptionActive;
+        var trialDaysRemaining = trialActive ? Math.Max(1, (int)Math.Ceiling((trialEndsAt - DateTime.UtcNow).TotalDays)) : 0;
+
+        if (string.IsNullOrWhiteSpace(tenant.PayPalSubscriptionId))
+        {
+            return Ok(new
             {
-                subscriptionId = x.PayPalSubscriptionId,
-                status = x.PayPalSubscriptionStatus,
-                planId = x.PayPalPlanId,
-                payerEmail = x.PayPalPayerEmail,
-                nextBillingTime = x.PayPalNextBillingTime,
-                updatedAt = x.PayPalSubscriptionUpdatedAt
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (tenant is null)
-            return NotFound(new { message = "No se encontró el negocio." });
-
-        if (string.IsNullOrWhiteSpace(tenant.subscriptionId))
-            return Ok(new { hasSubscription = false });
+                hasSubscription = false,
+                accessAllowed,
+                trialActive,
+                trialDaysRemaining,
+                trialEndsAt
+            });
+        }
 
         return Ok(new
         {
             hasSubscription = true,
-            tenant.subscriptionId,
-            tenant.status,
-            tenant.planId,
-            tenant.payerEmail,
-            tenant.nextBillingTime,
-            tenant.updatedAt
+            accessAllowed,
+            trialActive,
+            trialDaysRemaining,
+            trialEndsAt,
+            subscriptionId = tenant.PayPalSubscriptionId,
+            status = tenant.PayPalSubscriptionStatus,
+            planId = tenant.PayPalPlanId,
+            payerEmail = tenant.PayPalPayerEmail,
+            nextBillingTime = tenant.PayPalNextBillingTime,
+            updatedAt = tenant.PayPalSubscriptionUpdatedAt
         });
     }
 
     [HttpGet("subscriptions/{subscriptionId}")]
-    public async Task<IActionResult> GetSubscription(
-        string subscriptionId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetSubscription(string subscriptionId, CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _payPalService.GetSubscriptionAsync(
-                subscriptionId,
-                cancellationToken);
-
+            var result = await _payPalService.GetSubscriptionAsync(subscriptionId, cancellationToken);
             var tenantId = _tenantContext.TenantId;
-            var tenant = await _context.Tenants
-                .FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+            var tenant = await _context.Tenants.FirstOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
+            if (tenant is null) return NotFound(new { message = "No se encontró el negocio." });
 
-            if (tenant is null)
-                return NotFound(new { message = "No se encontró el negocio." });
-
-            var subscriptionOwner = await _context.Tenants
-                .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => x.PayPalSubscriptionId == result.SubscriptionId && x.Id != tenantId,
-                    cancellationToken);
-
+            var subscriptionOwner = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(
+                x => x.PayPalSubscriptionId == result.SubscriptionId && x.Id != tenantId,
+                cancellationToken);
             if (subscriptionOwner is not null)
                 return Conflict(new { message = "Esta suscripción ya está asociada a otro negocio." });
 
@@ -115,9 +101,7 @@ public sealed class PayPalController : ControllerBase
             tenant.PayPalPayerEmail = result.PayerEmail;
             tenant.PayPalNextBillingTime = ParsePayPalDate(result.NextBillingTime);
             tenant.PayPalSubscriptionUpdatedAt = DateTime.UtcNow;
-
             await _context.SaveChangesAsync(cancellationToken);
-
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -128,11 +112,7 @@ public sealed class PayPalController : ControllerBase
 
     private static DateTime? ParsePayPalDate(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-
-        return DateTimeOffset.TryParse(value, out var parsed)
-            ? parsed.UtcDateTime
-            : null;
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return DateTimeOffset.TryParse(value, out var parsed) ? parsed.UtcDateTime : null;
     }
 }
