@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FaBoxes, FaCalendarAlt, FaCashRegister, FaChartBar, FaCog, FaCreditCard, FaCut, FaFileInvoiceDollar, FaHome, FaSignOutAlt, FaStore, FaUsers, FaUserTie, FaWhatsapp } from "react-icons/fa";
+import { FaBoxes, FaCalendarAlt, FaCashRegister, FaChartBar, FaCog, FaCreditCard, FaCut, FaFileInvoiceDollar, FaHome, FaSignOutAlt, FaStore, FaUsers, FaUserTie } from "react-icons/fa";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 import { useSucursal } from "../context/SucursalContext";
 
@@ -10,6 +10,7 @@ function MainLayout() {
   const { sucursales, sucursalId, cargandoSucursales, errorSucursales, seleccionarSucursal } = useSucursal();
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const esSuperAdmin = usuario.rol === "SuperAdmin";
+  const esPaginaSuscripcion = location.pathname === "/mi-suscripcion";
 
   const cerrarSesion = () => { localStorage.removeItem("token"); localStorage.removeItem("usuario"); localStorage.removeItem("barberiaSaaS.sucursalSeleccionada"); navigate("/"); };
   const inicialNegocio = nombreNegocio?.charAt(0)?.toUpperCase() || "N";
@@ -49,7 +50,8 @@ function MainLayout() {
         <div className="topbar-user"><div className="topbar-user-text d-none d-md-flex"><strong>{usuario.nombre || "Usuario"}</strong>{usuario.sucursal && <span>{usuario.sucursal}</span>}</div><div className="topbar-avatar">{(usuario.nombre || "U").charAt(0).toUpperCase()}</div></div>
       </header>
       <div className="page-content">
-        {errorConfiguracion && <div className="alert alert-warning">{errorConfiguracion}</div>}{errorSucursales && <div className="alert alert-warning">{errorSucursales}</div>}
+        {!esPaginaSuscripcion && errorConfiguracion && <div className="alert alert-warning">{errorConfiguracion}</div>}
+        {!esPaginaSuscripcion && errorSucursales && <div className="alert alert-warning">{errorSucursales}</div>}
         {mostrarAvisoPrueba && <div className="mb-4" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "18px 20px", background: "linear-gradient(135deg, var(--soft-pink), #ffffff)", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}><div className="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barberia SaaS</div><div className="fw-bold" style={{ fontSize: 20 }}>Días usando la App: {diasUsandoApp}</div>{diasUsandoApp < 31 && <div className="text-muted mt-1">Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</div>}</div>{diasUsandoApp < 31 && <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={activarSuscripcion} style={{ borderRadius: 14, padding: "10px 16px", fontWeight: 700 }}><FaCreditCard />Activar suscripción</button>}</div></div>}
         <Outlet />
       </div>
