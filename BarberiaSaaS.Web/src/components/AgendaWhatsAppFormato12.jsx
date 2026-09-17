@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 function convertirHora12(horaTexto) {
-  const match = String(horaTexto || "").match(
+  const match = String(horaTexto || "").trim().match(
     /^([01]?\d|2[0-3]):([0-5]\d)$/
   );
 
@@ -48,6 +48,38 @@ function transformarMensajeWhatsApp(valor) {
   return resultado;
 }
 
+function formatearElementoHora(elemento) {
+  if (!elemento) {
+    return;
+  }
+
+  const actual = elemento.textContent?.trim() || "";
+
+  if (!actual || /\b(?:AM|PM)\b/i.test(actual)) {
+    return;
+  }
+
+  const convertido = convertirHora12(actual);
+
+  if (convertido !== actual) {
+    elemento.textContent = convertido;
+  }
+}
+
+function formatearHorasAgenda() {
+  // Vista diaria visual: columna de horas y hora dentro de cada cita.
+  document
+    .querySelectorAll(
+      ".visual-agenda-time-label, .visual-appointment-time"
+    )
+    .forEach(formatearElementoHora);
+
+  // Vista diaria en lista: hora principal de cada tarjeta.
+  document
+    .querySelectorAll(".appointment-time strong")
+    .forEach(formatearElementoHora);
+}
+
 function formatearHoraVisibleDetalle() {
   const modales = Array.from(
     document.querySelectorAll(".custom-modal")
@@ -75,21 +107,7 @@ function formatearHoraVisibleDetalle() {
   const tarjetaHora = etiquetaHora?.parentElement;
   const valorHora = tarjetaHora?.querySelector("strong");
 
-  if (!valorHora) {
-    return;
-  }
-
-  const actual = valorHora.textContent?.trim() || "";
-
-  if (/\b(?:AM|PM)\b/i.test(actual)) {
-    return;
-  }
-
-  const convertido = convertirHora12(actual);
-
-  if (convertido !== actual) {
-    valorHora.textContent = convertido;
-  }
+  formatearElementoHora(valorHora);
 }
 
 function AgendaWhatsAppFormato12() {
@@ -105,7 +123,12 @@ function AgendaWhatsAppFormato12() {
     globalThis.encodeURIComponent =
       encodePersonalizado;
 
-    formatearHoraVisibleDetalle();
+    const formatearHorasVisibles = () => {
+      formatearHorasAgenda();
+      formatearHoraVisibleDetalle();
+    };
+
+    formatearHorasVisibles();
 
     let pendiente = false;
 
@@ -118,7 +141,7 @@ function AgendaWhatsAppFormato12() {
 
       requestAnimationFrame(() => {
         pendiente = false;
-        formatearHoraVisibleDetalle();
+        formatearHorasVisibles();
       });
     });
 
