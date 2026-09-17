@@ -14,6 +14,7 @@ import Configuracion from "./pages/Configuracion";
 import Sucursales from "./pages/Sucursales";
 import CuentasPorCobrar from "./pages/CuentasPorCobrar";
 import MiSuscripcion from "./pages/MiSuscripcion";
+import AdminSuscripciones from "./pages/AdminSuscripciones";
 import LandingPublica from "./pages/LandingPublica";
 import ManualPublico from "./pages/ManualPublico";
 import Prueba from "./pages/Prueba";
@@ -41,44 +42,26 @@ function RutaProtegida({ children }) {
   const token = localStorage.getItem("token");
   const location = useLocation();
   const [estadoAcceso, setEstadoAcceso] = useState("cargando");
-
   useEffect(() => {
     let activo = true;
-
-    if (!token) {
-      setEstadoAcceso("sin-token");
-      return () => { activo = false; };
-    }
-
+    if (!token) { setEstadoAcceso("sin-token"); return () => { activo = false; }; }
     const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-    if (usuario.rol === "SuperAdmin" || location.pathname === "/mi-suscripcion") {
-      setEstadoAcceso("permitido");
-      return () => { activo = false; };
-    }
-
+    if (usuario.rol === "SuperAdmin" || location.pathname === "/mi-suscripcion") { setEstadoAcceso("permitido"); return () => { activo = false; }; }
     setEstadoAcceso("cargando");
     api.get("/paypal/subscription-current")
-      .then(({ data }) => {
-        if (activo) setEstadoAcceso(data?.accessAllowed ? "permitido" : "bloqueado");
-      })
-      .catch(() => {
-        if (activo) setEstadoAcceso("permitido");
-      });
-
+      .then(({ data }) => { if (activo) setEstadoAcceso(data?.accessAllowed ? "permitido" : "bloqueado"); })
+      .catch(() => { if (activo) setEstadoAcceso("permitido"); });
     return () => { activo = false; };
   }, [token, location.pathname]);
-
   if (!token || estadoAcceso === "sin-token") return <Navigate to="/login" replace />;
-  if (estadoAcceso === "cargando") {
-    return (
-      <div className="app-loading">
-        <div className="spinner-border" role="status" />
-        <div className="mt-3">Validando acceso...</div>
-      </div>
-    );
-  }
+  if (estadoAcceso === "cargando") return <div className="app-loading"><div className="spinner-border" role="status" /><div className="mt-3">Validando acceso...</div></div>;
   if (estadoAcceso === "bloqueado") return <Navigate to="/mi-suscripcion" replace />;
   return children;
+}
+
+function SoloSuperAdmin({ children }) {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  return usuario.rol === "SuperAdmin" ? children : <Navigate to="/dashboard" replace />;
 }
 
 function App() {
@@ -102,11 +85,11 @@ function App() {
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/sucursales" element={<Sucursales />} />
         <Route path="/mi-suscripcion" element={<MiSuscripcion />} />
+        <Route path="/admin/suscripciones" element={<SoloSuperAdmin><AdminSuscripciones /></SoloSuperAdmin>} />
         <Route path="/configuracion" element={<><Configuracion /><PaginaPublicaCard modo="configuracion" /></>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
 export default App;
