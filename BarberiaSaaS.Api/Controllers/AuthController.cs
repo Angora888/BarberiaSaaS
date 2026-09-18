@@ -440,34 +440,19 @@ namespace BarberiaSaaS.Api.Controllers
             Usuario usuario,
             string tokenPlano)
         {
-            var apiKey = _configuration["Resend:ApiKey"];
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                throw new InvalidOperationException(
-                    "Resend:ApiKey no está configurado.");
-            }
-
-            var from = _configuration["Resend:FromEmail"];
-
-            if (string.IsNullOrWhiteSpace(from))
-            {
-                from = "Barberia SaaS <onboarding@resend.dev>";
-            }
-
             var frontendUrl =
                 _configuration["App:FrontendUrl"]
                 ?? "https://barberiasaas.vercel.app";
 
             var enlace =
-                $"{frontendUrl.TrimEnd('/')}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
+                ${frontendUrl.TrimEnd('/')}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
 
             var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
             var negocio = System.Net.WebUtility.HtmlEncode(tenant.Nombre);
 
             var html = $"""
                 <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
-                  <h1 style="color:#111827">¡Bienvenido a Barberia SaaS!</h1>
+                  <h1 style="color:#111827">¡Bienvenido a Barbería SaaS!</h1>
                   <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para crear <strong>{negocio}</strong>.</p>
                   <p>Confirma tu correo para activar el negocio y comenzar tu período de prueba.</p>
                   <p style="margin:32px 0">
@@ -478,25 +463,21 @@ namespace BarberiaSaaS.Api.Controllers
                 </div>
                 """;
 
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue(
-                    "Bearer",
-                    apiKey);
-
-            var payload = new
+            try
             {
-                from,
-                to = new[] { usuario.Email },
-                subject = "Confirma tu negocio en Barberia SaaS",
-                html
-            };
+                var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
+                await emailService.EnviarAsync(
+                    usuario.Email,
+                    "Barbería SaaS",
+                    "Confirma tu negocio en Barbería SaaS",
+                    html);
 
-            using var response = await client.PostAsJsonAsync(
-                "https://api.resend.com/emails",
-                payload);
-
-            return response.IsSuccessStatusCode;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // =========================================================
