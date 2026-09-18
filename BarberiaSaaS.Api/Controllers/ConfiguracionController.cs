@@ -30,7 +30,7 @@ namespace BarberiaSaaS.Api.Controllers
                 x.SlugPublico, x.LandingPublicaActiva, x.FechaCreacion,
                 Configuracion = x.Configuracion == null ? null : new
                 {
-                    x.Configuracion.LogoUrl, x.Configuracion.ColorPrimario, x.Configuracion.ColorSecundario,
+                    x.Configuracion.LogoUrl, x.Configuracion.FrasePresentacion, x.Configuracion.ColorPrimario, x.Configuracion.ColorSecundario,
                     x.Configuracion.ColorFondo, x.Configuracion.Moneda, x.Configuracion.ZonaHoraria,
                     x.Configuracion.Idioma, x.Configuracion.DuracionSlotMinutos,
                     x.Configuracion.PermitirReservaOnline, x.Configuracion.MostrarPrecios,
@@ -63,7 +63,7 @@ namespace BarberiaSaaS.Api.Controllers
             var recordatoriosEstabanActivos = configuracion.RecordatorioEmailActivo;
             var horasAnteriores = configuracion.RecordatorioEmailHorasAntes;
 
-            configuracion.LogoUrl = Limpiar(request.LogoUrl); configuracion.ColorPrimario = request.ColorPrimario.Trim();
+            configuracion.LogoUrl = Limpiar(request.LogoUrl); configuracion.FrasePresentacion = Limpiar(request.FrasePresentacion); configuracion.ColorPrimario = request.ColorPrimario.Trim();
             configuracion.ColorSecundario = request.ColorSecundario.Trim(); configuracion.ColorFondo = request.ColorFondo.Trim();
             configuracion.Moneda = request.Moneda.Trim().ToUpperInvariant(); configuracion.ZonaHoraria = request.ZonaHoraria.Trim();
             configuracion.Idioma = string.IsNullOrWhiteSpace(request.Idioma) ? "es" : request.Idioma.Trim().ToLowerInvariant();
