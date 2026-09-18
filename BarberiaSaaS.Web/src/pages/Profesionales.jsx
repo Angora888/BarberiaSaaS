@@ -871,13 +871,16 @@ function Profesionales() {
           className="modal fade show d-block"
           tabIndex="-1"
           style={{
-            backgroundColor:
-              "rgba(0,0,0,.45)"
+            backgroundColor: "rgba(0,0,0,.45)",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch"
           }}
         >
-          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div className="modal-content">
+          <div className="modal-dialog modal-lg modal-dialog-scrollable my-3">
+            <div className="modal-content" style={{ maxHeight: "calc(100dvh - 2rem)" }}>
               <form
+                className="d-flex flex-column overflow-hidden"
+                style={{ maxHeight: "calc(100dvh - 2rem)" }}
                 onSubmit={
                   guardarProfesional
                 }
@@ -898,7 +901,13 @@ function Profesionales() {
                   />
                 </div>
 
-                <div className="modal-body">
+                <div
+                  className="modal-body"
+                  style={{
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch"
+                  }}
+                >
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label">
