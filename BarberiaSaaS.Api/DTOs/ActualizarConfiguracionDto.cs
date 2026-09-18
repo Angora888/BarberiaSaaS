@@ -9,6 +9,7 @@ namespace BarberiaSaaS.Api.DTOs
         public string? Email { get; set; }
 
         public string? LogoUrl { get; set; }
+        public string? FrasePresentacion { get; set; }
         public string ColorPrimario { get; set; } = "#C62864";
         public string ColorSecundario { get; set; } = "#F8E7EE";
         public string ColorFondo { get; set; } = "#FFFFFF";
