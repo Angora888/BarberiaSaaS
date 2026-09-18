@@ -628,9 +628,9 @@ function obtenerHoraCita(cita, zonaHoraria) {
   try {
     return new Intl.DateTimeFormat("es-CR", {
       timeZone: zonaHoraria || "America/Costa_Rica",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false
+      hour12: true
     }).format(fecha);
   } catch {
     return "-";
