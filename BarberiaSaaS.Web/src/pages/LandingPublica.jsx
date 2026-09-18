@@ -626,8 +626,7 @@ function LandingPublica() {
           )}
 
           <p className="landing-eyebrow">
-            Belleza • Bienestar •
-            Estilo
+            {landing.branding?.frasePresentacion || "Belleza • Bienestar • Estilo"}
           </p>
 
           <h1>
