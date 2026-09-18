@@ -4,7 +4,7 @@ import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 
 const formularioInicial = {
-  nombre: "", nombreComercial: "", identificacion: "", telefono: "", email: "", logoUrl: "",
+  nombre: "", nombreComercial: "", identificacion: "", telefono: "", email: "", logoUrl: "", frasePresentacion: "",
   colorPrimario: "#C62864", colorSecundario: "#F8E7EE", colorFondo: "#FFFFFF",
   moneda: "CRC", zonaHoraria: "America/Costa_Rica", idioma: "es", duracionSlotMinutos: 15,
   permitirReservaOnline: true, mostrarPrecios: true,
@@ -25,7 +25,7 @@ function Configuracion() {
     setFormulario({
       nombre: tenant.nombre || "", nombreComercial: tenant.nombreComercial || "",
       identificacion: tenant.identificacion || "", telefono: tenant.telefono || "", email: tenant.email || "",
-      logoUrl: configuracion?.logoUrl || "", colorPrimario: configuracion?.colorPrimario || "#C62864",
+      logoUrl: configuracion?.logoUrl || "", frasePresentacion: configuracion?.frasePresentacion || "", colorPrimario: configuracion?.colorPrimario || "#C62864",
       colorSecundario: configuracion?.colorSecundario || "#F8E7EE", colorFondo: configuracion?.colorFondo || "#FFFFFF",
       moneda: configuracion?.moneda || "CRC", zonaHoraria: configuracion?.zonaHoraria || "America/Costa_Rica",
       idioma: configuracion?.idioma || "es", duracionSlotMinutos: configuracion?.duracionSlotMinutos || 15,
@@ -80,6 +80,7 @@ function Configuracion() {
           <TextField label="Teléfono" value={formulario.telefono} onChange={v => actualizarCampo("telefono", v)} />
           <TextField label="Correo" type="email" value={formulario.email} onChange={v => actualizarCampo("email", v)} />
           <TextField label="URL del logo" placeholder="https://..." value={formulario.logoUrl} onChange={v => actualizarCampo("logoUrl", v)} />
+          <TextField label="Frase de presentación" placeholder="Belleza • Bienestar • Estilo" value={formulario.frasePresentacion} onChange={v => actualizarCampo("frasePresentacion", v)} />
         </div>
       </div>
 
