@@ -200,6 +200,11 @@ namespace BarberiaSaaS.Api.Controllers
                     logoUrl =
                         config?.LogoUrl,
 
+                    frasePresentacion =
+                        string.IsNullOrWhiteSpace(config?.FrasePresentacion)
+                            ? "Belleza • Bienestar • Estilo"
+                            : config!.FrasePresentacion,
+
                     colorPrimario =
                         config?.ColorPrimario
                         ?? "#C62864",
