@@ -561,10 +561,20 @@ function Profesionales() {
         return "";
       }
 
-      return hora.substring(
-        0,
-        5
+      const match = String(hora).match(
+        /^(\d{1,2}):(\d{2})/
       );
+
+      if (!match) {
+        return hora;
+      }
+
+      const horas24 = Number(match[1]);
+      const minutos = match[2];
+      const periodo = horas24 >= 12 ? "PM" : "AM";
+      const horas12 = horas24 % 12 || 12;
+
+      return `${horas12}:${minutos} ${periodo}`;
     };
 
   const horariosOrdenados =
