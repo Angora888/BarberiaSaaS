@@ -84,7 +84,7 @@ function Profesionales() {
   const [almuerzos, setAlmuerzos] = useState([]);
   const [guardandoAlmuerzo, setGuardandoAlmuerzo] = useState(false);
   const [formularioAlmuerzo, setFormularioAlmuerzo] = useState({
-    diaSemana: 1,
+    activo: false,
     horaInicio: "12:00",
     horaFin: "13:00"
   });
@@ -471,7 +471,21 @@ function Profesionales() {
       const response = await api.get(
         `/profesionales/${profesionalId}/almuerzos`
       );
-      setAlmuerzos(response.data);
+      const datos = response.data || [];
+      setAlmuerzos(datos);
+      if (datos.length > 0) {
+        setFormularioAlmuerzo({
+          activo: true,
+          horaInicio: String(datos[0].horaInicio).slice(0, 5),
+          horaFin: String(datos[0].horaFin).slice(0, 5)
+        });
+      } else {
+        setFormularioAlmuerzo({
+          activo: false,
+          horaInicio: "12:00",
+          horaFin: "13:00"
+        });
+      }
     } catch (error) {
       setError(
         error.response?.data?.mensaje ||
@@ -481,10 +495,10 @@ function Profesionales() {
   };
 
   const cambiarCampoAlmuerzo = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormularioAlmuerzo((anterior) => ({
       ...anterior,
-      [name]: name === "diaSemana" ? Number(value) : value
+      [name]: type === "checkbox" ? checked : value
     }));
   };
 
@@ -492,22 +506,29 @@ function Profesionales() {
     e.preventDefault();
     if (!profesionalHorario) return;
 
-    if (formularioAlmuerzo.horaFin <= formularioAlmuerzo.horaInicio) {
-      setError("La hora final del almuerzo debe ser posterior a la hora inicial.");
-      return;
-    }
-
     try {
       setGuardandoAlmuerzo(true);
       setError("");
-      await api.post(
-        `/profesionales/${profesionalHorario.id}/almuerzos`,
-        {
-          diaSemana: formularioAlmuerzo.diaSemana,
-          horaInicio: `${formularioAlmuerzo.horaInicio}:00`,
-          horaFin: `${formularioAlmuerzo.horaFin}:00`
+
+      if (!formularioAlmuerzo.activo) {
+        await api.delete(
+          `/profesionales/${profesionalHorario.id}/almuerzos`
+        );
+      } else {
+        if (formularioAlmuerzo.horaFin <= formularioAlmuerzo.horaInicio) {
+          setError("La hora final del almuerzo debe ser posterior a la hora inicial.");
+          return;
         }
-      );
+
+        await api.post(
+          `/profesionales/${profesionalHorario.id}/almuerzos`,
+          {
+            horaInicio: `${formularioAlmuerzo.horaInicio}:00`,
+            horaFin: `${formularioAlmuerzo.horaFin}:00`
+          }
+        );
+      }
+
       await cargarAlmuerzos(profesionalHorario.id);
     } catch (error) {
       setError(
@@ -519,30 +540,18 @@ function Profesionales() {
     }
   };
 
-  const eliminarAlmuerzo = async (almuerzo) => {
-    if (!profesionalHorario) return;
-    if (!window.confirm(`¿Quitar la hora de almuerzo de ${obtenerNombreDia(almuerzo.diaSemana)}?`)) return;
-
-    try {
-      setError("");
-      await api.delete(
-        `/profesionales/${profesionalHorario.id}/almuerzos/${almuerzo.id}`
-      );
-      await cargarAlmuerzos(profesionalHorario.id);
-    } catch (error) {
-      setError(
-        error.response?.data?.mensaje ||
-        "No fue posible eliminar la hora de almuerzo."
-      );
-    }
-  };
-
   const cerrarHorarios = () => {
     setMostrarHorarios(false);
     setProfesionalHorario(null);
     setHorarios([]);
     setAlmuerzos([]);
+    setFormularioAlmuerzo({
+      activo: false,
+      horaInicio: "12:00",
+      horaFin: "13:00"
+    });
     setHorarioEditando(null);
+    setError("");
     setHorarioEliminando(null);
 
     setFormularioHorario({
@@ -1523,86 +1532,62 @@ function Profesionales() {
               </div>
 
                 <div className="border-top mt-4 pt-4">
-                  <div className="professional-section-title mb-3">
-                    <FaClock />
-                    <span>🍽️ Hora de almuerzo</span>
-                  </div>
-
-                  <p className="text-muted small">
-                    Bloquea automáticamente este intervalo para que no se puedan reservar citas que coincidan con el almuerzo.
-                  </p>
-
-                  <form className="row g-3 align-items-end" onSubmit={guardarAlmuerzo}>
-                    <div className="col-md-4">
-                      <label className="form-label">Día</label>
-                      <select
-                        name="diaSemana"
-                        className="form-select"
-                        value={formularioAlmuerzo.diaSemana}
-                        onChange={cambiarCampoAlmuerzo}
-                      >
-                        {DIAS_SEMANA.map((dia) => (
-                          <option key={dia.valor} value={dia.valor}>{dia.nombre}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-md-3">
-                      <label className="form-label">Desde</label>
+                  <form onSubmit={guardarAlmuerzo}>
+                    <div className="form-check form-switch mb-3">
                       <input
-                        name="horaInicio"
-                        type="time"
-                        className="form-control"
-                        value={formularioAlmuerzo.horaInicio}
+                        id="horaAlmuerzoActiva"
+                        name="activo"
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={formularioAlmuerzo.activo}
                         onChange={cambiarCampoAlmuerzo}
                       />
+                      <label className="form-check-label fw-semibold" htmlFor="horaAlmuerzoActiva">
+                        🍽️ Hora de almuerzo
+                      </label>
                     </div>
 
-                    <div className="col-md-3">
-                      <label className="form-label">Hasta</label>
-                      <input
-                        name="horaFin"
-                        type="time"
-                        className="form-control"
-                        value={formularioAlmuerzo.horaFin}
-                        onChange={cambiarCampoAlmuerzo}
-                      />
-                    </div>
+                    {formularioAlmuerzo.activo && (
+                      <div className="row g-3 align-items-end">
+                        <div className="col-md-5">
+                          <label className="form-label">Desde</label>
+                          <input
+                            name="horaInicio"
+                            type="time"
+                            className="form-control"
+                            value={formularioAlmuerzo.horaInicio}
+                            onChange={cambiarCampoAlmuerzo}
+                          />
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label">Hasta</label>
+                          <input
+                            name="horaFin"
+                            type="time"
+                            className="form-control"
+                            value={formularioAlmuerzo.horaFin}
+                            onChange={cambiarCampoAlmuerzo}
+                          />
+                        </div>
+                        <div className="col-md-2">
+                          <button type="submit" className="btn btn-primary w-100" disabled={guardandoAlmuerzo}>
+                            {guardandoAlmuerzo ? "..." : "Guardar"}
+                          </button>
+                        </div>
+                        <div className="col-12">
+                          <small className="text-muted">
+                            Se aplica automáticamente a los días laborales registrados arriba.
+                          </small>
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="col-md-2">
-                      <button type="submit" className="btn btn-primary w-100" disabled={guardandoAlmuerzo}>
-                        {guardandoAlmuerzo ? "..." : "Guardar"}
+                    {!formularioAlmuerzo.activo && almuerzos.length > 0 && (
+                      <button type="submit" className="btn btn-outline-secondary btn-sm" disabled={guardandoAlmuerzo}>
+                        Guardar cambio
                       </button>
-                    </div>
+                    )}
                   </form>
-
-                  {almuerzos.length > 0 && (
-                    <div className="list-group mt-3">
-                      {[...almuerzos]
-                        .sort((a, b) => [1,2,3,4,5,6,0].indexOf(a.diaSemana) - [1,2,3,4,5,6,0].indexOf(b.diaSemana))
-                        .map((almuerzo) => (
-                          <div
-                            key={almuerzo.id}
-                            className="list-group-item d-flex justify-content-between align-items-center gap-2"
-                          >
-                            <div>
-                              <strong>{obtenerNombreDia(almuerzo.diaSemana)}</strong>
-                              <span className="ms-2">
-                                {formatearHora(almuerzo.horaInicio)} - {formatearHora(almuerzo.horaFin)}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger btn-sm"
-                              title="Quitar hora de almuerzo"
-                              onClick={() => eliminarAlmuerzo(almuerzo)}
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  )}
                 </div>
               <div className="modal-footer">
                 <button
