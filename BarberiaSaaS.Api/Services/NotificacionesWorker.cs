@@ -86,14 +86,26 @@ public class NotificacionesWorker : BackgroundService
             .Include(x => x.Cita!).ThenInclude(x => x.Tenant).ThenInclude(x => x.Configuracion).Include(x => x.Cliente).ToListAsync(ct);
         foreach (var n in pendientes)
         {
-            var email = NotificacionCitaService.NormalizarEmail(n.Cliente.Email);
-            var cfg = n.Cita?.Tenant.Configuracion;
-            var activo = cfg?.RecordatorioEmailActivo ?? true;
-            var horas = cfg?.RecordatorioEmailHorasAntes ?? 24;
-            var fechaEsperada = n.Cita?.FechaInicio.AddHours(-horas);
             var citaInvalida = n.Cita == null || n.Cita.Estado == EstadosCita.Cancelada || n.Cita.Estado == EstadosCita.Completada || n.Cita.Estado == EstadosCita.NoAsistio;
-            var reprogramadaATiempoYaPasado = fechaEsperada.HasValue && fechaEsperada.Value <= ahora && fechaEsperada.Value != n.ProgramadaPara;
-            if (!activo || citaInvalida || email == null || reprogramadaATiempoYaPasado) n.Estado = EstadosNotificacion.Cancelada;
+            if (n.Canal == CanalesNotificacion.WhatsApp)
+            {
+                var telefono = NormalizarTelefonoWhatsApp(n.Cliente.Telefono);
+                var fechaEsperada = n.Cita?.FechaInicio.AddHours(-24);
+                var reprogramadaATiempoYaPasado = fechaEsperada.HasValue && fechaEsperada.Value <= ahora && fechaEsperada.Value != n.ProgramadaPara;
+                if (citaInvalida || n.Cita?.Estado != EstadosCita.Pendiente || telefono == null || reprogramadaATiempoYaPasado)
+                    n.Estado = EstadosNotificacion.Cancelada;
+            }
+            else
+            {
+                var email = NotificacionCitaService.NormalizarEmail(n.Cliente.Email);
+                var cfg = n.Cita?.Tenant.Configuracion;
+                var activo = cfg?.RecordatorioEmailActivo ?? true;
+                var horas = cfg?.RecordatorioEmailHorasAntes ?? 24;
+                var fechaEsperada = n.Cita?.FechaInicio.AddHours(-horas);
+                var reprogramadaATiempoYaPasado = fechaEsperada.HasValue && fechaEsperada.Value <= ahora && fechaEsperada.Value != n.ProgramadaPara;
+                if (!activo || citaInvalida || email == null || reprogramadaATiempoYaPasado)
+                    n.Estado = EstadosNotificacion.Cancelada;
+            }
         }
         await db.SaveChangesAsync(ct);
     }
