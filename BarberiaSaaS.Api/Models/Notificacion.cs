@@ -7,6 +7,7 @@ namespace BarberiaSaaS.Api.Models
     public static class CanalesNotificacion
     {
         public const string Email = "Email";
+        public const string WhatsApp = "WhatsApp";
     }
 
     public static class TiposNotificacion
