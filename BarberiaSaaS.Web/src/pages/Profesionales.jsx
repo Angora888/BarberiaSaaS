@@ -6,6 +6,7 @@ import {
   FaEdit,
   FaPlus,
   FaSearch,
+  FaTrash,
   FaUserTie
 } from "react-icons/fa";
 
@@ -89,6 +90,9 @@ function Profesionales() {
     guardandoHorario,
     setGuardandoHorario
   ] = useState(false);
+
+  const [horarioEditando, setHorarioEditando] = useState(null);
+  const [horarioEliminando, setHorarioEliminando] = useState(null);
 
   const [
     formularioHorario,
@@ -457,6 +461,8 @@ function Profesionales() {
     setMostrarHorarios(false);
     setProfesionalHorario(null);
     setHorarios([]);
+    setHorarioEditando(null);
+    setHorarioEliminando(null);
 
     setFormularioHorario({
       diaSemana: 1,
@@ -484,6 +490,56 @@ function Profesionales() {
       );
     };
 
+  const editarHorario = (horario) => {
+    setHorarioEditando(horario);
+    setFormularioHorario({
+      diaSemana: horario.diaSemana,
+      horaInicio: String(horario.horaInicio).slice(0, 5),
+      horaFin: String(horario.horaFin).slice(0, 5)
+    });
+    setError("");
+  };
+
+  const cancelarEdicionHorario = () => {
+    setHorarioEditando(null);
+    setFormularioHorario({
+      diaSemana: 1,
+      horaInicio: "08:00",
+      horaFin: "17:00"
+    });
+  };
+
+  const eliminarHorario = async (horario) => {
+    if (!profesionalHorario) return;
+
+    const confirmado = window.confirm(
+      `¿Eliminar el horario de ${obtenerNombreDia(horario.diaSemana)} ${formatearHora(horario.horaInicio)} - ${formatearHora(horario.horaFin)}?`
+    );
+
+    if (!confirmado) return;
+
+    try {
+      setHorarioEliminando(horario.id);
+      setError("");
+      await api.delete(
+        `/profesionales/${profesionalHorario.id}/horarios/${horario.id}`
+      );
+
+      if (horarioEditando?.id === horario.id) {
+        cancelarEdicionHorario();
+      }
+
+      await cargarHorarios(profesionalHorario.id);
+    } catch (error) {
+      setError(
+        error.response?.data?.mensaje ||
+        "No fue posible eliminar el horario."
+      );
+    } finally {
+      setHorarioEliminando(null);
+    }
+  };
+
   const guardarHorario =
     async (e) => {
       e.preventDefault();
@@ -508,32 +564,34 @@ function Profesionales() {
         setGuardandoHorario(true);
         setError("");
 
-        await api.post(
-          `/profesionales/${profesionalHorario.id}/horarios`,
-          {
-            diaSemana:
-              formularioHorario
-                .diaSemana,
+        const payload = {
+          diaSemana: formularioHorario.diaSemana,
+          horaInicio: `${formularioHorario.horaInicio}:00`,
+          horaFin: `${formularioHorario.horaFin}:00`
+        };
 
-            horaInicio:
-              `${formularioHorario.horaInicio}:00`,
-
-            horaFin:
-              `${formularioHorario.horaFin}:00`
-          }
-        );
+        if (horarioEditando) {
+          await api.put(
+            `/profesionales/${profesionalHorario.id}/horarios/${horarioEditando.id}`,
+            payload
+          );
+        } else {
+          await api.post(
+            `/profesionales/${profesionalHorario.id}/horarios`,
+            payload
+          );
+        }
 
         await cargarHorarios(
           profesionalHorario.id
         );
 
-        setFormularioHorario(
-          (anterior) => ({
-            ...anterior,
-            horaInicio: "08:00",
-            horaFin: "17:00"
-          })
-        );
+        setHorarioEditando(null);
+        setFormularioHorario({
+          diaSemana: 1,
+          horaInicio: "08:00",
+          horaFin: "17:00"
+        });
       } catch (error) {
         setError(
           error.response?.data?.mensaje ||
@@ -1295,9 +1353,25 @@ function Profesionales() {
                         guardandoHorario
                       }
                     >
-                      <FaPlus />
+                      {horarioEditando ? <FaEdit /> : <FaPlus />}
                     </button>
                   </div>
+
+                  {horarioEditando && (
+                    <div className="col-12 d-flex align-items-center justify-content-between gap-2">
+                      <small className="text-muted">
+                        Editando horario de {obtenerNombreDia(horarioEditando.diaSemana)}
+                      </small>
+                      <button
+                        type="button"
+                        className="btn btn-light btn-sm"
+                        onClick={cancelarEdicionHorario}
+                        disabled={guardandoHorario}
+                      >
+                        Cancelar edición
+                      </button>
+                    </div>
+                  )}
                 </form>
 
                 <div className="professional-section-title mb-3">
@@ -1333,15 +1407,33 @@ function Profesionales() {
                             )}
                           </strong>
 
-                          <span>
-                            {formatearHora(
-                              horario.horaInicio
-                            )}{" "}
-                            -{" "}
-                            {formatearHora(
-                              horario.horaFin
-                            )}
-                          </span>
+                          <div className="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                            <span>
+                              {formatearHora(horario.horaInicio)} -{" "}
+                              {formatearHora(horario.horaFin)}
+                            </span>
+
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary btn-sm"
+                              title="Editar horario"
+                              aria-label="Editar horario"
+                              onClick={() => editarHorario(horario)}
+                            >
+                              <FaEdit />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm"
+                              title="Eliminar horario"
+                              aria-label="Eliminar horario"
+                              disabled={horarioEliminando === horario.id}
+                              onClick={() => eliminarHorario(horario)}
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
                         </div>
                       )
                     )}
