@@ -181,6 +181,20 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            var chocaConAlmuerzo = await _context.AlmuerzosProfesionales
+                .AnyAsync(x =>
+                    x.TenantId == tenantId &&
+                    x.ProfesionalId == profesional.Id &&
+                    x.DiaSemana == inicioLocal.DayOfWeek &&
+                    x.Activo &&
+                    inicioLocal.TimeOfDay < x.HoraFin &&
+                    finLocal.TimeOfDay > x.HoraInicio);
+
+            if (chocaConAlmuerzo)
+            {
+                return Conflict(new { mensaje = "La nueva hora coincide con la hora de almuerzo del profesional." });
+            }
+
             var chocaConCita = await _context.Citas
                 .AnyAsync(x =>
                     x.Id != cita.Id &&
