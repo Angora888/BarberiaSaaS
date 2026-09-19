@@ -83,6 +83,7 @@ function Profesionales() {
 
   const [almuerzos, setAlmuerzos] = useState([]);
   const [guardandoAlmuerzo, setGuardandoAlmuerzo] = useState(false);
+  const [mensajeAlmuerzo, setMensajeAlmuerzo] = useState("");
   const [formularioAlmuerzo, setFormularioAlmuerzo] = useState({
     activo: false,
     horaInicio: "12:00",
@@ -509,6 +510,7 @@ function Profesionales() {
     try {
       setGuardandoAlmuerzo(true);
       setError("");
+      setMensajeAlmuerzo("");
 
       if (!formularioAlmuerzo.activo) {
         await api.delete(
@@ -530,6 +532,11 @@ function Profesionales() {
       }
 
       await cargarAlmuerzos(profesionalHorario.id);
+      setMensajeAlmuerzo(
+        formularioAlmuerzo.activo
+          ? "Hora de almuerzo guardada correctamente."
+          : "Hora de almuerzo desactivada."
+      );
     } catch (error) {
       setError(
         error.response?.data?.mensaje ||
@@ -1533,6 +1540,11 @@ function Profesionales() {
 
                 <div className="border-top mt-4 pt-4">
                   <form onSubmit={guardarAlmuerzo}>
+                    {mensajeAlmuerzo && (
+                      <div className="alert alert-success py-2 mb-3">
+                        {mensajeAlmuerzo}
+                      </div>
+                    )}
                     <div className="form-check form-switch mb-3">
                       <input
                         id="horaAlmuerzoActiva"
