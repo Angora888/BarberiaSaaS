@@ -538,9 +538,15 @@ function Profesionales() {
           : "Hora de almuerzo desactivada."
       );
     } catch (error) {
-      setError(
+      const estado = error.response?.status;
+      const detalle =
         error.response?.data?.mensaje ||
-        "No fue posible guardar la hora de almuerzo."
+        error.response?.data?.title ||
+        error.response?.data?.detail ||
+        error.message;
+
+      setError(
+        `No fue posible guardar la hora de almuerzo${estado ? ` (HTTP ${estado})` : ""}: ${detalle || "Error desconocido."}`
       );
     } finally {
       setGuardandoAlmuerzo(false);
