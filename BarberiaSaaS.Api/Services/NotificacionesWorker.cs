@@ -19,7 +19,7 @@ public class NotificacionesWorker : BackgroundService
             try { await SincronizarAsync(stoppingToken); await EnviarPendientesAsync(stoppingToken); }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
             catch (Exception ex) { _logger.LogError(ex, "Error procesando notificaciones."); }
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
         }
     }
 
