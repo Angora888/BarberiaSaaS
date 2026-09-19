@@ -248,6 +248,12 @@ namespace BarberiaSaaS.Api.Controllers
                     })
                     .ToListAsync();
 
+            var almuerzos = await _context.AlmuerzosProfesionales
+                .AsNoTracking()
+                .Where(x => x.TenantId == tenantId && x.ProfesionalId == request.ProfesionalId && x.DiaSemana == diaSemana && x.Activo)
+                .Select(x => new { x.HoraInicio, x.HoraFin })
+                .ToListAsync();
+
             // ========================================================
             // CONFIGURACIÓN DEL TENANT
             // ========================================================
@@ -322,9 +328,14 @@ namespace BarberiaSaaS.Api.Controllers
                             candidatoFinUtc >
                                 x.FechaInicio);
 
+                    var chocaConAlmuerzo = almuerzos.Any(x =>
+                        candidatoLocal.TimeOfDay < x.HoraFin &&
+                        candidatoFinLocal.TimeOfDay > x.HoraInicio);
+
                     if (
                         !chocaConCita &&
-                        !chocaConBloqueo)
+                        !chocaConBloqueo &&
+                        !chocaConAlmuerzo)
                     {
                         resultado.Add(new
                         {
