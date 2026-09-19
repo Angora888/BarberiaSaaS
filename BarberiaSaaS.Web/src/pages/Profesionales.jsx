@@ -1544,67 +1544,78 @@ function Profesionales() {
                 )}
               </div>
 
-                <div className="border-top mt-4 pt-4">
+                <div className="border rounded-4 p-3 mt-3 mb-3" style={{ background: "rgba(198, 40, 100, 0.06)" }}>
                   <form onSubmit={guardarAlmuerzo}>
                     {mensajeAlmuerzo && (
                       <div className="alert alert-success py-2 mb-3">
                         {mensajeAlmuerzo}
                       </div>
                     )}
-                    <div className="form-check form-switch mb-3">
-                      <input
-                        id="horaAlmuerzoActiva"
-                        name="activo"
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={formularioAlmuerzo.activo}
-                        onChange={cambiarCampoAlmuerzo}
-                      />
-                      <label className="form-check-label fw-semibold" htmlFor="horaAlmuerzoActiva">
-                        🍽️ Hora de almuerzo
-                      </label>
-                    </div>
+                    <div className="row g-2 align-items-end">
+                      <div className="col-12 col-md-5">
+                        <div className="d-flex align-items-center gap-2">
+                          <div className="form-check form-switch m-0">
+                            <input
+                              id="horaAlmuerzoActiva"
+                              name="activo"
+                              type="checkbox"
+                              className="form-check-input"
+                              checked={formularioAlmuerzo.activo}
+                              onChange={cambiarCampoAlmuerzo}
+                            />
+                          </div>
+                          <label className="fw-semibold mb-0" htmlFor="horaAlmuerzoActiva">
+                            🍽️ Hora de almuerzo
+                          </label>
+                        </div>
+                        <small className="text-muted d-block mt-1">
+                          Se aplica a los días laborales registrados.
+                        </small>
+                      </div>
 
-                    {formularioAlmuerzo.activo && (
-                      <div className="row g-3 align-items-end">
-                        <div className="col-md-5">
-                          <label className="form-label">Desde</label>
-                          <input
-                            name="horaInicio"
-                            type="time"
-                            className="form-control"
-                            value={formularioAlmuerzo.horaInicio}
-                            onChange={cambiarCampoAlmuerzo}
-                          />
-                        </div>
-                        <div className="col-md-5">
-                          <label className="form-label">Hasta</label>
-                          <input
-                            name="horaFin"
-                            type="time"
-                            className="form-control"
-                            value={formularioAlmuerzo.horaFin}
-                            onChange={cambiarCampoAlmuerzo}
-                          />
-                        </div>
-                        <div className="col-md-2">
-                          <button type="submit" className="btn btn-primary w-100" disabled={guardandoAlmuerzo}>
+                      {formularioAlmuerzo.activo && (
+                        <>
+                          <div className="col-6 col-md-3">
+                            <label className="form-label small mb-1">Desde</label>
+                            <input
+                              name="horaInicio"
+                              type="time"
+                              className="form-control"
+                              value={formularioAlmuerzo.horaInicio}
+                              onChange={cambiarCampoAlmuerzo}
+                            />
+                          </div>
+                          <div className="col-6 col-md-3">
+                            <label className="form-label small mb-1">Hasta</label>
+                            <input
+                              name="horaFin"
+                              type="time"
+                              className="form-control"
+                              value={formularioAlmuerzo.horaFin}
+                              onChange={cambiarCampoAlmuerzo}
+                            />
+                          </div>
+                          <div className="col-12 col-md-1">
+                            <button
+                              type="submit"
+                              className="btn btn-primary btn-sm w-100"
+                              disabled={guardandoAlmuerzo}
+                              title="Guardar hora de almuerzo"
+                            >
+                              {guardandoAlmuerzo ? "..." : "✓"}
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {!formularioAlmuerzo.activo && almuerzos.length > 0 && (
+                        <div className="col-12 col-md-2">
+                          <button type="submit" className="btn btn-outline-secondary btn-sm w-100" disabled={guardandoAlmuerzo}>
                             {guardandoAlmuerzo ? "..." : "Guardar"}
                           </button>
                         </div>
-                        <div className="col-12">
-                          <small className="text-muted">
-                            Se aplica automáticamente a los días laborales registrados arriba.
-                          </small>
-                        </div>
-                      </div>
-                    )}
-
-                    {!formularioAlmuerzo.activo && almuerzos.length > 0 && (
-                      <button type="submit" className="btn btn-outline-secondary btn-sm" disabled={guardandoAlmuerzo}>
-                        Guardar cambio
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </form>
                 </div>
               <div className="modal-footer">
