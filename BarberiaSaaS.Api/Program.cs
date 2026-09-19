@@ -19,6 +19,7 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IPayPalService, PayPalService>();
 builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
+builder.Services.AddHttpClient<IWhatsAppService, MetaWhatsAppService>();
 builder.Services.AddScoped<INotificacionCitaService, NotificacionCitaService>();
 builder.Services.AddHostedService<NotificacionesWorker>();
 
