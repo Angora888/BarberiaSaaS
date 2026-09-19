@@ -37,6 +37,9 @@ namespace BarberiaSaaS.Api.Data
         public DbSet<HorarioProfesional> HorariosProfesionales =>
             Set<HorarioProfesional>();
 
+        public DbSet<AlmuerzoProfesional> AlmuerzosProfesionales =>
+            Set<AlmuerzoProfesional>();
+
         public DbSet<BloqueoProfesional> BloqueosProfesionales =>
             Set<BloqueoProfesional>();
 
@@ -380,6 +383,16 @@ namespace BarberiaSaaS.Api.Data
                     .WithMany(x => x.Horarios)
                     .HasForeignKey(x => x.ProfesionalId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<AlmuerzoProfesional>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.TenantId, x.ProfesionalId, x.DiaSemana }).IsUnique();
+                entity.HasOne(x => x.Tenant).WithMany(x => x.AlmuerzosProfesionales)
+                    .HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Profesional).WithMany(x => x.Almuerzos)
+                    .HasForeignKey(x => x.ProfesionalId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<BloqueoProfesional>(entity =>
