@@ -23,6 +23,20 @@ import api from "../services/api";
 
 import "./LandingPublica.css";
 
+const formatearHoraPublica = (hora) => {
+  if (!hora) return "";
+
+  const match = String(hora).match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return hora;
+
+  const horas24 = Number(match[1]);
+  const minutos = match[2];
+  const periodo = horas24 >= 12 ? "PM" : "AM";
+  const horas12 = horas24 % 12 || 12;
+
+  return `${horas12}:${minutos} ${periodo}`;
+};
+
 function LandingPublica() {
   const { slug } = useParams();
 
@@ -1308,7 +1322,7 @@ function LandingPublica() {
                                       }
                                     >
                                       {
-                                        hora
+                                        formatearHoraPublica(hora)
                                       }
                                     </span>
                                   )
