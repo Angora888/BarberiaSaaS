@@ -867,6 +867,20 @@ namespace BarberiaSaaS.Api.Controllers
                 );
             }
 
+            var existeAlmuerzo = await _context.AlmuerzosProfesionales
+                .AnyAsync(x =>
+                    x.TenantId == tenantId &&
+                    x.ProfesionalId == profesionalId &&
+                    x.DiaSemana == diaSemana &&
+                    x.Activo &&
+                    horaInicio < x.HoraFin &&
+                    horaFin > x.HoraInicio);
+
+            if (existeAlmuerzo)
+            {
+                return (false, "La cita coincide con la hora de almuerzo del profesional.");
+            }
+
             var existeBloqueo =
                 await _context
                     .BloqueosProfesionales
