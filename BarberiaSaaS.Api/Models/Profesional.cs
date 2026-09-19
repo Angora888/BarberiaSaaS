@@ -35,6 +35,7 @@
             = new List<Cita>();
 
         public ICollection<HorarioProfesional> Horarios { get; set; }
+        public ICollection<AlmuerzoProfesional> Almuerzos { get; set; } = new List<AlmuerzoProfesional>();
             = new List<HorarioProfesional>();
 
         public ICollection<BloqueoProfesional> Bloqueos { get; set; }
