@@ -445,7 +445,453 @@ namespace BarberiaSaaS.Api.Controllers
                 ?? "https://barberiasaas.vercel.app";
 
             var enlace =
-                ${frontendUrl.TrimEnd('/')}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
+                using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json.Serialization;
+using BarberiaSaaS.Api.Data;
+using BarberiaSaaS.Api.DTOs;
+using BarberiaSaaS.Api.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+namespace BarberiaSaaS.Api.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public AuthController(
+            AppDbContext context,
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory)
+        {
+            _context = context;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
+        }
+
+        // =========================================================
+        // REGISTRAR NEGOCIO
+        // =========================================================
+
+        [HttpPost("registrar-negocio")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> RegistrarNegocio(
+            RegistrarTenantDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NombreNegocio) ||
+                string.IsNullOrWhiteSpace(request.NombrePropietario) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "Nombre del negocio, propietario, email y contraseña son requeridos."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.TurnstileToken))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "Completa la verificación de seguridad antes de continuar."
+                });
+            }
+
+            if (!await ValidarTurnstileAsync(request.TurnstileToken))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La verificación de seguridad no fue válida o expiró. Intenta nuevamente."
+                });
+            }
+
+            var email = request.Email
+                .Trim()
+                .ToLowerInvariant();
+
+            var emailExiste = await _context.Usuarios
+                .AnyAsync(x =>
+                    x.Email.ToLower() == email);
+
+            if (emailExiste)
+            {
+                return Conflict(new
+                {
+                    mensaje = "Ya existe una cuenta registrada con este correo."
+                });
+            }
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var ahora = DateTime.UtcNow;
+
+                // =====================================================
+                // TENANT PENDIENTE DE CONFIRMACIÓN
+                // =====================================================
+
+                var tenant = new Tenant
+                {
+                    Nombre = request.NombreNegocio.Trim(),
+                    NombreComercial = request.NombreNegocio.Trim(),
+                    Identificacion = request.Identificacion?.Trim(),
+                    Telefono = request.Telefono?.Trim(),
+                    Email = email,
+                    Activo = false,
+                    EmailConfirmado = false,
+                    FechaActivacion = null,
+                    FechaCreacion = ahora
+                };
+
+                _context.Tenants.Add(tenant);
+                await _context.SaveChangesAsync();
+
+                // =====================================================
+                // CONFIGURACIÓN DEL TENANT
+                // =====================================================
+
+                var configuracion = new ConfiguracionTenant
+                {
+                    TenantId = tenant.Id,
+                    LogoUrl = null,
+                    ColorPrimario = "#C62864",
+                    ColorSecundario = "#F8E7EE",
+                    ColorFondo = "#FFFFFF",
+                    Moneda = "CRC",
+                    ZonaHoraria = "America/Costa_Rica",
+                    Idioma = "es",
+                    DuracionSlotMinutos = 15,
+                    PermitirReservaOnline = true,
+                    MostrarPrecios = true,
+                    RequiereDeposito = false,
+                    PorcentajeDeposito = 0,
+                    WhatsApp = request.Telefono?.Trim()
+                };
+
+                _context.ConfiguracionesTenant.Add(configuracion);
+
+                // =====================================================
+                // SUCURSAL PRINCIPAL
+                // =====================================================
+
+                var sucursal = new Sucursal
+                {
+                    TenantId = tenant.Id,
+                    Nombre = "Sucursal Principal",
+                    Telefono = request.Telefono?.Trim(),
+                    Email = email,
+                    Activa = true,
+                    FechaCreacion = ahora
+                };
+
+                _context.Sucursales.Add(sucursal);
+                await _context.SaveChangesAsync();
+
+                // =====================================================
+                // USUARIO PROPIETARIO
+                // =====================================================
+
+                var usuario = new Usuario
+                {
+                    TenantId = tenant.Id,
+                    SucursalId = sucursal.Id,
+                    Nombre = request.NombrePropietario.Trim(),
+                    Apellidos = request.ApellidosPropietario?.Trim()
+                        ?? string.Empty,
+                    Email = email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(
+                        request.Password),
+                    Rol = RolesUsuario.Propietario,
+                    Activo = true,
+                    FechaCreacion = ahora
+                };
+
+                _context.Usuarios.Add(usuario);
+                await _context.SaveChangesAsync();
+
+                // =====================================================
+                // TOKEN DE CONFIRMACIÓN - SOLO GUARDAMOS EL HASH
+                // =====================================================
+
+                var tokenPlano = GenerarTokenConfirmacion();
+                var tokenHash = CalcularSha256(tokenPlano);
+
+                var tokenConfirmacion = new TokenConfirmacionRegistro
+                {
+                    TenantId = tenant.Id,
+                    TokenHash = tokenHash,
+                    FechaCreacion = ahora,
+                    FechaExpiracion = ahora.AddMinutes(30),
+                    FechaUso = null
+                };
+
+                _context.Set<TokenConfirmacionRegistro>()
+                    .Add(tokenConfirmacion);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                var correoEnviado = await EnviarCorreoConfirmacionAsync(
+                    tenant,
+                    usuario,
+                    tokenPlano);
+
+                if (!correoEnviado)
+                {
+                    return StatusCode(
+                        StatusCodes.Status502BadGateway,
+                        new
+                        {
+                            mensaje = "El negocio quedó registrado, pero no pudimos enviar el correo de confirmación. Intenta reenviar la confirmación en unos minutos.",
+                            requiereConfirmacion = true,
+                            email
+                        });
+                }
+
+                return Ok(new
+                {
+                    mensaje = "Negocio registrado. Revisa tu correo para confirmar y activar tu cuenta.",
+                    requiereConfirmacion = true,
+                    email,
+                    negocio = tenant.Nombre
+                });
+            }
+            catch
+            {
+                if (transaction.GetDbTransaction().Connection != null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
+                throw;
+            }
+        }
+
+        // =========================================================
+        // CONFIRMAR REGISTRO
+        // =========================================================
+
+        [HttpPost("confirmar-registro")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> ConfirmarRegistro(
+            ConfirmarRegistroDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Token))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación no es válido."
+                });
+            }
+
+            var tokenHash = CalcularSha256(request.Token.Trim());
+            var ahora = DateTime.UtcNow;
+
+            var token = await _context
+                .Set<TokenConfirmacionRegistro>()
+                .Include(x => x.Tenant)
+                .FirstOrDefaultAsync(x =>
+                    x.TokenHash == tokenHash);
+
+            if (token == null)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación no es válido."
+                });
+            }
+
+            if (token.FechaUso.HasValue ||
+                token.Tenant.EmailConfirmado)
+            {
+                return Ok(new
+                {
+                    mensaje = "Este negocio ya fue confirmado.",
+                    confirmado = true
+                });
+            }
+
+            if (token.FechaExpiracion < ahora)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace de confirmación expiró. Solicita uno nuevo.",
+                    expirado = true
+                });
+            }
+
+            token.FechaUso = ahora;
+            token.Tenant.EmailConfirmado = true;
+            token.Tenant.Activo = true;
+            token.Tenant.FechaActivacion = ahora;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "¡Correo confirmado! Tu negocio ya está activo y tu período de prueba comienza hoy.",
+                confirmado = true
+            });
+        }
+
+        // =========================================================
+        // LOGIN
+        // =========================================================
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(
+            LoginDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "Email y contraseña son requeridos."
+                });
+            }
+
+            var email = request.Email
+                .Trim()
+                .ToLowerInvariant();
+
+            var usuario = await _context.Usuarios
+                .Include(x => x.Tenant)
+                .Include(x => x.Sucursal)
+                .FirstOrDefaultAsync(x =>
+                    x.Email.ToLower() == email &&
+                    x.Activo);
+
+            if (usuario == null)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "Email o contraseña incorrectos."
+                });
+            }
+
+            var passwordValido = BCrypt.Net.BCrypt.Verify(
+                request.Password,
+                usuario.PasswordHash);
+
+            if (!passwordValido)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "Email o contraseña incorrectos."
+                });
+            }
+
+            if (!usuario.Tenant.EmailConfirmado)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "Debes confirmar tu correo electrónico antes de iniciar sesión.",
+                    requiereConfirmacion = true
+                });
+            }
+
+            if (!usuario.Tenant.Activo)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "El negocio se encuentra inactivo."
+                });
+            }
+
+            var token = GenerarToken(usuario);
+
+            usuario.UltimoAcceso = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                token,
+                usuario = new
+                {
+                    usuario.Id,
+                    usuario.Nombre,
+                    usuario.Apellidos,
+                    usuario.Email,
+                    usuario.Rol,
+                    usuario.TenantId,
+                    usuario.SucursalId,
+                    negocio = usuario.Tenant.Nombre,
+                    sucursal = usuario.Sucursal?.Nombre
+                }
+            });
+        }
+
+        // =========================================================
+        // TURNSTILE
+        // =========================================================
+
+        private async Task<bool> ValidarTurnstileAsync(string token)
+        {
+            var secretKey = _configuration["Turnstile:SecretKey"];
+
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                throw new InvalidOperationException(
+                    "Turnstile:SecretKey no está configurado.");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+
+            var form = new Dictionary<string, string>
+            {
+                ["secret"] = secretKey,
+                ["response"] = token
+            };
+
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            if (!string.IsNullOrWhiteSpace(remoteIp))
+            {
+                form["remoteip"] = remoteIp;
+            }
+
+            using var response = await client.PostAsync(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                new FormUrlEncodedContent(form));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var resultado = await response.Content
+                .ReadFromJsonAsync<TurnstileVerificationResponse>();
+
+            return resultado?.Success == true;
+        }
+
+        // =========================================================
+        // RESEND
+        // =========================================================
+
+        private async Task<bool> EnviarCorreoConfirmacionAsync(
+            Tenant tenant,
+            Usuario usuario,
+            string tokenPlano)
+        {
+            var frontendUrl =
+                _configuration["App:FrontendUrl"]
+                ?? "https://barberiasaas.vercel.app";
+
+PLACEHOLDER`;
 
             var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
             var negocio = System.Net.WebUtility.HtmlEncode(tenant.Nombre);
