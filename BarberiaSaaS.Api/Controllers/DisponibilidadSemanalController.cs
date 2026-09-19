@@ -142,6 +142,12 @@ namespace BarberiaSaaS.Api.Controllers
                 })
                 .ToListAsync();
 
+            var almuerzos = await _context.AlmuerzosProfesionales
+                .AsNoTracking()
+                .Where(x => x.TenantId == tenantId && profesionalIds.Contains(x.ProfesionalId) && x.Activo)
+                .Select(x => new { x.ProfesionalId, x.DiaSemana, x.HoraInicio, x.HoraFin })
+                .ToListAsync();
+
             var citas = await _context.Citas
                 .Where(x =>
                     x.TenantId == tenantId &&
@@ -239,7 +245,13 @@ namespace BarberiaSaaS.Api.Controllers
                                     candidatoInicioUtc < x.FechaFin &&
                                     candidatoFinUtc > x.FechaInicio);
 
-                                if (!chocaConCita && !chocaConBloqueo)
+                                var chocaConAlmuerzo = almuerzos.Any(x =>
+                                    x.ProfesionalId == profesional.Id &&
+                                    x.DiaSemana == fechaLocal.DayOfWeek &&
+                                    candidatoLocal.TimeOfDay < x.HoraFin &&
+                                    candidatoFinLocal.TimeOfDay > x.HoraInicio);
+
+                                if (!chocaConCita && !chocaConBloqueo && !chocaConAlmuerzo)
                                 {
                                     horasDisponibles.Add(
                                         candidatoLocal.ToString("HH:mm"));
