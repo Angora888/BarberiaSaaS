@@ -1372,110 +1372,77 @@ function Profesionales() {
               </div>
 
               <div className="modal-body">
-                <form
-                  className="row g-3 align-items-end mb-4"
-                  onSubmit={
-                    guardarHorario
-                  }
-                >
-                  <div className="col-md-4">
-                    <label className="form-label">
-                      Día
-                    </label>
-
-                    <select
-                      name="diaSemana"
-                      className="form-select"
-                      value={
-                        formularioHorario.diaSemana
-                      }
-                      onChange={
-                        cambiarCampoHorario
-                      }
-                    >
-                      {DIAS_SEMANA.map(
-                        (dia) => (
-                          <option
-                            key={
-                              dia.valor
-                            }
-                            value={
-                              dia.valor
-                            }
-                          >
-                            {
-                              dia.nombre
-                            }
+                <div className="border rounded-4 p-3 mb-3" style={{ background: "rgba(198, 40, 100, 0.06)" }}>
+                  <div className="fw-semibold mb-2">📅 {horarioEditando ? "Editar horario" : "Agregar horario"}</div>
+                  <form
+                    className="row g-2 align-items-end"
+                    onSubmit={guardarHorario}
+                  >
+                    <div className="col-12 col-md-4">
+                      <label className="form-label small mb-1">Día</label>
+                      <select
+                        name="diaSemana"
+                        className="form-select"
+                        value={formularioHorario.diaSemana}
+                        onChange={cambiarCampoHorario}
+                      >
+                        {DIAS_SEMANA.map((dia) => (
+                          <option key={dia.valor} value={dia.valor}>
+                            {dia.nombre}
                           </option>
-                        )
-                      )}
-                    </select>
-                  </div>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="col-md-3">
-                    <label className="form-label">
-                      Desde
-                    </label>
+                    <div className="col-6 col-md-3">
+                      <label className="form-label small mb-1">Desde</label>
+                      <input
+                        name="horaInicio"
+                        type="time"
+                        className="form-control"
+                        value={formularioHorario.horaInicio}
+                        onChange={cambiarCampoHorario}
+                      />
+                    </div>
 
-                    <input
-                      name="horaInicio"
-                      type="time"
-                      className="form-control"
-                      value={
-                        formularioHorario.horaInicio
-                      }
-                      onChange={
-                        cambiarCampoHorario
-                      }
-                    />
-                  </div>
+                    <div className="col-6 col-md-3">
+                      <label className="form-label small mb-1">Hasta</label>
+                      <input
+                        name="horaFin"
+                        type="time"
+                        className="form-control"
+                        value={formularioHorario.horaFin}
+                        onChange={cambiarCampoHorario}
+                      />
+                    </div>
 
-                  <div className="col-md-3">
-                    <label className="form-label">
-                      Hasta
-                    </label>
-
-                    <input
-                      name="horaFin"
-                      type="time"
-                      className="form-control"
-                      value={
-                        formularioHorario.horaFin
-                      }
-                      onChange={
-                        cambiarCampoHorario
-                      }
-                    />
-                  </div>
-
-                  <div className="col-md-2">
-                    <button
-                      type="submit"
-                      className="btn btn-primary w-100"
-                      disabled={
-                        guardandoHorario
-                      }
-                    >
-                      {horarioEditando ? <FaEdit /> : <FaPlus />}
-                    </button>
-                  </div>
-
-                  {horarioEditando && (
-                    <div className="col-12 d-flex align-items-center justify-content-between gap-2">
-                      <small className="text-muted">
-                        Editando horario de {obtenerNombreDia(horarioEditando.diaSemana)}
-                      </small>
+                    <div className="col-12 col-md-2">
                       <button
-                        type="button"
-                        className="btn btn-light btn-sm"
-                        onClick={cancelarEdicionHorario}
+                        type="submit"
+                        className="btn btn-primary btn-sm w-100"
                         disabled={guardandoHorario}
                       >
-                        Cancelar edición
+                        {guardandoHorario ? "..." : horarioEditando ? <><FaEdit /> Guardar</> : <><FaPlus /> Agregar</>}
                       </button>
                     </div>
-                  )}
-                </form>
+
+                    {horarioEditando && (
+                      <div className="col-12 d-flex align-items-center justify-content-between gap-2">
+                        <small className="text-muted">
+                          Editando {obtenerNombreDia(horarioEditando.diaSemana)}
+                        </small>
+                        <button
+                          type="button"
+                          className="btn btn-light btn-sm"
+                          onClick={cancelarEdicionHorario}
+                          disabled={guardandoHorario}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </form>
+                </div>
 
                 <div className="professional-section-title mb-3">
                   <FaCalendarAlt />
