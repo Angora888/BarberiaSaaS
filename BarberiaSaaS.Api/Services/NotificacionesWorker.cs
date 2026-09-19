@@ -29,9 +29,10 @@ public class NotificacionesWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var set = db.Set<Notificacion>();
         var ahora = DateTime.UtcNow;
+        var whatsapp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
 
         var citas = await db.Citas.AsNoTracking().Include(x => x.Cliente).Include(x => x.Tenant).ThenInclude(x => x.Configuracion)
-            .Where(x => x.FechaInicio > ahora && x.FechaInicio <= ahora.AddDays(60) && x.Cliente.Activo && x.Cliente.Email != null && x.Cliente.Email != "" && x.Estado != EstadosCita.Cancelada && x.Estado != EstadosCita.Completada && x.Estado != EstadosCita.NoAsistio)
+            .Where(x => x.FechaInicio > ahora && x.FechaInicio <= ahora.AddDays(60) && x.Cliente.Activo && x.Estado != EstadosCita.Cancelada && x.Estado != EstadosCita.Completada && x.Estado != EstadosCita.NoAsistio)
             .ToListAsync(ct);
 
         foreach (var cita in citas)
@@ -58,6 +59,27 @@ public class NotificacionesWorker : BackgroundService
                 n.Destino = email; n.ProgramadaPara = cuando; n.Estado = EstadosNotificacion.Pendiente; n.Intentos = 0; n.UltimoError = null;
             }
         }
+        if (whatsapp.EstaConfigurado)
+        {
+            foreach (var cita in citas.Where(x => x.Estado == EstadosCita.Pendiente))
+            {
+                var telefono = NormalizarTelefonoWhatsApp(cita.Cliente.Telefono);
+                if (telefono == null) continue;
+                var cuando = cita.FechaInicio.AddHours(-24);
+                if (cuando <= ahora) continue;
+
+                var n = await set.FirstOrDefaultAsync(x => x.CitaId == cita.Id && x.Canal == CanalesNotificacion.WhatsApp && x.Tipo == TiposNotificacion.RecordatorioCita24H, ct);
+                if (n == null)
+                {
+                    set.Add(new Notificacion { TenantId = cita.TenantId, CitaId = cita.Id, ClienteId = cita.ClienteId, Canal = CanalesNotificacion.WhatsApp, Tipo = TiposNotificacion.RecordatorioCita24H, Destino = telefono, ProgramadaPara = cuando, Estado = EstadosNotificacion.Pendiente, FechaCreacion = ahora });
+                }
+                else if (n.Estado != EstadosNotificacion.Enviada && (n.ProgramadaPara != cuando || n.Destino != telefono))
+                {
+                    n.Destino = telefono; n.ProgramadaPara = cuando; n.Estado = EstadosNotificacion.Pendiente; n.Intentos = 0; n.UltimoError = null;
+                }
+            }
+        }
+
         await db.SaveChangesAsync(ct);
 
         var pendientes = await set.Where(x => (x.Estado == EstadosNotificacion.Pendiente || x.Estado == EstadosNotificacion.Reintento) && x.CitaId != null)
@@ -81,6 +103,7 @@ public class NotificacionesWorker : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var mail = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var whatsapp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
         var zonas = scope.ServiceProvider.GetRequiredService<ITimeZoneService>();
         var set = db.Set<Notificacion>();
         var ahora = DateTime.UtcNow;
@@ -90,24 +113,54 @@ public class NotificacionesWorker : BackgroundService
         {
             var n = await set.Include(x => x.Tenant).ThenInclude(x => x.Configuracion).Include(x => x.Cliente).Include(x => x.Cita!).ThenInclude(x => x.Profesional).Include(x => x.Cita!).ThenInclude(x => x.Servicio).Include(x => x.Cita!).ThenInclude(x => x.ServicioVariante).Include(x => x.Cita!).ThenInclude(x => x.Sucursal).FirstOrDefaultAsync(x => x.Id == id, ct);
             if (n?.Cita == null) continue;
-            if (n.Tenant.Configuracion?.RecordatorioEmailActivo == false) { n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue; }
-            var email = NotificacionCitaService.NormalizarEmail(n.Cliente.Email);
-            if (email == null || !string.Equals(email, n.Destino, StringComparison.OrdinalIgnoreCase)) { n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue; }
+
+            var esWhatsApp = n.Canal == CanalesNotificacion.WhatsApp;
+            if (esWhatsApp)
+            {
+                if (!whatsapp.EstaConfigurado || n.Cita.Estado != EstadosCita.Pendiente)
+                {
+                    n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue;
+                }
+                var telefono = NormalizarTelefonoWhatsApp(n.Cliente.Telefono);
+                if (telefono == null || telefono != n.Destino)
+                {
+                    n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue;
+                }
+            }
+            else
+            {
+                if (n.Tenant.Configuracion?.RecordatorioEmailActivo == false) { n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue; }
+                var email = NotificacionCitaService.NormalizarEmail(n.Cliente.Email);
+                if (email == null || !string.Equals(email, n.Destino, StringComparison.OrdinalIgnoreCase)) { n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue; }
+            }
 
             n.Estado = EstadosNotificacion.Procesando; n.Intentos++; await db.SaveChangesAsync(ct);
             try
             {
-                var c = n.Cita; var local = await zonas.UtcALocalAsync(n.TenantId, c.FechaInicio);
+                var cita = n.Cita; var local = await zonas.UtcALocalAsync(n.TenantId, cita.FechaInicio);
                 var negocio = n.Tenant.NombreComercial ?? n.Tenant.Nombre; var cliente = $"{n.Cliente.Nombre} {n.Cliente.Apellidos}".Trim();
-                var profesional = $"{c.Profesional.Nombre} {c.Profesional.Apellidos}".Trim();
-                var servicio = c.ServicioVariante == null ? c.Servicio.Nombre : $"{c.Servicio.Nombre} - {c.ServicioVariante.Nombre}";
-                var cultura = new System.Globalization.CultureInfo("es-CR"); var fecha = local.ToString("dddd d 'de' MMMM 'de' yyyy", cultura); var hora = local.ToString("h:mm tt", cultura);
-                await mail.EnviarAsync(n.Destino, negocio, $"Recordatorio de tu cita en {negocio}", Html(negocio, cliente, fecha, hora, servicio, profesional, c.Sucursal.Nombre), ct);
+                var profesional = $"{cita.Profesional.Nombre} {cita.Profesional.Apellidos}".Trim();
+                var servicio = cita.ServicioVariante == null ? cita.Servicio.Nombre : $"{cita.Servicio.Nombre} - {cita.ServicioVariante.Nombre}";
+                var cultura = new System.Globalization.CultureInfo("es-CR"); var fecha = local.ToString("d 'de' MMMM 'de' yyyy", cultura); var hora = local.ToString("h:mm tt", cultura);
+
+                if (esWhatsApp)
+                    await whatsapp.EnviarRecordatorioCitaAsync(n.Destino, cliente, negocio, fecha, hora, servicio, profesional, cita.Id, ct);
+                else
+                    await mail.EnviarAsync(n.Destino, negocio, $"Recordatorio de tu cita en {negocio}", Html(negocio, cliente, fecha, hora, servicio, profesional, cita.Sucursal.Nombre), ct);
+
                 n.Estado = EstadosNotificacion.Enviada; n.FechaEnvio = DateTime.UtcNow; n.UltimoError = null;
             }
             catch (Exception ex) { n.Estado = n.Intentos >= 3 ? EstadosNotificacion.Fallida : EstadosNotificacion.Reintento; n.UltimoError = ex.Message.Length > 2000 ? ex.Message[..2000] : ex.Message; _logger.LogError(ex, "Falló notificación {Id}.", id); }
             await db.SaveChangesAsync(ct);
         }
+    }
+
+    private static string? NormalizarTelefonoWhatsApp(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return null;
+        var digits = new string(valor.Where(char.IsDigit).ToArray());
+        if (digits.Length == 8) digits = "506" + digits;
+        return digits.Length is >= 10 and <= 15 ? digits : null;
     }
 
     private static string Html(string negocio, string cliente, string fecha, string hora, string servicio, string profesional, string sucursal)
