@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.Models;
@@ -29,11 +31,18 @@ public sealed class WhatsAppWebhookController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Recibir([FromBody] JsonElement payload, CancellationToken ct)
+    public async Task<IActionResult> Recibir(CancellationToken ct)
     {
+        using var reader = new StreamReader(Request.Body, Encoding.UTF8);
+        var raw = await reader.ReadToEndAsync(ct);
+        if (!FirmaValida(raw)) return Unauthorized();
+
         try
         {
+            using var doc = JsonDocument.Parse(raw);
+            var payload = doc.RootElement;
             if (!payload.TryGetProperty("entry", out var entries)) return Ok();
+
             foreach (var entry in entries.EnumerateArray())
             {
                 if (!entry.TryGetProperty("changes", out var changes)) continue;
@@ -64,16 +73,25 @@ public sealed class WhatsAppWebhookController : ControllerBase
         return Ok();
     }
 
+    private bool FirmaValida(string raw)
+    {
+        var secret = _config["WHATSAPP_APP_SECRET"];
+        if (string.IsNullOrWhiteSpace(secret)) return false;
+        var header = Request.Headers["X-Hub-Signature-256"].ToString();
+        if (!header.StartsWith("sha256=", StringComparison.OrdinalIgnoreCase)) return false;
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        var esperado = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(raw))).ToLowerInvariant();
+        var recibido = header["sha256=".Length..].ToLowerInvariant();
+        return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(esperado), Encoding.ASCII.GetBytes(recibido));
+    }
+
     private static string? ObtenerPayloadBoton(JsonElement message)
     {
         if (message.TryGetProperty("button", out var button) && button.TryGetProperty("payload", out var payload))
             return payload.GetString();
-
-        if (message.TryGetProperty("interactive", out var interactive) &&
-            interactive.TryGetProperty("button_reply", out var reply) &&
-            reply.TryGetProperty("id", out var id))
+        if (message.TryGetProperty("interactive", out var interactive) && interactive.TryGetProperty("button_reply", out var reply) && reply.TryGetProperty("id", out var id))
             return id.GetString();
-
         return null;
     }
 }
