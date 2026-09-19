@@ -9,7 +9,6 @@ namespace BarberiaSaaS.Api.Controllers
 {
     public class GuardarAlmuerzoProfesionalDto
     {
-        public int DiaSemana { get; set; }
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
     }
@@ -48,36 +47,71 @@ namespace BarberiaSaaS.Api.Controllers
         public async Task<IActionResult> Guardar(int profesionalId, GuardarAlmuerzoProfesionalDto request)
         {
             var tenantId = _tenantContext.TenantId;
-            if (request.DiaSemana < 0 || request.DiaSemana > 6)
-                return BadRequest(new { mensaje = "DiaSemana debe estar entre 0 y 6." });
             if (request.HoraFin <= request.HoraInicio)
                 return BadRequest(new { mensaje = "La hora final debe ser posterior a la hora inicial." });
 
             if (!await _context.Profesionales.AnyAsync(x => x.Id == profesionalId && x.TenantId == tenantId && x.Activo))
                 return NotFound(new { mensaje = "Profesional no encontrado." });
 
-            var dia = (DayOfWeek)request.DiaSemana;
-            var dentroHorario = await _context.HorariosProfesionales.AnyAsync(x =>
-                x.TenantId == tenantId && x.ProfesionalId == profesionalId && x.DiaSemana == dia && x.Activo &&
-                request.HoraInicio >= x.HoraInicio && request.HoraFin <= x.HoraFin);
+            var horarios = await _context.HorariosProfesionales
+                .Where(x => x.TenantId == tenantId && x.ProfesionalId == profesionalId && x.Activo)
+                .Select(x => new { x.DiaSemana, x.HoraInicio, x.HoraFin })
+                .ToListAsync();
 
-            if (!dentroHorario)
-                return BadRequest(new { mensaje = "La hora de almuerzo debe estar dentro del horario laboral de ese día." });
+            var diasAplicables = horarios
+                .Where(x => request.HoraInicio >= x.HoraInicio && request.HoraFin <= x.HoraFin)
+                .Select(x => x.DiaSemana)
+                .Distinct()
+                .ToList();
 
-            var almuerzo = await _context.AlmuerzosProfesionales
-                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProfesionalId == profesionalId && x.DiaSemana == dia);
+            if (diasAplicables.Count == 0)
+                return BadRequest(new { mensaje = "La hora de almuerzo no coincide con ninguno de los días laborales del profesional." });
 
-            if (almuerzo == null)
+            var existentes = await _context.AlmuerzosProfesionales
+                .Where(x => x.TenantId == tenantId && x.ProfesionalId == profesionalId)
+                .ToListAsync();
+
+            _context.AlmuerzosProfesionales.RemoveRange(
+                existentes.Where(x => !diasAplicables.Contains(x.DiaSemana)));
+
+            foreach (var dia in diasAplicables)
             {
-                almuerzo = new AlmuerzoProfesional { TenantId = tenantId, ProfesionalId = profesionalId, DiaSemana = dia };
-                _context.AlmuerzosProfesionales.Add(almuerzo);
+                var almuerzo = existentes.FirstOrDefault(x => x.DiaSemana == dia);
+                if (almuerzo == null)
+                {
+                    almuerzo = new AlmuerzoProfesional
+                    {
+                        TenantId = tenantId,
+                        ProfesionalId = profesionalId,
+                        DiaSemana = dia
+                    };
+                    _context.AlmuerzosProfesionales.Add(almuerzo);
+                }
+
+                almuerzo.HoraInicio = request.HoraInicio;
+                almuerzo.HoraFin = request.HoraFin;
+                almuerzo.Activo = true;
             }
 
-            almuerzo.HoraInicio = request.HoraInicio;
-            almuerzo.HoraFin = request.HoraFin;
-            almuerzo.Activo = true;
             await _context.SaveChangesAsync();
-            return Ok(new { mensaje = "Hora de almuerzo guardada.", almuerzo.Id, diaSemana = (int)almuerzo.DiaSemana, almuerzo.HoraInicio, almuerzo.HoraFin });
+            return Ok(new { mensaje = "Hora de almuerzo guardada para los días laborales.", dias = diasAplicables.Select(x => (int)x) });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> EliminarTodos(int profesionalId)
+        {
+            var tenantId = _tenantContext.TenantId;
+            var almuerzos = await _context.AlmuerzosProfesionales
+                .Where(x => x.ProfesionalId == profesionalId && x.TenantId == tenantId)
+                .ToListAsync();
+
+            if (almuerzos.Count > 0)
+            {
+                _context.AlmuerzosProfesionales.RemoveRange(almuerzos);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { mensaje = "Hora de almuerzo desactivada." });
         }
 
         [HttpDelete("{almuerzoId:int}")]
