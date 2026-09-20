@@ -237,9 +237,32 @@ function Clientes() {
       const lineasContacto = lineas.slice(inicio, fin + 1);
       const { nombre, apellidos } = parsearNombreVcard(lineasContacto);
       const telefonoOriginal = obtenerValorPropiedad(lineasContacto, "TEL");
-      const telefono = telefonoOriginal
+      const telefonoLimpio = telefonoOriginal
         .replace(/^tel:/i, "")
         .replace(/[^\d+]/g, "");
+      const digitosTelefono = telefonoLimpio.replace(/\D/g, "");
+
+      const paisDetectado = paises
+        .slice()
+        .sort(
+          (a, b) =>
+            String(b.codigoTelefonico).replace(/\D/g, "").length -
+            String(a.codigoTelefonico).replace(/\D/g, "").length
+        )
+        .find((pais) => {
+          const prefijo = String(pais.codigoTelefonico).replace(/\D/g, "");
+          return digitosTelefono.startsWith(prefijo);
+        });
+
+      const telefono =
+        paisDetectado && digitosTelefono.startsWith(
+          String(paisDetectado.codigoTelefonico).replace(/\D/g, "")
+        )
+          ? digitosTelefono.substring(
+              String(paisDetectado.codigoTelefonico).replace(/\D/g, "").length
+            )
+          : telefonoLimpio;
+
       const email = obtenerValorPropiedad(lineasContacto, "EMAIL");
 
       if (!nombre && !telefono && !email) {
@@ -252,13 +275,7 @@ function Clientes() {
         apellidos: apellidos || anterior.apellidos,
         telefono: telefono || anterior.telefono,
         paisCodigoTelefono:
-          telefono?.startsWith("+")
-            ? (paises
-                .slice()
-                .sort((a, b) => String(b.codigoTelefonico).length - String(a.codigoTelefonico).length)
-                .find((pais) => telefono.startsWith(pais.codigoTelefonico))?.codigo ||
-              anterior.paisCodigoTelefono)
-            : anterior.paisCodigoTelefono,
+          paisDetectado?.codigo || anterior.paisCodigoTelefono,
         email: email || anterior.email
       }));
       setMensaje("Contacto cargado. Revisa los datos antes de guardar.");
