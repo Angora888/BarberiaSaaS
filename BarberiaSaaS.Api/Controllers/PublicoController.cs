@@ -225,6 +225,14 @@ namespace BarberiaSaaS.Api.Controllers
                         config?.Moneda
                         ?? "CRC",
 
+                    idioma =
+                        config?.Idioma
+                        ?? "es",
+
+                    zonaHoraria =
+                        config?.ZonaHoraria
+                        ?? "America/Costa_Rica",
+
                     mostrarPrecios =
                         config?.MostrarPrecios
                         ?? true

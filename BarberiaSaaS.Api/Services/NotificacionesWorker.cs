@@ -166,7 +166,14 @@ public class NotificacionesWorker : BackgroundService
                 var negocio = n.Tenant.NombreComercial ?? n.Tenant.Nombre; var cliente = $"{n.Cliente.Nombre} {n.Cliente.Apellidos}".Trim();
                 var profesional = $"{cita.Profesional.Nombre} {cita.Profesional.Apellidos}".Trim();
                 var servicio = cita.ServicioVariante == null ? cita.Servicio.Nombre : $"{cita.Servicio.Nombre} - {cita.ServicioVariante.Nombre}";
-                var cultura = new System.Globalization.CultureInfo("es-CR"); var fecha = local.ToString("d 'de' MMMM 'de' yyyy", cultura); var hora = local.ToString("h:mm tt", cultura);
+                var codigoPais = n.Tenant.PaisCodigo?.Trim().ToUpperInvariant() ?? "CR";
+                var idioma = n.Tenant.Configuracion?.Idioma?.Trim().ToLowerInvariant() == "en" ? "en" : "es";
+                var nombreCultura = $"{idioma}-{codigoPais}";
+                System.Globalization.CultureInfo cultura;
+                try { cultura = System.Globalization.CultureInfo.GetCultureInfo(nombreCultura); }
+                catch (System.Globalization.CultureNotFoundException) { cultura = System.Globalization.CultureInfo.GetCultureInfo(idioma == "en" ? "en-US" : "es-CR"); }
+                var fecha = local.ToString("D", cultura);
+                var hora = local.ToString("t", cultura);
 
                 if (esWhatsApp)
                     await whatsapp.EnviarRecordatorioCitaAsync(n.Destino, cliente, negocio, fecha, hora, servicio, profesional, cita.Id, ct);
