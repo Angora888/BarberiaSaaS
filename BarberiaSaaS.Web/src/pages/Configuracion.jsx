@@ -3,6 +3,23 @@ import { FaBell, FaPalette, FaSave, FaStore, FaWhatsapp } from "react-icons/fa";
 import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 
+const zonasHorarias = [
+  { value: "America/Costa_Rica", label: "🇨🇷 Costa Rica — San José (UTC-6)" },
+  { value: "America/Panama", label: "🇵🇦 Panamá (UTC-5)" },
+  { value: "America/Managua", label: "🇳🇮 Nicaragua — Managua (UTC-6)" },
+  { value: "America/Tegucigalpa", label: "🇭🇳 Honduras — Tegucigalpa (UTC-6)" },
+  { value: "America/El_Salvador", label: "🇸🇻 El Salvador (UTC-6)" },
+  { value: "America/Guatemala", label: "🇬🇹 Guatemala (UTC-6)" },
+  { value: "America/Belize", label: "🇧🇿 Belice (UTC-6)" },
+  { value: "America/New_York", label: "🇺🇸 EE. UU. — Eastern" },
+  { value: "America/Chicago", label: "🇺🇸 EE. UU. — Central" },
+  { value: "America/Denver", label: "🇺🇸 EE. UU. — Mountain" },
+  { value: "America/Phoenix", label: "🇺🇸 EE. UU. — Arizona" },
+  { value: "America/Los_Angeles", label: "🇺🇸 EE. UU. — Pacific" },
+  { value: "America/Anchorage", label: "🇺🇸 EE. UU. — Alaska" },
+  { value: "Pacific/Honolulu", label: "🇺🇸 EE. UU. — Hawaii" }
+];
+
 const formularioInicial = {
   nombre: "", nombreComercial: "", identificacion: "", telefono: "", email: "", logoUrl: "", frasePresentacion: "",
   colorPrimario: "#C62864", colorSecundario: "#F8E7EE", colorFondo: "#FFFFFF",
@@ -98,7 +115,7 @@ function Configuracion() {
         <div className="col-md-4"><label className="form-label">Moneda</label><select className="form-select" value={formulario.moneda} onChange={e => actualizarCampo("moneda", e.target.value)}><option value="CRC">CRC - Colón</option><option value="USD">USD - Dólar</option></select></div>
         <div className="col-md-4"><label className="form-label">Idioma</label><select className="form-select" value={formulario.idioma} onChange={e => actualizarCampo("idioma", e.target.value)}><option value="es">Español</option><option value="en">English</option></select></div>
         <div className="col-md-4"><label className="form-label">Intervalo de agenda</label><select className="form-select" value={formulario.duracionSlotMinutos} onChange={e => actualizarCampo("duracionSlotMinutos", e.target.value)}>{[5,10,15,20,30,60].map(v => <option key={v} value={v}>{v} min</option>)}</select></div>
-        <div className="col-12"><label className="form-label">Zona horaria</label><input className="form-control" value={formulario.zonaHoraria} onChange={e => actualizarCampo("zonaHoraria", e.target.value)} /><small className="text-muted">Para Costa Rica usa America/Costa_Rica.</small></div>
+        <div className="col-12"><label className="form-label">Zona horaria</label><select className="form-select" value={formulario.zonaHoraria} onChange={e => actualizarCampo("zonaHoraria", e.target.value)}>{zonasHorarias.map(zona => <option key={zona.value} value={zona.value}>{zona.label}</option>)}</select><small className="text-muted">Se usa para agenda, reservas, reportes y recordatorios. Puedes cambiarla aunque el negocio esté registrado en otro país.</small></div>
       </div></div>
 
       <div className="content-card p-4 mb-4">
