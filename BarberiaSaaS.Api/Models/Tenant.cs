@@ -5,13 +5,20 @@ namespace BarberiaSaaS.Api.Models
 {
     [Index(nameof(SlugPublico), IsUnique = true)]
     [Index(nameof(PayPalSubscriptionId), IsUnique = true)]
+    [Index(nameof(Telefono), IsUnique = true)]
     public class Tenant
     {
         public int Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string? NombreComercial { get; set; }
         public string? Identificacion { get; set; }
+
+        [MaxLength(2)]
+        public string PaisCodigo { get; set; } = "CR";
+
+        [MaxLength(20)]
         public string? Telefono { get; set; }
+
         public string? Email { get; set; }
 
         [MaxLength(180)]
