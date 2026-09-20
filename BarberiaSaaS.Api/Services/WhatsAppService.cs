@@ -86,9 +86,12 @@ public sealed class MetaWhatsAppService : IWhatsAppService
         if (string.IsNullOrWhiteSpace(wabaId))
             throw new InvalidOperationException("WHATSAPP_WABA_ID no está configurado.");
 
+        // Query the full template collection instead of filtering by name.
+        // This lets us distinguish "template not visible to this token/WABA"
+        // from a Meta name-filter mismatch and gives us safe metadata for diagnostics.
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
-            $"https://graph.facebook.com/{version}/{wabaId}/message_templates?name={Uri.EscapeDataString(template)}&fields=name,language,status");
+            $"https://graph.facebook.com/{version}/{wabaId}/message_templates?fields=name,language,status&limit=100");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var response = await _http.SendAsync(request, ct);
