@@ -125,7 +125,7 @@ function Configuracion() {
       </div>
 
       <div className="content-card p-4"><div className="d-flex align-items-center gap-2 mb-4"><FaWhatsapp /><h5 className="mb-0">Redes y contacto</h5></div><div className="row g-3">
-        <TextField label="WhatsApp" placeholder="+506 8888 8888" value={formulario.whatsApp} onChange={v => actualizarCampo("whatsApp", v)} />
+        <TextField label="WhatsApp" placeholder="+código de país + número" value={formulario.whatsApp} onChange={v => actualizarCampo("whatsApp", v)} />
         <TextField label="Instagram" placeholder="@negocio" value={formulario.instagram} onChange={v => actualizarCampo("instagram", v)} />
         <TextField label="Facebook" value={formulario.facebook} onChange={v => actualizarCampo("facebook", v)} />
       </div></div>

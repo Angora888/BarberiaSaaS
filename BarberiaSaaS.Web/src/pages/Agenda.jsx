@@ -1417,11 +1417,6 @@ function Agenda() {
         digitos.substring(2);
     }
 
-    if (digitos.length === 8) {
-      digitos =
-        `506${digitos}`;
-    }
-
     return digitos;
   };
 

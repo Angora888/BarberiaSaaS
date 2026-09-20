@@ -138,7 +138,6 @@ namespace BarberiaSaaS.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(valor)) return null;
             var digits = new string(valor.Where(char.IsDigit).ToArray());
-            if (digits.Length == 8) digits = "506" + digits;
             return digits.Length is >= 10 and <= 15 ? digits : null;
         }
 
