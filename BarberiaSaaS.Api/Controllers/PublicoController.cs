@@ -1,4 +1,5 @@
 ﻿using BarberiaSaaS.Api.Data;
+using BarberiaSaaS.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +12,12 @@ namespace BarberiaSaaS.Api.Controllers
     public class PublicoController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IInternacionalizacionService _internacionalizacion;
 
-        public PublicoController(AppDbContext context)
+        public PublicoController(AppDbContext context, IInternacionalizacionService internacionalizacion)
         {
             _context = context;
+            _internacionalizacion = internacionalizacion;
         }
 
         // ============================================================
@@ -192,7 +195,8 @@ namespace BarberiaSaaS.Api.Controllers
 
                     tenant.Telefono,
                     tenant.Email,
-                    tenant.SlugPublico
+                    tenant.SlugPublico,
+                    paisCodigo = tenant.PaisCodigo
                 },
 
                 branding = new
@@ -237,6 +241,8 @@ namespace BarberiaSaaS.Api.Controllers
                     whatsapp =
                         config?.WhatsApp
                 },
+
+                paisesTelefono = _internacionalizacion.ObtenerPaises(),
 
                 sucursales,
 
