@@ -192,7 +192,7 @@ function Dashboard() {
 
         <div className="text-md-end">
           <div className="small text-muted">Hoy</div>
-          <strong>{formatearFechaLarga(fechaHoy)}</strong>
+          <strong>{formatearFechaLarga(fechaHoy, locale)}</strong>
         </div>
       </div>
 
@@ -365,7 +365,7 @@ function Dashboard() {
                   <tbody>
                     {proximasCitas.map((cita) => (
                       <tr key={cita.id}>
-                        <td className="fw-bold">{obtenerHoraCita(cita, zonaHoraria)}</td>
+                        <td className="fw-bold">{obtenerHoraCita(cita, zonaHoraria, locale)}</td>
                         <td>{obtenerNombreCliente(cita)}</td>
                         <td>{obtenerNombreServicio(cita)}</td>
                         <td>{obtenerNombreProfesional(cita)}</td>
@@ -606,7 +606,7 @@ function obtenerFechaCita(cita) {
   return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
 }
 
-function obtenerHoraCita(cita, zonaHoraria) {
+function obtenerHoraCita(cita, zonaHoraria, locale) {
   const fechaTexto = cita.fechaInicioUtc || cita.fechaInicio;
 
   if (!fechaTexto) {
@@ -697,7 +697,7 @@ function formatearEstado(estado) {
   }
 }
 
-function formatearFechaLarga(fecha) {
+function formatearFechaLarga(fecha, locale) {
   if (!fecha) {
     return "";
   }
