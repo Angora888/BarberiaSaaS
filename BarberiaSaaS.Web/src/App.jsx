@@ -25,7 +25,6 @@ import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
 import AgendaWhatsAppFormato12 from "./components/AgendaWhatsAppFormato12";
 import EditarCitaSidecar from "./components/EditarCitaSidecar";
 import ReservaPublicaSidecar from "./components/ReservaPublicaSidecar";
-import ReservaPublicaTelefonoCR from "./components/ReservaPublicaTelefonoCR";
 import VentaCobroCompletada from "./components/VentaCobroCompletada";
 import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
@@ -71,7 +70,7 @@ function App() {
       <Route path="/manual" element={<ManualPublico />} />
       <Route path="/prueba" element={<><Prueba /><TurnstileRegistro /></>} />
       <Route path="/confirmarcreacion/:token" element={<ConfirmarRegistro />} />
-      <Route path="/negocio/:slug" element={<><LandingPublica /><ReservaPublicaSidecar /><ReservaPublicaTelefonoCR /></>} />
+      <Route path="/negocio/:slug" element={<><LandingPublica /><ReservaPublicaSidecar /></>} />
       <Route path="/login" element={<Login />} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
         <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
