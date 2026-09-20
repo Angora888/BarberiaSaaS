@@ -11,7 +11,7 @@ import {
 } from "../context/ConfiguracionContext";
 
 function HistorialCitasProfesional({ profesional }) {
-  const { zonaHoraria } = useConfiguracion();
+  const { zonaHoraria, locale } = useConfiguracion();
 
   const [mostrar, setMostrar] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -100,7 +100,7 @@ function HistorialCitasProfesional({ profesional }) {
     if (!fecha) return "";
 
     try {
-      return new Intl.DateTimeFormat("es-CR", {
+      return new Intl.DateTimeFormat(locale, {
         timeZone: zonaHoraria || "America/Costa_Rica",
         weekday: "short",
         day: "numeric",
@@ -111,7 +111,7 @@ function HistorialCitasProfesional({ profesional }) {
         hour12: true
       }).format(new Date(fecha));
     } catch {
-      return new Date(fecha).toLocaleString("es-CR");
+      return new Date(fecha).toLocaleString(locale);
     }
   };
 

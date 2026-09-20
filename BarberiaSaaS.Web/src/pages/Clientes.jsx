@@ -17,7 +17,7 @@ import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 
 function Clientes() {
-  const { formatearMoneda } = useConfiguracion();
+  const { formatearMoneda, formatearFechaHora } = useConfiguracion();
   const [clientes, setClientes] = useState([]);
   const [paises, setPaises] = useState([]);
   const [paisPredeterminado, setPaisPredeterminado] = useState("CR");
@@ -567,7 +567,7 @@ function Clientes() {
                         <tbody>
                           {clienteHistorial.citas.map((cita) => (
                             <tr key={cita.id}>
-                              <td>{new Date(cita.fechaInicio).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })}</td>
+                              <td>{formatearFechaHora(cita.fechaInicio)}</td>
                               <td>{cita.servicio.nombre}</td>
                               <td>{cita.profesional.nombre} {cita.profesional.apellidos}</td>
                               <td><span className="status-badge">{cita.estado}</span></td>

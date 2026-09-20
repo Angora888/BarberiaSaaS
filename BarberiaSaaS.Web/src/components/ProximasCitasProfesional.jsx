@@ -14,7 +14,8 @@ function ProximasCitasProfesional({
   profesional
 }) {
   const {
-    zonaHoraria
+    zonaHoraria,
+    locale
   } = useConfiguracion();
 
   const [mostrar, setMostrar] =
@@ -120,7 +121,7 @@ function ProximasCitasProfesional({
 
     try {
       return new Intl.DateTimeFormat(
-        "es-CR",
+        locale,
         {
           timeZone:
             zonaHoraria ||
@@ -139,7 +140,7 @@ function ProximasCitasProfesional({
     } catch {
       return new Date(
         fecha
-      ).toLocaleString("es-CR");
+      ).toLocaleString(locale);
     }
   };
 

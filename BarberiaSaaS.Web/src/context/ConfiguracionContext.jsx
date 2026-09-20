@@ -118,6 +118,15 @@ export function ConfiguracionProvider({
     tenant?.configuracion?.idioma ||
     "es";
 
+  const paisCodigo =
+    tenant?.paisCodigo ||
+    "CR";
+
+  const locale =
+    idioma === "en"
+      ? `en-${paisCodigo === "US" ? "US" : paisCodigo}`
+      : `es-${paisCodigo}`;
+
   const logoUrl =
     tenant?.configuracion?.logoUrl ||
     null;
@@ -131,9 +140,7 @@ export function ConfiguracionProvider({
   ) => {
     try {
       return new Intl.NumberFormat(
-        idioma === "es"
-          ? "es-CR"
-          : idioma,
+        locale,
         {
           style: "currency",
           currency: moneda,
@@ -157,9 +164,7 @@ export function ConfiguracionProvider({
     }
 
     return new Intl.DateTimeFormat(
-      idioma === "es"
-        ? "es-CR"
-        : idioma,
+      locale,
       {
         timeZone: zonaHoraria,
         year: "numeric",
@@ -190,6 +195,10 @@ export function ConfiguracionProvider({
     zonaHoraria,
 
     idioma,
+
+    paisCodigo,
+
+    locale,
 
     logoUrl,
 

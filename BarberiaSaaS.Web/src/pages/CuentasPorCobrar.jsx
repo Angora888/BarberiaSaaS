@@ -21,7 +21,7 @@ const METODOS_PAGO = [
 ];
 
 function CuentasPorCobrar() {
-  const { formatearMoneda } = useConfiguracion();
+  const { formatearMoneda, formatearFechaHora } = useConfiguracion();
 
   const [cuentas, setCuentas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -225,22 +225,7 @@ function CuentasPorCobrar() {
     }
   };
 
-  const formatearFecha = (valor) => {
-    if (!valor) {
-      return "—";
-    }
-
-    const fecha = new Date(valor);
-
-    if (Number.isNaN(fecha.getTime())) {
-      return "—";
-    }
-
-    return new Intl.DateTimeFormat("es-CR", {
-      dateStyle: "medium",
-      timeStyle: "short"
-    }).format(fecha);
-  };
+  const formatearFecha = (valor) => formatearFechaHora(valor);
 
   const nombreCliente = (cliente) => {
     const nombre = `${cliente?.nombre || ""} ${cliente?.apellidos || ""}`.trim();
