@@ -11,9 +11,21 @@ import {
 } from "react-icons/fa";
 import api from "../services/api";
 
+const PAISES = [
+  { codigo: "CR", nombre: "Costa Rica", bandera: "🇨🇷", prefijo: "+506", placeholder: "8888 8888" },
+  { codigo: "PA", nombre: "Panamá", bandera: "🇵🇦", prefijo: "+507", placeholder: "6000 0000" },
+  { codigo: "NI", nombre: "Nicaragua", bandera: "🇳🇮", prefijo: "+505", placeholder: "8888 8888" },
+  { codigo: "HN", nombre: "Honduras", bandera: "🇭🇳", prefijo: "+504", placeholder: "9999 9999" },
+  { codigo: "SV", nombre: "El Salvador", bandera: "🇸🇻", prefijo: "+503", placeholder: "7000 0000" },
+  { codigo: "GT", nombre: "Guatemala", bandera: "🇬🇹", prefijo: "+502", placeholder: "5555 5555" },
+  { codigo: "BZ", nombre: "Belice", bandera: "🇧🇿", prefijo: "+501", placeholder: "600 0000" },
+  { codigo: "US", nombre: "Estados Unidos", bandera: "🇺🇸", prefijo: "+1", placeholder: "305 555 0123" }
+];
+
 const estadoInicial = {
   nombreNegocio: "",
   identificacion: "",
+  paisCodigo: "CR",
   telefono: "",
   nombrePropietario: "",
   apellidosPropietario: "",
@@ -31,7 +43,7 @@ function Prueba() {
 
   const manejarCambio = (e) => {
     const { name, value } = e.target;
-    const valor = name === "telefono" ? value.replace(/\D/g, "").slice(0, 8) : value;
+    const valor = name === "telefono" ? value.replace(/\D/g, "").slice(0, 15) : value;
 
     setFormulario((actual) => ({
       ...actual,
@@ -41,11 +53,6 @@ function Prueba() {
 
   const registrarNegocio = async (e) => {
     e.preventDefault();
-
-    if (formulario.telefono && formulario.telefono.length !== 8) {
-      setError("El teléfono debe contener exactamente 8 números.");
-      return;
-    }
 
     if (formulario.password !== formulario.confirmarPassword) {
       setError("Las contraseñas no coinciden.");
@@ -64,7 +71,8 @@ function Prueba() {
       const response = await api.post("/Auth/registrar-negocio", {
         nombreNegocio: formulario.nombreNegocio.trim(),
         identificacion: formulario.identificacion.trim() || null,
-        telefono: formulario.telefono ? `+506${formulario.telefono}` : null,
+        paisCodigo: formulario.paisCodigo,
+        telefono: formulario.telefono || null,
         nombrePropietario: formulario.nombrePropietario.trim(),
         apellidosPropietario: formulario.apellidosPropietario.trim(),
         email: formulario.email.trim(),
@@ -251,15 +259,24 @@ function Prueba() {
 
                         <div className="col-md-6">
                           <label className="trial-label">Identificación</label>
-                          <input type="text" className="form-control trial-input" name="identificacion" value={formulario.identificacion} onChange={manejarCambio} placeholder="Cédula física o jurídica" />
+                          <input type="text" className="form-control trial-input" name="identificacion" value={formulario.identificacion} onChange={manejarCambio} placeholder="Identificación del negocio" />
                         </div>
 
                         <div className="col-md-6">
-                          <label className="trial-label">Teléfono</label>
+                          <label className="trial-label">País *</label>
+                          <select className="form-select trial-input" name="paisCodigo" value={formulario.paisCodigo} onChange={manejarCambio} required>
+                            {PAISES.map((pais) => (
+                              <option key={pais.codigo} value={pais.codigo}>{pais.bandera} {pais.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="col-12">
+                          <label className="trial-label">Teléfono *</label>
                           <div className="trial-phone-group">
                             <div className="trial-phone-prefix" aria-hidden="true">
-                              <span className="trial-phone-flag">🇨🇷</span>
-                              <span>+506</span>
+                              <span className="trial-phone-flag">{PAISES.find((p) => p.codigo === formulario.paisCodigo)?.bandera}</span>
+                              <span>{PAISES.find((p) => p.codigo === formulario.paisCodigo)?.prefijo}</span>
                             </div>
                             <input
                               type="tel"
@@ -269,13 +286,12 @@ function Prueba() {
                               name="telefono"
                               value={formulario.telefono}
                               onChange={manejarCambio}
-                              placeholder="8888 8888"
-                              maxLength={8}
-                              pattern="[0-9]{8}"
-                              title="Ingresa 8 números"
+                              placeholder={PAISES.find((p) => p.codigo === formulario.paisCodigo)?.placeholder}
+                              maxLength={15}
+                              required
                             />
                           </div>
-                          <div className="trial-phone-help">Ingresa solo 8 números. Guardaremos el teléfono con el código +506.</div>
+                          <div className="trial-phone-help">Ingresa tu número nacional. Lo validaremos para el país seleccionado y lo guardaremos en formato internacional.</div>
                         </div>
 
                         <div className="col-md-6">
