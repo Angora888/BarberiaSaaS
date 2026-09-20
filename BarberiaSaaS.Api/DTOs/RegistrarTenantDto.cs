@@ -7,6 +7,10 @@ namespace BarberiaSaaS.Api.DTOs
 
         public string? Identificacion { get; set; }
 
+        // ISO 3166-1 alpha-2, por ejemplo CR, PA o US.
+        public string PaisCodigo { get; set; } = "CR";
+
+        // Se normalizará a E.164 en el backend antes de persistirlo.
         public string? Telefono { get; set; }
 
         // Propietario

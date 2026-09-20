@@ -22,15 +22,18 @@ namespace BarberiaSaaS.Api.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IInternacionalizacionService _internacionalizacion;
 
         public AuthController(
             AppDbContext context,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IInternacionalizacionService internacionalizacion)
         {
             _context = context;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _internacionalizacion = internacionalizacion;
         }
 
         // =========================================================
@@ -73,15 +76,42 @@ namespace BarberiaSaaS.Api.Controllers
                 .Trim()
                 .ToLowerInvariant();
 
+            var pais = _internacionalizacion.ObtenerPais(request.PaisCodigo);
+            if (pais == null)
+            {
+                return BadRequest(new { mensaje = "Selecciona un país válido." });
+            }
+
+            if (!_internacionalizacion.TryNormalizarTelefono(
+                    request.Telefono,
+                    pais.Codigo,
+                    out var telefonoE164,
+                    out var errorTelefono))
+            {
+                return BadRequest(new { mensaje = errorTelefono });
+            }
+
             var emailExiste = await _context.Usuarios
-                .AnyAsync(x =>
-                    x.Email.ToLower() == email);
+                .AnyAsync(x => x.Email.ToLower() == email)
+                || await _context.Tenants
+                    .AnyAsync(x => x.Email != null && x.Email.ToLower() == email);
 
             if (emailExiste)
             {
                 return Conflict(new
                 {
                     mensaje = "Ya existe una cuenta registrada con este correo."
+                });
+            }
+
+            var telefonoExiste = await _context.Tenants
+                .AnyAsync(x => x.Telefono == telefonoE164);
+
+            if (telefonoExiste)
+            {
+                return Conflict(new
+                {
+                    mensaje = "Ya existe un negocio registrado con este teléfono."
                 });
             }
 
@@ -101,7 +131,8 @@ namespace BarberiaSaaS.Api.Controllers
                     Nombre = request.NombreNegocio.Trim(),
                     NombreComercial = request.NombreNegocio.Trim(),
                     Identificacion = request.Identificacion?.Trim(),
-                    Telefono = request.Telefono?.Trim(),
+                    PaisCodigo = pais.Codigo,
+                    Telefono = telefonoE164,
                     Email = email,
                     Activo = false,
                     EmailConfirmado = false,
@@ -123,15 +154,15 @@ namespace BarberiaSaaS.Api.Controllers
                     ColorPrimario = "#C62864",
                     ColorSecundario = "#F8E7EE",
                     ColorFondo = "#FFFFFF",
-                    Moneda = "CRC",
-                    ZonaHoraria = "America/Costa_Rica",
-                    Idioma = "es",
+                    Moneda = pais.Moneda,
+                    ZonaHoraria = pais.ZonaHoraria,
+                    Idioma = pais.Idioma,
                     DuracionSlotMinutos = 15,
                     PermitirReservaOnline = true,
                     MostrarPrecios = true,
                     RequiereDeposito = false,
                     PorcentajeDeposito = 0,
-                    WhatsApp = request.Telefono?.Trim()
+                    WhatsApp = telefonoE164
                 };
 
                 _context.ConfiguracionesTenant.Add(configuracion);
@@ -144,7 +175,7 @@ namespace BarberiaSaaS.Api.Controllers
                 {
                     TenantId = tenant.Id,
                     Nombre = "Sucursal Principal",
-                    Telefono = request.Telefono?.Trim(),
+                    Telefono = telefonoE164,
                     Email = email,
                     Activa = true,
                     FechaCreacion = ahora
