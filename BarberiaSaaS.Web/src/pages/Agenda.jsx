@@ -23,7 +23,8 @@ function Agenda() {
   const {
     formatearMoneda,
     zonaHoraria,
-    nombreNegocio
+    nombreNegocio,
+    locale
   } = useConfiguracion();
 
   const [fechaSeleccionada, setFechaSeleccionada] =
@@ -1435,7 +1436,7 @@ function Agenda() {
 
     try {
       return new Intl.DateTimeFormat(
-        "es-CR",
+        locale,
         {
           weekday: "long",
           day: "numeric",
@@ -1721,7 +1722,7 @@ function Agenda() {
         if (mismoMes) {
           return `${inicio.getDate()} - ${fin.getDate()} de ${
             new Intl.DateTimeFormat(
-              "es-CR",
+              locale,
               {
                 month: "long"
               }
@@ -1732,7 +1733,7 @@ function Agenda() {
         if (mismoAnio) {
           return `${
             new Intl.DateTimeFormat(
-              "es-CR",
+              locale,
               {
                 day: "numeric",
                 month: "short"
@@ -1740,7 +1741,7 @@ function Agenda() {
             ).format(inicio)
           } - ${
             new Intl.DateTimeFormat(
-              "es-CR",
+              locale,
               {
                 day: "numeric",
                 month: "short"
@@ -1751,7 +1752,7 @@ function Agenda() {
 
         return `${
           new Intl.DateTimeFormat(
-            "es-CR",
+            locale,
             {
               day: "numeric",
               month: "short",
@@ -1760,7 +1761,7 @@ function Agenda() {
           ).format(inicio)
         } - ${
           new Intl.DateTimeFormat(
-            "es-CR",
+            locale,
             {
               day: "numeric",
               month: "short",
@@ -1776,7 +1777,7 @@ function Agenda() {
         );
 
       return new Intl.DateTimeFormat(
-        "es-CR",
+        locale,
         {
           weekday: "long",
           day: "numeric",
@@ -4000,7 +4001,7 @@ function obtenerDiasSemana(
         nombreCorto:
           capitalizar(
             new Intl.DateTimeFormat(
-              "es-CR",
+              locale,
               {
                 weekday: "short"
               }
@@ -4274,7 +4275,7 @@ function obtenerMinutosCita(
   try {
     const partes =
       new Intl.DateTimeFormat(
-        "es-CR",
+        locale,
         {
           timeZone:
             zonaHoraria ||
@@ -4491,7 +4492,7 @@ function obtenerHoraCita(
     }
 
     return new Intl.DateTimeFormat(
-      "es-CR",
+      locale,
       {
         timeZone:
           zonaHoraria ||
