@@ -14,8 +14,10 @@ import {
   FaUser
 } from "react-icons/fa";
 import api from "../services/api";
+import { useConfiguracion } from "../context/ConfiguracionContext";
 
 function Clientes() {
+  const { formatearMoneda } = useConfiguracion();
   const [clientes, setClientes] = useState([]);
   const [paises, setPaises] = useState([]);
   const [paisPredeterminado, setPaisPredeterminado] = useState("CR");
@@ -344,13 +346,6 @@ function Clientes() {
       setCargandoHistorial(false);
     }
   };
-
-  const formatearMoneda = (valor) =>
-    new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-      maximumFractionDigits: 0
-    }).format(valor || 0);
 
   const formatearFecha = (fecha) => {
     if (!fecha) return "-";

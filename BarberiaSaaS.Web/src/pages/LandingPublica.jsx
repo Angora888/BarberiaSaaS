@@ -285,20 +285,15 @@ function LandingPublica() {
   ) => {
     const monedaCodigo =
       landing?.branding?.moneda ||
-      "CRC";
+      "USD";
 
     return new Intl.NumberFormat(
-      "es-CR",
+      undefined,
       {
         style: "currency",
-        currency:
-          monedaCodigo,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        currency: monedaCodigo
       }
-    ).format(
-      Number(valor || 0)
-    );
+    ).format(Number(valor || 0));
   };
 
   const profesionalesServicio =
