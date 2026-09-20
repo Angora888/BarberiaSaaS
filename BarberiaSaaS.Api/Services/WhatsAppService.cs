@@ -114,6 +114,19 @@ public sealed class MetaWhatsAppService : IWhatsAppService
                 return language.GetString()!;
         }
 
-        throw new InvalidOperationException($"No se encontró una versión aprobada de la plantilla {template} en el WABA configurado.");
+        var encontradas = data.EnumerateArray()
+            .Select(item =>
+            {
+                var nombre = item.TryGetProperty("name", out var n) ? n.GetString() : null;
+                var idioma = item.TryGetProperty("language", out var l) ? l.GetString() : null;
+                var estado = item.TryGetProperty("status", out var s) ? s.GetString() : null;
+                return $"{nombre ?? "(sin nombre)"}|{idioma ?? "(sin idioma)"}|{estado ?? "(sin estado)"}";
+            })
+            .Take(10)
+            .ToArray();
+
+        var detalle = encontradas.Length == 0 ? "Meta devolvió data vacío." : string.Join(", ", encontradas);
+        throw new InvalidOperationException(
+            $"No se encontró una versión aprobada de la plantilla {template} en el WABA configurado. Respuesta: {detalle}");
     }
 }
