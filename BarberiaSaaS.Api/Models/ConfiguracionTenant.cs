@@ -24,6 +24,7 @@ namespace BarberiaSaaS.Api.Models
 
         // Notificaciones
         public bool RecordatorioEmailActivo { get; set; } = true;
+        public bool RecordatorioWhatsAppActivo { get; set; } = true;
         public int RecordatorioEmailHorasAntes { get; set; } = 24;
 
         // Depósitos
