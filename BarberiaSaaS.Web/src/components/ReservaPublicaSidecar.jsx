@@ -70,7 +70,7 @@ function obtenerFechaSeleccionadaDesdeDom() {
   return `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 }
 
-function formatearFecha(fechaTexto) {
+function formatearFecha(fechaTexto, locale) {
   if (!fechaTexto) {
     return "";
   }
@@ -80,7 +80,7 @@ function formatearFecha(fechaTexto) {
     .map(Number);
 
   return new Intl.DateTimeFormat(
-    "es-CR",
+    locale,
     {
       weekday: "long",
       day: "numeric",
@@ -136,6 +136,10 @@ function ReservaPublicaSidecar() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(null);
+
+  const locale = landing
+    ? `${landing?.branding?.idioma === "en" ? "en" : "es"}-${landing?.negocio?.paisCodigo || "CR"}`
+    : "es-CR";
 
   useEffect(() => {
     if (!slug) {
@@ -277,7 +281,7 @@ function ReservaPublicaSidecar() {
       return "";
     }
 
-    return `${formatearFecha(reserva.fecha)} · ${formatearHora12(reserva.hora)}`;
+    return `${formatearFecha(reserva.fecha, locale)} · ${formatearHora12(reserva.hora)}`;
   }, [reserva]);
 
   const cerrar = () => {
