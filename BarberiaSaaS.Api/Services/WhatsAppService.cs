@@ -30,7 +30,7 @@ public sealed class MetaWhatsAppService : IWhatsAppService
         var token = _config["WHATSAPP_ACCESS_TOKEN"] ?? throw new InvalidOperationException("WHATSAPP_ACCESS_TOKEN no está configurado.");
         var phoneNumberId = _config["WHATSAPP_PHONE_NUMBER_ID"] ?? throw new InvalidOperationException("WHATSAPP_PHONE_NUMBER_ID no está configurado.");
         var version = _config["WHATSAPP_API_VERSION"] ?? "v26.0";
-        var template = _config["WHATSAPP_TEMPLATE_RECORDATORIO"] ?? "recordatorio_cita";
+        var template = _config["WHATSAPP_TEMPLATE_RECORDATORIO"] ?? "recordarorio_cita";
         var language = await ObtenerIdiomaPlantillaAsync(token, version, template, ct);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"https://graph.facebook.com/{version}/{phoneNumberId}/messages");
