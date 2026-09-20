@@ -280,6 +280,11 @@ function LandingPublica() {
     return `${year}-${month}-${day}`;
   };
 
+  const locale =
+    landing
+      ? `${landing?.branding?.idioma === "en" ? "en" : "es"}-${landing?.negocio?.paisCodigo || "CR"}`
+      : locale;
+
   const moneda = (
     valor
   ) => {
@@ -476,7 +481,7 @@ function LandingPublica() {
 
   const formatearNombreMes = () => {
     return new Intl.DateTimeFormat(
-      "es-CR",
+      locale,
       {
         month: "long",
         year: "numeric"
@@ -503,7 +508,7 @@ function LandingPublica() {
         .map(Number);
 
     return new Intl.DateTimeFormat(
-      "es-CR",
+      locale,
       {
         weekday: "long",
         day: "numeric",
