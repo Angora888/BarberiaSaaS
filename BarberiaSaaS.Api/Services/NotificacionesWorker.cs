@@ -44,11 +44,17 @@ public class NotificacionesWorker : BackgroundService
             var cuando = cita.FechaInicio.AddHours(-horas);
             var n = await set.FirstOrDefaultAsync(x => x.CitaId == cita.Id && x.Canal == CanalesNotificacion.Email && x.Tipo == TiposNotificacion.RecordatorioCita24H, ct);
 
-            if (!activo || email == null || cuando <= ahora)
+            if (!activo || email == null)
             {
                 if (n != null && n.Estado != EstadosNotificacion.Enviada) n.Estado = EstadosNotificacion.Cancelada;
                 continue;
             }
+
+            // Once a reminder already exists and becomes due, leave it pending so
+            // EnviarPendientesAsync can send it. Only skip creating a brand-new
+            // reminder when its configured reminder time has already passed.
+            if (n == null && cuando <= ahora)
+                continue;
 
             if (n == null)
             {
