@@ -22,7 +22,8 @@ import {
 
 function Ventas() {
   const {
-    formatearMoneda
+    formatearMoneda,
+    formatearFechaHora
   } = useConfiguracion();
 
   const [sucursales, setSucursales] =
