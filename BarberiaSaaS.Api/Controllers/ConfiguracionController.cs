@@ -55,6 +55,18 @@ namespace BarberiaSaaS.Api.Controllers
             if (request.RecordatorioEmailHorasAntes < 1 || request.RecordatorioEmailHorasAntes > 168) return BadRequest(new { mensaje = "El recordatorio por correo debe programarse entre 1 y 168 horas antes." });
             if (string.IsNullOrWhiteSpace(request.Moneda)) return BadRequest(new { mensaje = "La moneda es requerida." });
             if (string.IsNullOrWhiteSpace(request.ZonaHoraria)) return BadRequest(new { mensaje = "La zona horaria es requerida." });
+            try
+            {
+                _ = TimeZoneInfo.FindSystemTimeZoneById(request.ZonaHoraria.Trim());
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return BadRequest(new { mensaje = "La zona horaria seleccionada no es válida." });
+            }
+            catch (InvalidTimeZoneException)
+            {
+                return BadRequest(new { mensaje = "La zona horaria seleccionada no es válida." });
+            }
 
             tenant.Nombre = request.Nombre.Trim(); tenant.NombreComercial = Limpiar(request.NombreComercial);
             tenant.Identificacion = Limpiar(request.Identificacion); tenant.Telefono = Limpiar(request.Telefono); tenant.Email = Limpiar(request.Email);
