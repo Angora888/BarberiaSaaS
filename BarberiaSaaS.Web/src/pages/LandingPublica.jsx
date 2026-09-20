@@ -537,13 +537,6 @@ function LandingPublica() {
           ""
         );
 
-    if (
-      limpio.length === 8
-    ) {
-      limpio =
-        `506${limpio}`;
-    }
-
     return limpio;
   };
 
