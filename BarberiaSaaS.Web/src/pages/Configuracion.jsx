@@ -8,7 +8,7 @@ const formularioInicial = {
   colorPrimario: "#C62864", colorSecundario: "#F8E7EE", colorFondo: "#FFFFFF",
   moneda: "CRC", zonaHoraria: "America/Costa_Rica", idioma: "es", duracionSlotMinutos: 15,
   permitirReservaOnline: true, mostrarPrecios: true,
-  recordatorioEmailActivo: true, recordatorioEmailHorasAntes: 24,
+  recordatorioEmailActivo: true, recordatorioWhatsAppActivo: true, recordatorioEmailHorasAntes: 24,
   requiereDeposito: false, porcentajeDeposito: 0,
   instagram: "", facebook: "", whatsApp: ""
 };
@@ -32,6 +32,7 @@ function Configuracion() {
       permitirReservaOnline: configuracion?.permitirReservaOnline ?? true,
       mostrarPrecios: configuracion?.mostrarPrecios ?? true,
       recordatorioEmailActivo: configuracion?.recordatorioEmailActivo ?? true,
+      recordatorioWhatsAppActivo: configuracion?.recordatorioWhatsAppActivo ?? true,
       recordatorioEmailHorasAntes: configuracion?.recordatorioEmailHorasAntes ?? 24,
       requiereDeposito: configuracion?.requiereDeposito ?? false,
       porcentajeDeposito: configuracion?.porcentajeDeposito || 0,
@@ -47,7 +48,7 @@ function Configuracion() {
     if (formulario.requiereDeposito && (Number(formulario.porcentajeDeposito) <= 0 || Number(formulario.porcentajeDeposito) > 100))
       return setError("El porcentaje de depósito debe ser mayor que 0 y menor o igual que 100.");
     const horas = Number(formulario.recordatorioEmailHorasAntes);
-    if (formulario.recordatorioEmailActivo && (horas < 1 || horas > 168))
+    if ((formulario.recordatorioEmailActivo || formulario.recordatorioWhatsAppActivo) && (horas < 1 || horas > 168))
       return setError("El recordatorio debe programarse entre 1 y 168 horas antes.");
 
     try {
@@ -108,7 +109,11 @@ function Configuracion() {
             <div><div className="fw-semibold">📧 Recordatorio por correo</div><div className="small text-muted mt-1">Solo se programa si el cliente tiene un correo válido.</div></div>
             <div className="form-check form-switch"><input className="form-check-input" type="checkbox" role="switch" checked={formulario.recordatorioEmailActivo} onChange={e => actualizarCampo("recordatorioEmailActivo", e.target.checked)} /></div>
           </div>
-          {formulario.recordatorioEmailActivo && <div className="row mt-3"><div className="col-md-6"><label className="form-label">Enviar recordatorio</label><select className="form-select" value={formulario.recordatorioEmailHorasAntes} onChange={e => actualizarCampo("recordatorioEmailHorasAntes", e.target.value)}><option value={2}>2 horas antes</option><option value={6}>6 horas antes</option><option value={12}>12 horas antes</option><option value={24}>24 horas antes</option><option value={48}>48 horas antes</option><option value={72}>72 horas antes</option></select><small className="text-muted">Si cambias este valor, los recordatorios pendientes se reprograman automáticamente.</small></div></div>}
+          <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap mt-3 pt-3 border-top">
+            <div><div className="fw-semibold">📲 Recordatorio por WhatsApp</div><div className="small text-muted mt-1">Solo se programa si el cliente tiene un teléfono válido.</div></div>
+            <div className="form-check form-switch"><input className="form-check-input" type="checkbox" role="switch" checked={formulario.recordatorioWhatsAppActivo} onChange={e => actualizarCampo("recordatorioWhatsAppActivo", e.target.checked)} /></div>
+          </div>
+          {(formulario.recordatorioEmailActivo || formulario.recordatorioWhatsAppActivo) && <div className="row mt-3"><div className="col-md-6"><label className="form-label">Enviar recordatorios</label><select className="form-select" value={formulario.recordatorioEmailHorasAntes} onChange={e => actualizarCampo("recordatorioEmailHorasAntes", e.target.value)}><option value={2}>2 horas antes</option><option value={6}>6 horas antes</option><option value={12}>12 horas antes</option><option value={24}>24 horas antes</option><option value={48}>48 horas antes</option><option value={72}>72 horas antes</option></select><small className="text-muted">Esta anticipación se aplica a correo y WhatsApp. Si la cambias, los recordatorios pendientes se reprograman automáticamente.</small></div></div>}
         </div>
       </div>
 
