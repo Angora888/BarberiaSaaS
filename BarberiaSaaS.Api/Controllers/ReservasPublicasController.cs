@@ -14,13 +14,16 @@ namespace BarberiaSaaS.Api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITimeZoneService _timeZoneService;
+        private readonly IInternacionalizacionService _internacionalizacion;
 
         public ReservasPublicasController(
             AppDbContext context,
-            ITimeZoneService timeZoneService)
+            ITimeZoneService timeZoneService,
+            IInternacionalizacionService internacionalizacion)
         {
             _context = context;
             _timeZoneService = timeZoneService;
+            _internacionalizacion = internacionalizacion;
         }
 
         [HttpPost]
@@ -43,21 +46,6 @@ namespace BarberiaSaaS.Api.Controllers
                     mensaje = "Ingresa tu nombre completo."
                 });
             }
-
-            var telefonoNormalizado =
-                NormalizarTelefono(request.Telefono);
-
-            if (telefonoNormalizado.Length != 8)
-            {
-                return BadRequest(new
-                {
-                    mensaje = "Ingresa exactamente 8 dígitos en el teléfono."
-                });
-            }
-
-            var telefonoFormatoCostaRica =
-                FormatearTelefonoCostaRica(
-                    telefonoNormalizado);
 
             if (request.ServicioId <= 0 ||
                 request.ProfesionalId <= 0 ||
@@ -92,6 +80,19 @@ namespace BarberiaSaaS.Api.Controllers
                 {
                     mensaje = "La página pública del negocio no está disponible."
                 });
+            }
+
+            var paisTelefono = string.IsNullOrWhiteSpace(request.PaisCodigoTelefono)
+                ? tenant.PaisCodigo
+                : request.PaisCodigoTelefono.Trim().ToUpperInvariant();
+
+            if (!_internacionalizacion.TryNormalizarTelefono(
+                    request.Telefono,
+                    paisTelefono,
+                    out var telefonoE164,
+                    out var errorTelefono))
+            {
+                return BadRequest(new { mensaje = errorTelefono });
             }
 
             var tenantId = tenant.Id;
@@ -270,7 +271,7 @@ namespace BarberiaSaaS.Api.Controllers
 
             var cliente = clientesTenant
                 .FirstOrDefault(x =>
-                    NormalizarTelefono(x.Telefono) == telefonoNormalizado);
+                    string.Equals(x.Telefono, telefonoE164, StringComparison.OrdinalIgnoreCase));
 
             var clienteCreado = false;
 
@@ -283,7 +284,8 @@ namespace BarberiaSaaS.Api.Controllers
                     TenantId = tenantId,
                     Nombre = nombrePartes.Nombre,
                     Apellidos = nombrePartes.Apellidos,
-                    Telefono = telefonoFormatoCostaRica,
+                    Telefono = telefonoE164,
+                    PaisCodigoTelefono = paisTelefono,
                     Activo = true,
                     FechaCreacion = DateTime.UtcNow
                 };
@@ -291,9 +293,10 @@ namespace BarberiaSaaS.Api.Controllers
                 _context.Clientes.Add(cliente);
                 clienteCreado = true;
             }
-            else if (cliente.Telefono != telefonoFormatoCostaRica)
+            else
             {
-                cliente.Telefono = telefonoFormatoCostaRica;
+                cliente.Telefono = telefonoE164;
+                cliente.PaisCodigoTelefono = paisTelefono;
             }
 
             var cita = new Cita
@@ -333,36 +336,6 @@ namespace BarberiaSaaS.Api.Controllers
             });
         }
 
-        private static string NormalizarTelefono(string? telefono)
-        {
-            if (string.IsNullOrWhiteSpace(telefono))
-            {
-                return string.Empty;
-            }
-
-            var digitos = new string(
-                telefono.Where(char.IsDigit).ToArray());
-
-            if (digitos.StartsWith("00"))
-            {
-                digitos = digitos[2..];
-            }
-
-            if (digitos.Length == 11 &&
-                digitos.StartsWith("506"))
-            {
-                digitos = digitos[3..];
-            }
-
-            return digitos;
-        }
-
-        private static string FormatearTelefonoCostaRica(
-            string telefonoNormalizado)
-        {
-            return $"+506{telefonoNormalizado}";
-        }
-
         private static (string Nombre, string Apellidos) SepararNombre(
             string nombreCompleto)
         {
@@ -390,6 +363,7 @@ namespace BarberiaSaaS.Api.Controllers
     {
         public string NombreCompleto { get; set; } = string.Empty;
         public string Telefono { get; set; } = string.Empty;
+        public string? PaisCodigoTelefono { get; set; }
         public int ServicioId { get; set; }
         public int ProfesionalId { get; set; }
         public DateTime Fecha { get; set; }
