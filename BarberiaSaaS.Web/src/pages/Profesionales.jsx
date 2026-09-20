@@ -33,6 +33,9 @@ function Profesionales() {
   const [sucursales, setSucursales] =
     useState([]);
 
+  const [paises, setPaises] = useState([]);
+  const [paisPredeterminado, setPaisPredeterminado] = useState("CR");
+
   const [cargando, setCargando] =
     useState(true);
 
@@ -61,6 +64,7 @@ function Profesionales() {
       nombre: "",
       apellidos: "",
       telefono: "",
+      paisCodigoTelefono: "CR",
       email: "",
       especialidad: "",
       fotoUrl: "",
@@ -124,11 +128,13 @@ function Profesionales() {
       const [
         profesionalesResponse,
         serviciosResponse,
-        sucursalesResponse
+        sucursalesResponse,
+        internacionalizacionResponse
       ] = await Promise.all([
         api.get("/Profesionales"),
         api.get("/Servicios"),
-        api.get("/Sucursales")
+        api.get("/Sucursales"),
+        api.get("/Internacionalizacion/paises")
       ]);
 
       setProfesionales(
@@ -142,6 +148,9 @@ function Profesionales() {
       setSucursales(
         sucursalesResponse.data
       );
+
+      setPaises(internacionalizacionResponse.data.paises || []);
+      setPaisPredeterminado(internacionalizacionResponse.data.paisPredeterminado || "CR");
 
       if (
         sucursalesResponse
@@ -216,6 +225,7 @@ function Profesionales() {
     nombre: "",
     apellidos: "",
     telefono: "",
+    paisCodigoTelefono: paisPredeterminado,
     email: "",
     especialidad: "",
     fotoUrl: "",
@@ -249,6 +259,8 @@ function Profesionales() {
         profesional.apellidos || "",
       telefono:
         profesional.telefono || "",
+      paisCodigoTelefono:
+        profesional.paisCodigoTelefono || paisPredeterminado,
       email:
         profesional.email || "",
       especialidad:
@@ -371,6 +383,9 @@ function Profesionales() {
         telefono:
           formulario.telefono
             .trim() || null,
+
+        paisCodigoTelefono:
+          formulario.paisCodigoTelefono || paisPredeterminado,
 
         email:
           formulario.email
@@ -1107,10 +1122,29 @@ function Profesionales() {
 
                     <div className="col-md-6">
                       <label className="form-label">
+                        País del teléfono
+                      </label>
+                      <select
+                        name="paisCodigoTelefono"
+                        className="form-select"
+                        value={formulario.paisCodigoTelefono}
+                        onChange={cambiarCampo}
+                      >
+                        {paises.map((pais) => (
+                          <option key={pais.codigo} value={pais.codigo}>
+                            {pais.bandera} {pais.nombre} (+{pais.codigoTelefonico})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label">
                         Teléfono
                       </label>
 
                       <input
+                        type="tel"
                         name="telefono"
                         className="form-control"
                         value={
@@ -1119,7 +1153,11 @@ function Profesionales() {
                         onChange={
                           cambiarCampo
                         }
+                        placeholder="Número nacional o internacional"
                       />
+                      <div className="form-text">
+                        Puede ser de un país diferente al del negocio.
+                      </div>
                     </div>
 
                     <div className="col-md-6">

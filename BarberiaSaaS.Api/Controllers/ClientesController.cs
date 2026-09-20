@@ -15,13 +15,16 @@ namespace BarberiaSaaS.Api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITenantContext _tenantContext;
+        private readonly IInternacionalizacionService _internacionalizacion;
 
         public ClientesController(
             AppDbContext context,
-            ITenantContext tenantContext)
+            ITenantContext tenantContext,
+            IInternacionalizacionService internacionalizacion)
         {
             _context = context;
             _tenantContext = tenantContext;
+            _internacionalizacion = internacionalizacion;
         }
 
         // ============================================================
@@ -44,6 +47,7 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Nombre,
                     x.Apellidos,
                     x.Telefono,
+                    x.PaisCodigoTelefono,
                     x.Email,
                     x.FechaNacimiento,
                     x.Notas,
@@ -80,6 +84,7 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Nombre,
                     x.Apellidos,
                     x.Telefono,
+                    x.PaisCodigoTelefono,
                     x.Email,
                     x.FechaNacimiento,
                     x.Notas,
@@ -124,12 +129,35 @@ namespace BarberiaSaaS.Api.Controllers
 
             var tenantId = _tenantContext.TenantId;
 
+            var paisTenant = await _context.Tenants
+                .Where(x => x.Id == tenantId)
+                .Select(x => x.PaisCodigo)
+                .FirstAsync();
+
+            var paisTelefono = string.IsNullOrWhiteSpace(request.PaisCodigoTelefono)
+                ? paisTenant
+                : request.PaisCodigoTelefono.Trim().ToUpperInvariant();
+
+            string? telefonoE164 = null;
+            if (!string.IsNullOrWhiteSpace(request.Telefono))
+            {
+                if (!_internacionalizacion.TryNormalizarTelefono(
+                        request.Telefono,
+                        paisTelefono,
+                        out telefonoE164,
+                        out var errorTelefono))
+                {
+                    return BadRequest(new { mensaje = errorTelefono });
+                }
+            }
+
             var cliente = new Cliente
             {
                 TenantId = tenantId,
                 Nombre = request.Nombre.Trim(),
                 Apellidos = request.Apellidos?.Trim() ?? string.Empty,
-                Telefono = request.Telefono?.Trim(),
+                Telefono = telefonoE164,
+                PaisCodigoTelefono = telefonoE164 == null ? null : paisTelefono,
                 Email = request.Email?.Trim().ToLowerInvariant(),
                 FechaNacimiento = request.FechaNacimiento,
                 Notas = request.Notas?.Trim(),
@@ -181,9 +209,32 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            var paisTenant = await _context.Tenants
+                .Where(x => x.Id == tenantId)
+                .Select(x => x.PaisCodigo)
+                .FirstAsync();
+
+            var paisTelefono = string.IsNullOrWhiteSpace(request.PaisCodigoTelefono)
+                ? paisTenant
+                : request.PaisCodigoTelefono.Trim().ToUpperInvariant();
+
+            string? telefonoE164 = null;
+            if (!string.IsNullOrWhiteSpace(request.Telefono))
+            {
+                if (!_internacionalizacion.TryNormalizarTelefono(
+                        request.Telefono,
+                        paisTelefono,
+                        out telefonoE164,
+                        out var errorTelefono))
+                {
+                    return BadRequest(new { mensaje = errorTelefono });
+                }
+            }
+
             cliente.Nombre = request.Nombre.Trim();
             cliente.Apellidos = request.Apellidos?.Trim() ?? string.Empty;
-            cliente.Telefono = request.Telefono?.Trim();
+            cliente.Telefono = telefonoE164;
+            cliente.PaisCodigoTelefono = telefonoE164 == null ? null : paisTelefono;
             cliente.Email = request.Email?.Trim().ToLowerInvariant();
             cliente.FechaNacimiento = request.FechaNacimiento;
             cliente.Notas = request.Notas?.Trim();
@@ -197,6 +248,7 @@ namespace BarberiaSaaS.Api.Controllers
                 cliente.Nombre,
                 cliente.Apellidos,
                 cliente.Telefono,
+                cliente.PaisCodigoTelefono,
                 cliente.Email,
                 cliente.FechaNacimiento,
                 cliente.Notas

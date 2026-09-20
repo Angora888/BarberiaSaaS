@@ -15,13 +15,16 @@ namespace BarberiaSaaS.Api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITenantContext _tenantContext;
+        private readonly IInternacionalizacionService _internacionalizacion;
 
         public ProfesionalesController(
             AppDbContext context,
-            ITenantContext tenantContext)
+            ITenantContext tenantContext,
+            IInternacionalizacionService internacionalizacion)
         {
             _context = context;
             _tenantContext = tenantContext;
+            _internacionalizacion = internacionalizacion;
         }
 
         // ============================================================
@@ -46,6 +49,7 @@ namespace BarberiaSaaS.Api.Controllers
                         x.Nombre,
                         x.Apellidos,
                         x.Telefono,
+                        x.PaisCodigoTelefono,
                         x.Email,
                         x.Especialidad,
                         x.FotoUrl,
@@ -92,6 +96,28 @@ namespace BarberiaSaaS.Api.Controllers
 
             var tenantId =
                 _tenantContext.TenantId;
+
+            var paisTenant = await _context.Tenants
+                .Where(x => x.Id == tenantId)
+                .Select(x => x.PaisCodigo)
+                .FirstAsync();
+
+            var paisTelefono = string.IsNullOrWhiteSpace(request.PaisCodigoTelefono)
+                ? paisTenant
+                : request.PaisCodigoTelefono.Trim().ToUpperInvariant();
+
+            string? telefonoE164 = null;
+            if (!string.IsNullOrWhiteSpace(request.Telefono))
+            {
+                if (!_internacionalizacion.TryNormalizarTelefono(
+                        request.Telefono,
+                        paisTelefono,
+                        out telefonoE164,
+                        out var errorTelefono))
+                {
+                    return BadRequest(new { mensaje = errorTelefono });
+                }
+            }
 
             if (request.SucursalId.HasValue)
             {
@@ -158,8 +184,9 @@ namespace BarberiaSaaS.Api.Controllers
                         request.Apellidos?.Trim() ??
                         string.Empty,
 
-                    Telefono =
-                        request.Telefono?.Trim(),
+                    Telefono = telefonoE164,
+
+                    PaisCodigoTelefono = telefonoE164 == null ? null : paisTelefono,
 
                     Email =
                         request.Email?
@@ -257,6 +284,28 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            var paisTenant = await _context.Tenants
+                .Where(x => x.Id == tenantId)
+                .Select(x => x.PaisCodigo)
+                .FirstAsync();
+
+            var paisTelefono = string.IsNullOrWhiteSpace(request.PaisCodigoTelefono)
+                ? paisTenant
+                : request.PaisCodigoTelefono.Trim().ToUpperInvariant();
+
+            string? telefonoE164 = null;
+            if (!string.IsNullOrWhiteSpace(request.Telefono))
+            {
+                if (!_internacionalizacion.TryNormalizarTelefono(
+                        request.Telefono,
+                        paisTelefono,
+                        out telefonoE164,
+                        out var errorTelefono))
+                {
+                    return BadRequest(new { mensaje = errorTelefono });
+                }
+            }
+
             if (request.SucursalId.HasValue)
             {
                 var sucursalValida =
@@ -315,8 +364,9 @@ namespace BarberiaSaaS.Api.Controllers
                 request.Apellidos?.Trim() ??
                 string.Empty;
 
-            profesional.Telefono =
-                request.Telefono?.Trim();
+            profesional.Telefono = telefonoE164;
+
+            profesional.PaisCodigoTelefono = telefonoE164 == null ? null : paisTelefono;
 
             profesional.Email =
                 request.Email?
@@ -365,6 +415,7 @@ namespace BarberiaSaaS.Api.Controllers
                 profesional.Nombre,
                 profesional.Apellidos,
                 profesional.Telefono,
+                profesional.PaisCodigoTelefono,
                 profesional.Email,
                 profesional.Especialidad,
                 profesional.FotoUrl,
