@@ -10,7 +10,7 @@ import { useConfiguracion } from "../context/ConfiguracionContext";
 import "./EnviarDisponibilidadClientes.css";
 
 function EnviarDisponibilidadClientes() {
-  const { nombreNegocio } = useConfiguracion();
+  const { nombreNegocio, locale } = useConfiguracion();
 
   const [mostrar, setMostrar] =
     useState(false);
@@ -537,7 +537,8 @@ function construirMensaje(
   cliente,
   servicio,
   profesional,
-  nombreNegocio
+  nombreNegocio,
+  locale
 ) {
   const nombreCliente =
     cliente.nombre || "";
@@ -590,7 +591,7 @@ function construirMensaje(
           );
 
         lineas.push(
-          `📅 *${formatearDia(dia.fecha)}*: ${rangos.join(", ")}`
+          `📅 *${formatearDia(dia.fecha, locale)}*: ${rangos.join(", ")}`
         );
       }
     );
@@ -728,7 +729,7 @@ function formatearHora(totalMinutos) {
   return `${horas12}:${String(minutos).padStart(2, "0")} ${periodo}`;
 }
 
-function formatearDia(fechaTexto) {
+function formatearDia(fechaTexto, locale) {
   const [anio, mes, dia] =
     fechaTexto
       .split("-")
@@ -746,7 +747,7 @@ function formatearDia(fechaTexto) {
 
   const texto =
     new Intl.DateTimeFormat(
-      "es-CR",
+      locale,
       {
         weekday: "long",
         day: "numeric",
