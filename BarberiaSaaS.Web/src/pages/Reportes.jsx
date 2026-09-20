@@ -21,6 +21,7 @@ function Reportes() {
   const {
     zonaHoraria,
     moneda,
+    locale,
     formatearMoneda
   } = useConfiguracion();
 
@@ -364,7 +365,8 @@ function Reportes() {
               <strong>
                 {formatearRango(
                   periodo.desde,
-                  periodo.hasta
+                  periodo.hasta,
+                  locale
                 )}
               </strong>
             </div>
@@ -525,7 +527,8 @@ function Reportes() {
                               <td>
                                 <strong>
                                   {formatearFecha(
-                                    dia.fecha
+                                    dia.fecha,
+                                    locale
                                   )}
                                 </strong>
                               </td>
@@ -886,10 +889,11 @@ function obtenerFechaActualTenant(
 }
 
 function formatearFecha(
-  fecha
+  fecha,
+  locale
 ) {
   return new Intl.DateTimeFormat(
-    "es-CR",
+    locale,
     {
       weekday: "short",
       day: "2-digit",
@@ -903,18 +907,22 @@ function formatearFecha(
 
 function formatearRango(
   desde,
-  hasta
+  hasta,
+  locale
 ) {
   if (desde === hasta) {
     return formatearFecha(
-      desde
+      desde,
+      locale
     );
   }
 
   return `${formatearFecha(
-    desde
+    desde,
+    locale
   )} - ${formatearFecha(
-    hasta
+    hasta,
+    locale
   )}`;
 }
 
