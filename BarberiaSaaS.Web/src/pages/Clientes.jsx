@@ -115,6 +115,7 @@ function Clientes() {
     nombre: "",
     apellidos: "",
     telefono: "",
+    paisCodigoTelefono: paisPredeterminado,
     email: "",
     fechaNacimiento: "",
     notas: ""
@@ -235,7 +236,10 @@ function Clientes() {
 
       const lineasContacto = lineas.slice(inicio, fin + 1);
       const { nombre, apellidos } = parsearNombreVcard(lineasContacto);
-      const telefono = obtenerValorPropiedad(lineasContacto, "TEL");
+      const telefonoOriginal = obtenerValorPropiedad(lineasContacto, "TEL");
+      const telefono = telefonoOriginal
+        .replace(/^tel:/i, "")
+        .replace(/[^\d+]/g, "");
       const email = obtenerValorPropiedad(lineasContacto, "EMAIL");
 
       if (!nombre && !telefono && !email) {
@@ -252,7 +256,7 @@ function Clientes() {
             ? (paises
                 .slice()
                 .sort((a, b) => String(b.codigoTelefonico).length - String(a.codigoTelefonico).length)
-                .find((pais) => telefono.startsWith(`+${pais.codigoTelefonico}`))?.codigo ||
+                .find((pais) => telefono.startsWith(pais.codigoTelefonico))?.codigo ||
               anterior.paisCodigoTelefono)
             : anterior.paisCodigoTelefono,
         email: email || anterior.email
@@ -471,7 +475,7 @@ function Clientes() {
                     <select name="paisCodigoTelefono" className="form-select" value={formulario.paisCodigoTelefono} onChange={cambiarCampo}>
                       {paises.map((pais) => (
                         <option key={pais.codigo} value={pais.codigo}>
-                          {pais.bandera} {pais.nombre} (+{pais.codigoTelefonico})
+                          {pais.bandera} {pais.nombre} ({pais.codigoTelefonico})
                         </option>
                       ))}
                     </select>
