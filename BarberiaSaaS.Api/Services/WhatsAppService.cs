@@ -31,6 +31,7 @@ public sealed class MetaWhatsAppService : IWhatsAppService
         var phoneNumberId = _config["WHATSAPP_PHONE_NUMBER_ID"] ?? throw new InvalidOperationException("WHATSAPP_PHONE_NUMBER_ID no está configurado.");
         var version = _config["WHATSAPP_API_VERSION"] ?? "v23.0";
         var template = _config["WHATSAPP_TEMPLATE_RECORDATORIO"] ?? "recordatorio_cita";
+        var language = await ObtenerIdiomaPlantillaAsync(token, version, template, ct);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"https://graph.facebook.com/{version}/{phoneNumberId}/messages");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -42,7 +43,7 @@ public sealed class MetaWhatsAppService : IWhatsAppService
             template = new
             {
                 name = template,
-                language = new { code = "es" },
+                language = new { code = language },
                 components = new object[]
                 {
                     new
@@ -77,5 +78,42 @@ public sealed class MetaWhatsAppService : IWhatsAppService
         using var json = JsonDocument.Parse(body);
         if (!json.RootElement.TryGetProperty("messages", out _))
             throw new InvalidOperationException("Meta no devolvió un identificador de mensaje.");
+    }
+
+    private async Task<string> ObtenerIdiomaPlantillaAsync(string token, string version, string template, CancellationToken ct)
+    {
+        var wabaId = _config["WHATSAPP_WABA_ID"];
+        if (string.IsNullOrWhiteSpace(wabaId))
+            throw new InvalidOperationException("WHATSAPP_WABA_ID no está configurado.");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"https://graph.facebook.com/{version}/{wabaId}/message_templates?name={Uri.EscapeDataString(template)}&fields=name,language,status");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await _http.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Meta no pudo consultar la plantilla {(int)response.StatusCode}: {body}");
+
+        using var json = JsonDocument.Parse(body);
+        if (!json.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
+            throw new InvalidOperationException($"Meta no devolvió datos para la plantilla {template}.");
+
+        foreach (var item in data.EnumerateArray())
+        {
+            if (!item.TryGetProperty("name", out var name) ||
+                !string.Equals(name.GetString(), template, StringComparison.Ordinal))
+                continue;
+
+            if (item.TryGetProperty("status", out var status) &&
+                !string.Equals(status.GetString(), "APPROVED", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (item.TryGetProperty("language", out var language) && !string.IsNullOrWhiteSpace(language.GetString()))
+                return language.GetString()!;
+        }
+
+        throw new InvalidOperationException($"No se encontró una versión aprobada de la plantilla {template} en el WABA configurado.");
     }
 }
