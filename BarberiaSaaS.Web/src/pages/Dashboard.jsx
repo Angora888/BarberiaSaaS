@@ -26,6 +26,7 @@ function Dashboard() {
     nombreNegocio,
     zonaHoraria,
     moneda,
+    locale,
     formatearMoneda
   } = useConfiguracion();
 
@@ -629,7 +630,7 @@ function obtenerHoraCita(cita, zonaHoraria) {
   }
 
   try {
-    return new Intl.DateTimeFormat("es-CR", {
+    return new Intl.DateTimeFormat(locale, {
       timeZone: zonaHoraria || "America/Costa_Rica",
       hour: "numeric",
       minute: "2-digit",
@@ -704,7 +705,7 @@ function formatearFechaLarga(fecha) {
   const [year, month, day] = fecha.split("-").map(Number);
   const fechaLocal = new Date(year, month - 1, day);
 
-  return new Intl.DateTimeFormat("es-CR", {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
