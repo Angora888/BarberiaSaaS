@@ -531,11 +531,14 @@ function mostrarMoneda(valor, formatearMoneda, moneda) {
     return formatearMoneda(numero);
   }
 
-  if (moneda === "CRC") {
-    return `₡${numero.toLocaleString("es-CR")}`;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: moneda || "USD"
+    }).format(numero);
+  } catch {
+    return `${moneda || ""} ${numero.toLocaleString()}`.trim();
   }
-
-  return `${moneda} ${numero.toLocaleString("es-CR")}`;
 }
 
 function normalizarLista(data) {
