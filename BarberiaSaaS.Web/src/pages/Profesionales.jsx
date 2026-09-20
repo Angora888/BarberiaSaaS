@@ -1132,7 +1132,7 @@ function Profesionales() {
                       >
                         {paises.map((pais) => (
                           <option key={pais.codigo} value={pais.codigo}>
-                            {pais.bandera} {pais.nombre} (+{pais.codigoTelefonico})
+                            {pais.bandera} {pais.nombre} ({pais.codigoTelefonico})
                           </option>
                         ))}
                       </select>
