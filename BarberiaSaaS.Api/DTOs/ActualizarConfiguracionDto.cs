@@ -23,6 +23,7 @@ namespace BarberiaSaaS.Api.DTOs
         public bool MostrarPrecios { get; set; } = true;
 
         public bool RecordatorioEmailActivo { get; set; } = true;
+        public bool RecordatorioWhatsAppActivo { get; set; } = true;
         public int RecordatorioEmailHorasAntes { get; set; } = 24;
 
         public bool RequiereDeposito { get; set; }
