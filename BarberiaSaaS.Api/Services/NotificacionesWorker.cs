@@ -71,7 +71,11 @@ public class NotificacionesWorker : BackgroundService
             {
                 var telefono = NormalizarTelefonoWhatsApp(cita.Cliente.Telefono);
                 if (telefono == null) continue;
-                var cuando = cita.FechaInicio.AddHours(-24);
+                var cfg = cita.Tenant.Configuracion;
+                var activoWhatsApp = cfg?.RecordatorioWhatsAppActivo ?? true;
+                var horasWhatsApp = cfg?.RecordatorioEmailHorasAntes ?? 24;
+                if (!activoWhatsApp) continue;
+                var cuando = cita.FechaInicio.AddHours(-horasWhatsApp);
                 if (cuando <= ahora) continue;
 
                 var n = await set.FirstOrDefaultAsync(x => x.CitaId == cita.Id && x.Canal == CanalesNotificacion.WhatsApp && x.Tipo == TiposNotificacion.RecordatorioCita24H, ct);
@@ -96,9 +100,12 @@ public class NotificacionesWorker : BackgroundService
             if (n.Canal == CanalesNotificacion.WhatsApp)
             {
                 var telefono = NormalizarTelefonoWhatsApp(n.Cliente.Telefono);
-                var fechaEsperada = n.Cita?.FechaInicio.AddHours(-24);
+                var cfg = n.Cita?.Tenant.Configuracion;
+                var activoWhatsApp = cfg?.RecordatorioWhatsAppActivo ?? true;
+                var horasWhatsApp = cfg?.RecordatorioEmailHorasAntes ?? 24;
+                var fechaEsperada = n.Cita?.FechaInicio.AddHours(-horasWhatsApp);
                 var reprogramadaATiempoYaPasado = fechaEsperada.HasValue && fechaEsperada.Value <= ahora && fechaEsperada.Value != n.ProgramadaPara;
-                if (citaInvalida || n.Cita?.Estado != EstadosCita.Pendiente || telefono == null || reprogramadaATiempoYaPasado)
+                if (!activoWhatsApp || citaInvalida || n.Cita?.Estado != EstadosCita.Pendiente || telefono == null || reprogramadaATiempoYaPasado)
                     n.Estado = EstadosNotificacion.Cancelada;
             }
             else
@@ -135,7 +142,7 @@ public class NotificacionesWorker : BackgroundService
             var esWhatsApp = n.Canal == CanalesNotificacion.WhatsApp;
             if (esWhatsApp)
             {
-                if (!whatsapp.EstaConfigurado || n.Cita.Estado != EstadosCita.Pendiente)
+                if (!whatsapp.EstaConfigurado || n.Tenant.Configuracion?.RecordatorioWhatsAppActivo == false || n.Cita.Estado != EstadosCita.Pendiente)
                 {
                     n.Estado = EstadosNotificacion.Cancelada; await db.SaveChangesAsync(ct); continue;
                 }
