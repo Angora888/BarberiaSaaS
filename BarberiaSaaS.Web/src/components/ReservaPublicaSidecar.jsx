@@ -132,6 +132,7 @@ function ReservaPublicaSidecar() {
   const [reserva, setReserva] = useState(null);
   const [nombreCompleto, setNombreCompleto] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [paisCodigoTelefono, setPaisCodigoTelefono] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(null);
@@ -144,6 +145,7 @@ function ReservaPublicaSidecar() {
     api.get(`/Publico/${slug}`)
       .then((response) => {
         setLanding(response.data);
+        setPaisCodigoTelefono(response.data?.negocio?.paisCodigo || "CR");
       })
       .catch(() => {
         setLanding(null);
@@ -228,6 +230,7 @@ function ReservaPublicaSidecar() {
             setExito(null);
             setNombreCompleto("");
             setTelefono("");
+            setPaisCodigoTelefono(landing?.negocio?.paisCodigo || "CR");
             setReserva({
               servicio,
               profesional,
@@ -313,6 +316,7 @@ function ReservaPublicaSidecar() {
         {
           nombreCompleto: nombreCompleto.trim(),
           telefono: telefono.trim(),
+          paisCodigoTelefono: paisCodigoTelefono || landing?.negocio?.paisCodigo || "CR",
           servicioId: Number(reserva.servicio.id),
           profesionalId: Number(reserva.profesional.id),
           fecha: `${reserva.fecha}T00:00:00`,
@@ -445,7 +449,8 @@ function ReservaPublicaSidecar() {
           font-weight: 700;
           color: #374151;
         }
-        .landing-reserva-field input {
+        .landing-reserva-field input,
+        .landing-reserva-field select {
           width: 100%;
           min-height: 50px;
           border: 1px solid #d9dee7;
@@ -453,7 +458,8 @@ function ReservaPublicaSidecar() {
           padding: 0 14px;
           font-size: 16px;
         }
-        .landing-reserva-field input:focus {
+        .landing-reserva-field input:focus,
+        .landing-reserva-field select:focus {
           outline: none;
           border-color: var(--landing-primary, #c62864);
           box-shadow: 0 0 0 4px rgba(198,40,100,.1);
@@ -608,6 +614,27 @@ function ReservaPublicaSidecar() {
                 </div>
 
                 <div className="landing-reserva-field">
+                  <label htmlFor="reserva-pais-telefono">
+                    País del teléfono
+                  </label>
+                  <select
+                    id="reserva-pais-telefono"
+                    value={paisCodigoTelefono}
+                    onChange={(e) => {
+                      setPaisCodigoTelefono(e.target.value);
+                      setTelefono("");
+                    }}
+                    required
+                  >
+                    {(landing?.paisesTelefono || []).map((pais) => (
+                      <option key={pais.codigo} value={pais.codigo}>
+                        {pais.bandera} {pais.nombre} ({pais.codigoTelefonico})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="landing-reserva-field">
                   <label htmlFor="reserva-telefono">
                     Teléfono
                   </label>
@@ -616,13 +643,20 @@ function ReservaPublicaSidecar() {
                     type="tel"
                     value={telefono}
                     onChange={(e) =>
-                      setTelefono(e.target.value)
+                      setTelefono(
+                        e.target.value
+                          .replace(/[^\d\s()\-]/g, "")
+                          .slice(0, 20)
+                      )
                     }
-                    autoComplete="tel"
+                    autoComplete="tel-national"
                     inputMode="tel"
-                    placeholder="8888 8888"
+                    placeholder="Número de teléfono"
                     required
                   />
+                  <small style={{ display: "block", marginTop: 6, color: "#6b7280", fontSize: 12 }}>
+                    Selecciona el país del número. Lo validaremos antes de reservar.
+                  </small>
                 </div>
 
                 <button
