@@ -433,23 +433,7 @@ function Ventas() {
     }
   };
 
-  const formatearFecha = (
-    fecha
-  ) => {
-    if (!fecha) {
-      return "";
-    }
-
-    return new Intl.DateTimeFormat(
-      "es-CR",
-      {
-        dateStyle: "short",
-        timeStyle: "short"
-      }
-    ).format(
-      new Date(fecha)
-    );
-  };
+  const formatearFecha = (fecha) => formatearFechaHora(fecha);
 
   if (cargando) {
     return (
