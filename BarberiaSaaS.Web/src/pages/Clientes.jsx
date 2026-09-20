@@ -17,6 +17,8 @@ import api from "../services/api";
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
+  const [paises, setPaises] = useState([]);
+  const [paisPredeterminado, setPaisPredeterminado] = useState("CR");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -28,6 +30,7 @@ function Clientes() {
     nombre: "",
     apellidos: "",
     telefono: "",
+    paisCodigoTelefono: paisPredeterminado,
     email: "",
     fechaNacimiento: "",
     notas: ""
@@ -80,8 +83,13 @@ function Clientes() {
     try {
       setCargando(true);
       setError("");
-      const response = await api.get("/Clientes");
+      const [response, internacionalizacion] = await Promise.all([
+        api.get("/Clientes"),
+        api.get("/Internacionalizacion/paises")
+      ]);
       setClientes(response.data);
+      setPaises(internacionalizacion.data.paises || []);
+      setPaisPredeterminado(internacionalizacion.data.paisPredeterminado || "CR");
     } catch (error) {
       setError(error.response?.data?.mensaje || "No fue posible cargar los clientes.");
     } finally {
@@ -126,6 +134,7 @@ function Clientes() {
       nombre: cliente.nombre || "",
       apellidos: cliente.apellidos || "",
       telefono: cliente.telefono || "",
+      paisCodigoTelefono: cliente.paisCodigoTelefono || paisPredeterminado,
       email: cliente.email || "",
       fechaNacimiento: cliente.fechaNacimiento
         ? cliente.fechaNacimiento.substring(0, 10)
@@ -238,6 +247,14 @@ function Clientes() {
         nombre: nombre || anterior.nombre,
         apellidos: apellidos || anterior.apellidos,
         telefono: telefono || anterior.telefono,
+        paisCodigoTelefono:
+          telefono?.startsWith("+")
+            ? (paises
+                .slice()
+                .sort((a, b) => String(b.codigoTelefonico).length - String(a.codigoTelefonico).length)
+                .find((pais) => telefono.startsWith(`+${pais.codigoTelefonico}`))?.codigo ||
+              anterior.paisCodigoTelefono)
+            : anterior.paisCodigoTelefono,
         email: email || anterior.email
       }));
       setMensaje("Contacto cargado. Revisa los datos antes de guardar.");
@@ -265,6 +282,7 @@ function Clientes() {
       nombre: formulario.nombre.trim(),
       apellidos: formulario.apellidos.trim(),
       telefono: formulario.telefono.trim() || null,
+      paisCodigoTelefono: formulario.paisCodigoTelefono || paisPredeterminado,
       email: formulario.email.trim() || null,
       fechaNacimiento: formulario.fechaNacimiento || null,
       notas: formulario.notas.trim() || null
@@ -449,8 +467,19 @@ function Clientes() {
                     <input type="text" name="apellidos" className="form-control" value={formulario.apellidos} onChange={cambiarCampo} />
                   </div>
                   <div className="col-md-6">
+                    <label className="form-label">País del teléfono</label>
+                    <select name="paisCodigoTelefono" className="form-select" value={formulario.paisCodigoTelefono} onChange={cambiarCampo}>
+                      {paises.map((pais) => (
+                        <option key={pais.codigo} value={pais.codigo}>
+                          {pais.bandera} {pais.nombre} (+{pais.codigoTelefonico})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-6">
                     <label className="form-label">Teléfono</label>
-                    <input type="text" name="telefono" className="form-control" value={formulario.telefono} onChange={cambiarCampo} />
+                    <input type="tel" name="telefono" className="form-control" value={formulario.telefono} onChange={cambiarCampo} placeholder="Número nacional o internacional" />
+                    <div className="form-text">Puedes escoger un país diferente al del negocio.</div>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Correo electrónico</label>
