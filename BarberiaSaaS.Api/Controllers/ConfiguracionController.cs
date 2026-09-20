@@ -34,7 +34,7 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Configuracion.ColorFondo, x.Configuracion.Moneda, x.Configuracion.ZonaHoraria,
                     x.Configuracion.Idioma, x.Configuracion.DuracionSlotMinutos,
                     x.Configuracion.PermitirReservaOnline, x.Configuracion.MostrarPrecios,
-                    x.Configuracion.RecordatorioEmailActivo, x.Configuracion.RecordatorioEmailHorasAntes,
+                    x.Configuracion.RecordatorioEmailActivo, x.Configuracion.RecordatorioWhatsAppActivo, x.Configuracion.RecordatorioEmailHorasAntes,
                     x.Configuracion.RequiereDeposito, x.Configuracion.PorcentajeDeposito,
                     x.Configuracion.Instagram, x.Configuracion.Facebook, x.Configuracion.WhatsApp
                 }
@@ -61,6 +61,7 @@ namespace BarberiaSaaS.Api.Controllers
             tenant.Configuracion ??= new ConfiguracionTenant { TenantId = tenantId };
             var configuracion = tenant.Configuracion;
             var recordatoriosEstabanActivos = configuracion.RecordatorioEmailActivo;
+            var whatsappEstabaActivo = configuracion.RecordatorioWhatsAppActivo;
             var horasAnteriores = configuracion.RecordatorioEmailHorasAntes;
 
             configuracion.LogoUrl = Limpiar(request.LogoUrl); configuracion.FrasePresentacion = Limpiar(request.FrasePresentacion); configuracion.ColorPrimario = request.ColorPrimario.Trim();
@@ -69,6 +70,7 @@ namespace BarberiaSaaS.Api.Controllers
             configuracion.Idioma = string.IsNullOrWhiteSpace(request.Idioma) ? "es" : request.Idioma.Trim().ToLowerInvariant();
             configuracion.DuracionSlotMinutos = request.DuracionSlotMinutos; configuracion.PermitirReservaOnline = request.PermitirReservaOnline;
             configuracion.MostrarPrecios = request.MostrarPrecios; configuracion.RecordatorioEmailActivo = request.RecordatorioEmailActivo;
+            configuracion.RecordatorioWhatsAppActivo = request.RecordatorioWhatsAppActivo;
             configuracion.RecordatorioEmailHorasAntes = request.RecordatorioEmailHorasAntes; configuracion.RequiereDeposito = request.RequiereDeposito;
             configuracion.PorcentajeDeposito = request.RequiereDeposito ? request.PorcentajeDeposito : 0;
             configuracion.Instagram = Limpiar(request.Instagram); configuracion.Facebook = Limpiar(request.Facebook); configuracion.WhatsApp = Limpiar(request.WhatsApp);
@@ -101,8 +103,43 @@ namespace BarberiaSaaS.Api.Controllers
                 }
             }
 
+            var pendientesWhatsApp = await notificaciones.Where(x => x.TenantId == tenantId && x.Canal == CanalesNotificacion.WhatsApp && x.Tipo == TiposNotificacion.RecordatorioCita24H && x.Estado != EstadosNotificacion.Enviada && x.Estado != EstadosNotificacion.Cancelada).ToListAsync();
+
+            if (!request.RecordatorioWhatsAppActivo)
+            {
+                foreach (var n in pendientesWhatsApp) n.Estado = EstadosNotificacion.Cancelada;
+            }
+            else if (!whatsappEstabaActivo || horasAnteriores != request.RecordatorioEmailHorasAntes)
+            {
+                var citasWhatsApp = await _context.Citas.Include(x => x.Cliente).Where(x => x.TenantId == tenantId && x.FechaInicio > DateTime.UtcNow && x.Estado == EstadosCita.Pendiente).ToListAsync();
+                foreach (var cita in citasWhatsApp)
+                {
+                    var telefono = NormalizarTelefonoWhatsApp(cita.Cliente.Telefono);
+                    var programada = cita.FechaInicio.AddHours(-request.RecordatorioEmailHorasAntes);
+                    var existente = pendientesWhatsApp.FirstOrDefault(x => x.CitaId == cita.Id);
+                    if (telefono == null || programada <= DateTime.UtcNow) { if (existente != null) existente.Estado = EstadosNotificacion.Cancelada; continue; }
+                    if (existente != null)
+                    {
+                        existente.Destino = telefono; existente.ProgramadaPara = programada; existente.Estado = EstadosNotificacion.Pendiente;
+                        existente.Intentos = 0; existente.UltimoError = null;
+                    }
+                    else
+                    {
+                        notificaciones.Add(new Notificacion { TenantId = tenantId, CitaId = cita.Id, ClienteId = cita.ClienteId, Canal = CanalesNotificacion.WhatsApp, Tipo = TiposNotificacion.RecordatorioCita24H, Destino = telefono, ProgramadaPara = programada, Estado = EstadosNotificacion.Pendiente, FechaCreacion = DateTime.UtcNow });
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
             return Ok(new { mensaje = "Configuración actualizada correctamente." });
+        }
+
+        private static string? NormalizarTelefonoWhatsApp(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor)) return null;
+            var digits = new string(valor.Where(char.IsDigit).ToArray());
+            if (digits.Length == 8) digits = "506" + digits;
+            return digits.Length is >= 10 and <= 15 ? digits : null;
         }
 
         private static string? Limpiar(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
