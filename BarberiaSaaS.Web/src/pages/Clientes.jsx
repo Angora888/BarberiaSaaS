@@ -189,8 +189,13 @@ function Clientes() {
   const obtenerValorPropiedad = (lineas, propiedad) => {
     const prefijo = propiedad.toUpperCase();
     const linea = lineas.find((item) => {
-      const parteClave = item.split(":")[0]?.toUpperCase();
-      return parteClave === prefijo || parteClave?.startsWith(`${prefijo};`);
+      const parteClave = item.split(":")[0]?.toUpperCase() || "";
+      const nombrePropiedad = parteClave.split(";")[0];
+      const nombreSinGrupo = nombrePropiedad.includes(".")
+        ? nombrePropiedad.substring(nombrePropiedad.lastIndexOf(".") + 1)
+        : nombrePropiedad;
+
+      return nombreSinGrupo === prefijo;
     });
     if (!linea) return "";
     const posicion = linea.indexOf(":");
