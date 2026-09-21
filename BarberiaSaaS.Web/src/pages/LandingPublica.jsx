@@ -283,7 +283,7 @@ function LandingPublica() {
   const locale =
     landing
       ? `${landing?.branding?.idioma === "en" ? "en" : "es"}-${landing?.negocio?.paisCodigo || "CR"}`
-      : locale;
+      : "es-CR";
 
   const moneda = (
     valor
