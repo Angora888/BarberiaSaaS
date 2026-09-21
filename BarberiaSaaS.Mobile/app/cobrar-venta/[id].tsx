@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Venta={id:number;clienteId?:number|null;cliente?:string;total?:number;metodoPago?:string};
 const FALLBACK=["Efectivo","SINPE Movil","Tarjeta","Transferencia"];
 export default function CobrarVenta(){const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
