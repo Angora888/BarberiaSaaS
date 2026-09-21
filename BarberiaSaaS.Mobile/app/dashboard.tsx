@@ -39,7 +39,7 @@ export default function DashboardScreen() {
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");\n  const [sucursales,setSucursales]=useState<any[]>([]);\n  const [sucursalId,setSucursalId]=useState<number|null>(null);\n  const [suscripcion,setSuscripcion]=useState<any>(null);\n  const [fechaCreacion,setFechaCreacion]=useState<string|null>(null);
 
   const fechaHoy = useMemo(() => {
     try {
@@ -64,17 +64,17 @@ export default function DashboardScreen() {
       const desde = `${fechaHoy}T00:00:00`;
       const hasta = `${fechaHoy}T23:59:59`;
 
-      const [rCitas, rClientes, rProfesionales, rResumen] = await Promise.all([
+      const [rCitas, rClientes, rProfesionales, rResumen, rSucursales, rSuscripcion, rConfig] = await Promise.all([
         api.get("/Citas", { params: { desde, hasta } }),
         api.get("/Clientes"),
         api.get("/Profesionales"),
-        api.get("/ResumenFinanciero/diario", { params: { fecha: fechaHoy } })
+        api.get("/ResumenFinanciero/diario", { params: { fecha: fechaHoy, ...(sucursalId ? { sucursalId } : {}) } }),\n        api.get("/Sucursales"),\n        api.get("/paypal/subscription-current"),\n        api.get("/Configuracion")
       ]);
 
       setCitas(Array.isArray(rCitas.data) ? rCitas.data : []);
       setClientes(Array.isArray(rClientes.data) ? rClientes.data : []);
       setProfesionales(Array.isArray(rProfesionales.data) ? rProfesionales.data : []);
-      setResumen(rResumen.data ?? null);
+      setResumen(rResumen.data ?? null);\n      setSucursales(Array.isArray(rSucursales.data)?rSucursales.data:[]);\n      setSuscripcion(rSuscripcion.data??null);\n      setFechaCreacion(rConfig.data?.fechaCreacion??null);
     } catch (e: any) {
       if (e?.response?.status === 401) {
         await cerrarSesion();
@@ -90,7 +90,7 @@ export default function DashboardScreen() {
       setCargando(false);
       setRefrescando(false);
     }
-  }, [fechaHoy]);
+  }, [fechaHoy,sucursalId]);
 
   useEffect(() => {
     obtenerRegional().then(setRegional);
@@ -144,6 +144,9 @@ export default function DashboardScreen() {
             <Text style={styles.logout}>Salir</Text>
           </Pressable>
         </View>
+
+        <View style={styles.branchBox}><Text style={styles.branchLabel}>🏪 Sucursal</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchChoices}><Pressable style={[styles.branchChip,sucursalId===null&&styles.branchChipOn]} onPress={()=>setSucursalId(null)}><Text style={[styles.branchChipText,sucursalId===null&&styles.branchChipTextOn]}>Todas las sucursales</Text></Pressable>{sucursales.filter(x=>x.activa!==false).map(x=><Pressable key={x.id} style={[styles.branchChip,sucursalId===x.id&&styles.branchChipOn]} onPress={()=>setSucursalId(x.id)}><Text style={[styles.branchChipText,sucursalId===x.id&&styles.branchChipTextOn]}>{x.nombre}</Text></Pressable>)}</ScrollView></View>
+        {usuario?.rol!=="SuperAdmin"&&suscripcion?.trialActive?<View style={styles.trialCard}><Text style={styles.trialKicker}>BARBERÍA SAAS</Text><Text style={styles.trialTitle}>Días usando la App: {diasUso(fechaCreacion,regional)}</Text><Text style={styles.trialText}>Te quedan <Text style={styles.trialStrong}>{suscripcion?.trialDaysRemaining??0} días</Text> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</Text><Pressable style={styles.trialButton} onPress={()=>router.push("/mi-suscripcion")}><Text style={styles.trialButtonText}>💳 Activar suscripción</Text></Pressable></View>:null}
 
         <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}><Text style={styles.agendaButtonText}>📅 Abrir agenda</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}><Text style={styles.agendaButtonText}>👥 Clientes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
@@ -219,6 +222,8 @@ export default function DashboardScreen() {
   );
 }
 
+function diasUso(fecha:string|null,r:Regional){if(!fecha)return"—";try{const inicio=new Date(fecha);const parts=(d:Date)=>{const p=new Intl.DateTimeFormat("en-CA",{timeZone:r.zonaHoraria,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);const n=(t:string)=>Number(p.find(x=>x.type===t)?.value);return Date.UTC(n("year"),n("month")-1,n("day"))};return String(Math.max(1,Math.floor((parts(new Date())-parts(inicio))/86400000)+1))}catch{return"—"}}
+
 function MetricCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text><Text style={styles.metricDetail}>{detail}</Text></View>;
 }
@@ -255,7 +260,7 @@ function formatearFecha(fecha: string, regional: Regional) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#f4f6f8" },
-  agendaButton: { marginTop: 22, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  branchBox:{marginTop:20,backgroundColor:"#fff",borderRadius:18,padding:14},branchLabel:{fontSize:12,color:"#64748b",fontWeight:"800",marginBottom:9},branchChoices:{gap:8},branchChip:{backgroundColor:"#f1f5f9",borderRadius:999,paddingHorizontal:13,paddingVertical:8},branchChipOn:{backgroundColor:"#111827"},branchChipText:{color:"#475569",fontWeight:"800",fontSize:12},branchChipTextOn:{color:"#fff"},trialCard:{marginTop:14,backgroundColor:"#fff7fb",borderRadius:22,padding:20,borderWidth:1,borderColor:"#fce7f3"},trialKicker:{color:"#ec2f7b",fontSize:11,fontWeight:"900",letterSpacing:1.2},trialTitle:{fontSize:20,fontWeight:"900",color:"#111827",marginTop:8},trialText:{color:"#64748b",fontSize:15,lineHeight:22,marginTop:7},trialStrong:{fontWeight:"900",color:"#334155"},trialButton:{alignSelf:"flex-start",backgroundColor:"#ec2f7b",borderRadius:14,paddingHorizontal:16,paddingVertical:12,marginTop:14},trialButtonText:{color:"#fff",fontWeight:"900"},\n  agendaButton: { marginTop: 14, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   agendaButtonText: { color: "#111827", fontWeight: "800" },
   clientsButton: { marginTop: 10, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   agendaArrow: { color: "#2563eb", fontSize: 26, lineHeight: 26 },
