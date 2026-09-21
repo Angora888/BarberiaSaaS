@@ -143,7 +143,7 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}><Text style={styles.agendaButtonText}>📅 Abrir agenda</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}><Text style={styles.agendaButtonText}>👥 Clientes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n\n        <View style={styles.titleRow}>
+        <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}><Text style={styles.agendaButtonText}>📅 Abrir agenda</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}><Text style={styles.agendaButtonText}>👥 Clientes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/profesionales")}><Text style={styles.agendaButtonText}>✂️ Profesionales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n\n        <View style={styles.titleRow}>
           <View>
             <Text style={styles.heading}>Hoy</Text>
             <Text style={styles.date}>{formatearFecha(fechaHoy)}</Text>
