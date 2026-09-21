@@ -1,10 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Venta={id:number;clienteId?:number|null;cliente?:string;total?:number;metodoPago?:string};
 const FALLBACK=["Efectivo","SINPE Movil","Tarjeta","Transferencia"];
-export default function CobrarVenta(){const[regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+export default function CobrarVenta(){const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const{id}=useLocalSearchParams<{id:string}>();const[v,setV]=useState<Venta|null>(null),[metodos,setMetodos]=useState<string[]>(FALLBACK),[monto,setMonto]=useState(""),[metodo,setMetodo]=useState("Efectivo"),[notas,setNotas]=useState(""),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState("");
  useEffect(()=>{obtenerRegional().then(setRegional);(async()=>{try{const[a,b]=await Promise.all([api.get(`/Ventas/${id}`),api.get("/Ventas/metodos-pago")]);setV(a.data);setMonto(String(Number(a.data?.total??0)));const ms=Array.isArray(b.data)&&b.data.length?b.data:FALLBACK;setMetodos(ms);setMetodo(a.data?.metodoPago||ms[0])}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible preparar el cobro.")}finally{setLoading(false)}})()},[id]);
  const total=Number(v?.total??0),pagado=Number(monto)||0,saldo=useMemo(()=>Math.max(0,total-pagado),[total,pagado]),tipo=pagado<=0?"Pendiente":pagado<total?"Pago parcial":"Pagado completo";
