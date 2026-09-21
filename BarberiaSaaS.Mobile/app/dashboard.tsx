@@ -10,7 +10,7 @@ import {
   Text,
   View
 } from "react-native";
-import api from "@/src/services/api";
+import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
 import { cerrarSesion, obtenerUsuario, UsuarioSesion } from "@/src/services/session";
 
 type Cita = {
@@ -31,7 +31,7 @@ type ResumenFinanciero = {
 };
 
 export default function DashboardScreen() {
-  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
+  const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});\n  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [profesionales, setProfesionales] = useState<any[]>([]);
@@ -92,7 +92,7 @@ export default function DashboardScreen() {
   }, [fechaHoy]);
 
   useEffect(() => {
-    obtenerUsuario().then((u) => {
+    obtenerRegional().then(setRegional);\n    obtenerUsuario().then((u) => {
       if (!u) {
         router.replace("/login");
         return;
@@ -170,7 +170,7 @@ export default function DashboardScreen() {
 
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Ingresos recibidos hoy</Text>
-          <Text style={styles.heroValue}>{moneda(resumen?.ingresosTotales)}</Text>
+          <Text style={styles.heroValue}>{dinero(resumen?.ingresosTotales,regional)}</Text>
           <Text style={styles.heroDetail}>{resumen?.caja?.cantidadCobros ?? 0} cobro(s) recibido(s)</Text>
         </View>
 
@@ -183,8 +183,8 @@ export default function DashboardScreen() {
 
         <Text style={styles.sectionTitle}>Ingresos</Text>
         <View style={styles.moneyRow}>
-          <MoneyCard label="Servicios" value={moneda(resumen?.servicios?.ingresos)} />
-          <MoneyCard label="Productos" value={moneda(resumen?.productos?.ingresos)} />
+          <MoneyCard label="Servicios" value={dinero(resumen?.servicios?.ingresos,regional)} />
+          <MoneyCard label="Productos" value={dinero(resumen?.productos?.ingresos,regional)} />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -223,10 +223,6 @@ function MetricCard({ label, value, detail }: { label: string; value: string; de
 
 function MoneyCard({ label, value }: { label: string; value: string }) {
   return <View style={styles.moneyCard}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.moneyValue}>{value}</Text></View>;
-}
-
-function moneda(valor?: number) {
-  return new Intl.NumberFormat("es-CR", { style: "currency", currency: "CRC", maximumFractionDigits: 0 }).format(Number(valor ?? 0));
 }
 
 function nombre(persona?: { nombre?: string; apellidos?: string }) {
