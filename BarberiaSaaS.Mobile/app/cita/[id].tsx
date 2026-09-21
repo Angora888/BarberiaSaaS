@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {whatsappUrl} from "@/src/services/phone";import {obtenerUsuario} from "@/src/services/session";import {dinero,fechaHora as fechaRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {whatsappUrl} from "@/src/services/phone";import {obtenerUsuario} from "@/src/services/session";import {dinero,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string;email?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null;sucursal?:{nombre?:string}};
 export default function CitaDetalle(){
  const {id}=useLocalSearchParams<{id:string}>();const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);const[cita,setCita]=useState<Cita|null>(null);const[cuenta,setCuenta]=useState<{id:number;estado:string;saldoPendiente:number}|null>(null);const[error,setError]=useState("");const[actualizando,setActualizando]=useState(false);
