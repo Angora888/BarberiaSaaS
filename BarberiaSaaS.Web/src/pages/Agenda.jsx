@@ -3964,7 +3964,8 @@ function obtenerRangoSemana(
 }
 
 function obtenerDiasSemana(
-  fechaReferencia
+  fechaReferencia,
+  locale = "es-CR"
 ) {
   const rango =
     obtenerRangoSemana(
@@ -4234,7 +4235,8 @@ function normalizarFechaUtc(
 
 function obtenerMinutosCita(
   cita,
-  zonaHoraria
+  zonaHoraria,
+  locale = "es-CR"
 ) {
   if (
     cita.fechaInicioLocal &&
@@ -4450,7 +4452,8 @@ function formatearEstado(estado) {
 
 function obtenerHoraCita(
   cita,
-  zonaHoraria
+  zonaHoraria,
+  locale = "es-CR"
 ) {
   if (
     cita.fechaInicioLocal &&
