@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {telUrl,whatsappUrl} from "@/src/services/phone";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
 type Cita={id:number;fechaInicio?:string;precio?:number;estado?:string;servicio?:{nombre?:string};profesional?:{nombre?:string;apellidos?:string};sucursal?:{nombre?:string}};
 type Historial={cliente?:{id:number;nombre?:string;apellidos?:string;telefono?:string;email?:string;fechaNacimiento?:string;notas?:string;deuda?:number};resumen?:{totalCitas?:number;citasCompletadas?:number;canceladas?:number;noAsistio?:number;totalGastado?:number;deuda?:number};citas?:Cita[]};
 export default function ClienteDetalle(){
@@ -9,11 +9,11 @@ export default function ClienteDetalle(){
  const cargar=useCallback(async(r=false)=>{r?setRefresh(true):setLoading(true);setError("");try{const x=await api.get(`/Clientes/${id}/historial`);setData(x.data??null)}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible cargar el historial del cliente.")}finally{setLoading(false);setRefresh(false)}},[id]);
  useEffect(()=>{obtenerRegional().then(setRegional);cargar()},[cargar]);if(loading)return <SafeAreaView style={s.center}><ActivityIndicator size="large"/><Text style={s.muted}>Cargando cliente...</Text></SafeAreaView>;
  const cl=data?.cliente,r=data?.resumen,citas=data?.citas??[];const full=[cl?.nombre,cl?.apellidos].filter(Boolean).join(" ")||"Cliente";
- const whatsapp=()=>{const phone=String(cl?.telefono??"").replace(/\D/g,"").replace(/^00/,"");if(phone)Linking.openURL(`https://wa.me/${phone}`)};
+ const whatsapp=()=>{const url=whatsappUrl(cl?.telefono);if(url)Linking.openURL(url)};
  return <SafeAreaView style={s.page}><ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refresh} onRefresh={()=>cargar(true)}/>}>
  <Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Clientes</Text></Pressable>{error?<Text style={s.error}>{error}</Text>:null}
  {data?<><View style={s.profile}><View style={s.avatar}><Text style={s.avatarText}>{(cl?.nombre?.[0]??"?").toUpperCase()}</Text></View><Text style={s.title}>{full}</Text><Pressable onPress={()=>router.push({pathname:"/editar-cliente/[id]",params:{id:String(id)}})}><Text style={s.edit}>Editar cliente</Text></Pressable><Text style={s.contact}>{cl?.telefono||"Sin teléfono"}{cl?.email?` · ${cl.email}`:""}</Text>
- <View style={s.actions}>{cl?.telefono?<Pressable style={s.whatsapp} onPress={whatsapp}><Text style={s.whatsappText}>💬 WhatsApp</Text></Pressable>:null}{cl?.telefono?<Pressable style={s.action} onPress={()=>Linking.openURL(`tel:${cl.telefono}`)}><Text style={s.actionText}>📞 Llamar</Text></Pressable>:null}</View></View>
+ <View style={s.actions}>{cl?.telefono?<Pressable style={s.whatsapp} onPress={whatsapp}><Text style={s.whatsappText}>💬 WhatsApp</Text></Pressable>:null}{cl?.telefono?<Pressable style={s.action} onPress={()=>{const url=telUrl(cl.telefono);if(url)Linking.openURL(url)}}><Text style={s.actionText}>📞 Llamar</Text></Pressable>:null}</View></View>
  <Text style={s.section}>Resumen</Text><View style={s.grid}><Metric label="Citas" value={r?.totalCitas??0}/><Metric label="Completadas" value={r?.citasCompletadas??0}/><Metric label="Canceladas" value={r?.canceladas??0}/><Metric label="No asistió" value={r?.noAsistio??0}/></View>
  <View style={s.money}><Text style={s.moneyLabel}>Total gastado</Text><Text style={s.moneyValue}>{dinero(r?.totalGastado,regional)}</Text><Text style={[s.moneyLabel,{marginTop:12}]}>Saldo pendiente</Text><Text style={[s.moneyValue,Number(r?.deuda)>0&&s.debt]}>{dinero(r?.deuda,regional)}</Text></View>
  {cl?.notas?<><Text style={s.section}>Notas</Text><View style={s.box}><Text style={s.notes}>{cl.notas}</Text></View></>:null}
