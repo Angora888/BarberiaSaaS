@@ -148,7 +148,8 @@ export default function DashboardScreen() {
         <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/profesionales")}><Text style={styles.agendaButtonText}>✂️ Profesionales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}><Text style={styles.agendaButtonText}>✨ Servicios</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/sucursales")}><Text style={styles.agendaButtonText}>🏢 Sucursales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/sucursales")}><Text style={styles.agendaButtonText}>🏢 Sucursales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/inventario")}><Text style={styles.agendaButtonText}>📦 Inventario</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/cuentas-por-cobrar")}><Text style={styles.agendaButtonText}>💰 Cuentas por cobrar</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
 
