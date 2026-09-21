@@ -25,7 +25,8 @@ export default function AgendaScreen(){
    }finally{setCargando(false);setRefrescando(false);}
  },[fecha]);
 
- useEffect(()=>{obtenerRegional().then(r=>{setRegional(r);setFecha(x=>x||hoyRegional(r));});},[]);\n useEffect(()=>{if(fecha)cargar();},[cargar,fecha]);
+ useEffect(()=>{obtenerRegional().then(r=>{setRegional(r);setFecha(x=>x||hoyRegional(r));});},[]);
+ useEffect(()=>{if(fecha)cargar();},[cargar,fecha]);
  const activas=useMemo(()=>citas.filter(c=>c.estado!=="Cancelada").sort((a,b)=>timestamp(a)-timestamp(b)),[citas]);
 
  return <SafeAreaView style={s.page}>
