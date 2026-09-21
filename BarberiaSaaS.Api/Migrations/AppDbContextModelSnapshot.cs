@@ -518,6 +518,41 @@ namespace BarberiaSaaS.Migrations
                     b.ToTable("MovimientosInventario");
                 });
 
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.PasswordResetToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaExpiracion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaUso")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId", "FechaExpiracion");
+
+                    b.ToTable("PasswordResetTokens");
+                });
+
             modelBuilder.Entity("BarberiaSaaS.Api.Models.Producto", b =>
                 {
                     b.Property<int>("Id")
@@ -1229,6 +1264,17 @@ namespace BarberiaSaaS.Migrations
                     b.Navigation("Sucursal");
 
                     b.Navigation("Tenant");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.PasswordResetToken", b =>
+                {
+                    b.HasOne("BarberiaSaaS.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Usuario");
                 });
