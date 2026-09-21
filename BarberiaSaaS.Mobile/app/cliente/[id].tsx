@@ -1,11 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {telUrl,whatsappUrl} from "@/src/services/phone";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {telUrl,whatsappUrl} from "@/src/services/phone";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Cita={id:number;fechaInicio?:string;precio?:number;estado?:string;servicio?:{nombre?:string};profesional?:{nombre?:string;apellidos?:string};sucursal?:{nombre?:string}};
 type Historial={cliente?:{id:number;nombre?:string;apellidos?:string;telefono?:string;email?:string;fechaNacimiento?:string;notas?:string;deuda?:number};resumen?:{totalCitas?:number;citasCompletadas?:number;canceladas?:number;noAsistio?:number;totalGastado?:number;deuda?:number};citas?:Cita[]};
 export default function ClienteDetalle(){
- const {id}=useLocalSearchParams<{id:string}>();const[regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"}),[data,setData]=useState<Historial|null>(null),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
+ const {id}=useLocalSearchParams<{id:string}>();const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT),[data,setData]=useState<Historial|null>(null),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
  const cargar=useCallback(async(r=false)=>{r?setRefresh(true):setLoading(true);setError("");try{const x=await api.get(`/Clientes/${id}/historial`);setData(x.data??null)}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible cargar el historial del cliente.")}finally{setLoading(false);setRefresh(false)}},[id]);
  useEffect(()=>{obtenerRegional().then(setRegional);cargar()},[cargar]);if(loading)return <SafeAreaView style={s.center}><ActivityIndicator size="large"/><Text style={s.muted}>Cargando cliente...</Text></SafeAreaView>;
  const cl=data?.cliente,r=data?.resumen,citas=data?.citas??[];const full=[cl?.nombre,cl?.apellidos].filter(Boolean).join(" ")||"Cliente";
