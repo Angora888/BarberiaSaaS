@@ -1,13 +1,13 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaCorta,hoyRegional,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaCorta,hoyRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion } from "@/src/services/session";
 
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null};
 
 export default function AgendaScreen(){
- const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+ const [regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const [fecha,setFecha]=useState("");
  const [citas,setCitas]=useState<Cita[]>([]);
  const [cargando,setCargando]=useState(true);
