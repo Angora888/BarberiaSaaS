@@ -10,7 +10,7 @@ import {
   Text,
   View
 } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion, obtenerUsuario, UsuarioSesion } from "@/src/services/session";
 
 type Cita = {
@@ -31,7 +31,7 @@ type ResumenFinanciero = {
 };
 
 export default function DashboardScreen() {
-  const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+  const [regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
