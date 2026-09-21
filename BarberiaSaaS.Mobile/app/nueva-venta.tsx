@@ -1,10 +1,10 @@
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { obtenerUsuario } from "@/src/services/session";
 type Sucursal={id:number;nombre:string};type Cliente={id:number;nombre:string;apellidos?:string};type Producto={id:number;nombre:string;categoria?:string;codigo?:string;precioVenta?:number;stockTotal?:number;activo?:boolean};type Item={productoId:number;nombre:string;precio:number;stock:number;cantidad:number};
-export default function NuevaVenta(){const[regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+export default function NuevaVenta(){const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const[sucursales,setSucursales]=useState<Sucursal[]>([]),[clientes,setClientes]=useState<Cliente[]>([]),[productos,setProductos]=useState<Producto[]>([]),[metodos,setMetodos]=useState<string[]>([]);
  const[sucursalId,setSucursalId]=useState<number|undefined>(),[clienteId,setClienteId]=useState<number|undefined>(),[metodo,setMetodo]=useState("Efectivo"),[q,setQ]=useState(""),[cq,setCq]=useState(""),[carrito,setCarrito]=useState<Item[]>([]),[descuento,setDescuento]=useState(""),[notas,setNotas]=useState(""),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState("");
  useEffect(()=>{obtenerRegional().then(setRegional);(async()=>{try{const u=await obtenerUsuario();const[a,b,c]=await Promise.all([api.get("/Sucursales"),api.get("/Clientes"),api.get("/Ventas/metodos-pago")]);const ss=a.data??[];setSucursales(ss);setClientes(b.data??[]);setMetodos(c.data??[]);setMetodo(c.data?.[0]??"Efectivo");setSucursalId(u?.sucursalId&&ss.some((x:Sucursal)=>x.id===u.sucursalId)?u.sucursalId:ss.length===1?ss[0].id:undefined)}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible preparar la venta.")}finally{setLoading(false)}})()},[]);
