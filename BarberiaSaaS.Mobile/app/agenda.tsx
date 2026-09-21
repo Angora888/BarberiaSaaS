@@ -6,7 +6,8 @@ import { cerrarSesion } from "@/src/services/session";
 
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null};
 
-export default function AgendaScreen(){\n const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+export default function AgendaScreen(){
+ const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
  const [fecha,setFecha]=useState(hoyCR());
  const [citas,setCitas]=useState<Cita[]>([]);
  const [cargando,setCargando]=useState(true);
