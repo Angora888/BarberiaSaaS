@@ -16,6 +16,7 @@ import {
   FaInstagram,
   FaMapMarkerAlt,
   FaPhoneAlt,
+  FaShareAlt,
   FaWhatsapp
 } from "react-icons/fa";
 
@@ -548,6 +549,34 @@ function LandingPublica() {
           ?.telefono
     );
 
+  const nombreNegocio =
+    landing?.negocio?.nombre ||
+    "Nuestro negocio";
+
+  const compartirLanding = async () => {
+    const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: nombreNegocio,
+          text: `Conoce los servicios y disponibilidad de ${nombreNegocio}.`,
+          url
+        });
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      window.alert("Enlace copiado. ¡Listo para compartir!");
+    } catch {
+      window.prompt("Copia este enlace para compartir:", url);
+    }
+  };
+
   const colores = {
     "--landing-primary":
       landing?.branding
@@ -597,10 +626,6 @@ function LandingPublica() {
     );
   }
 
-  const nombreNegocio =
-    landing.negocio?.nombre ||
-    "Nuestro negocio";
-
   return (
     <div
       className="landing-publica"
@@ -610,6 +635,16 @@ function LandingPublica() {
 
       <header className="landing-hero">
         <div className="landing-hero-overlay" />
+
+        <button
+          type="button"
+          className="landing-share-button"
+          onClick={compartirLanding}
+          aria-label="Compartir esta página"
+        >
+          <FaShareAlt />
+          <span>Compartir</span>
+        </button>
 
         <div className="landing-hero-content">
           {landing.branding
