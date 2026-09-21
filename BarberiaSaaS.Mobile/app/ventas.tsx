@@ -1,10 +1,10 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Venta={id:number;cliente?:string;metodoPago?:string;total?:number;estado?:string;fecha?:string;cantidadProductos?:number};
 export default function VentasMobile(){
- const[regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"}),[ventas,setVentas]=useState<Venta[]>([]),[q,setQ]=useState(""),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
+ const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT),[ventas,setVentas]=useState<Venta[]>([]),[q,setQ]=useState(""),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
  const cargar=useCallback(async(r=false)=>{r?setRefresh(true):setLoading(true);setError("");try{const x=await api.get("/Ventas",{params:{limite:100}});setVentas(Array.isArray(x.data)?x.data:[])}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible cargar las ventas.")}finally{setLoading(false);setRefresh(false)}},[]);
  useEffect(()=>{obtenerRegional().then(setRegional);cargar()},[cargar]);
  const lista=useMemo(()=>{const x=q.trim().toLowerCase();return !x?ventas:ventas.filter(v=>[`#${v.id}`,v.cliente,v.metodoPago,v.estado].filter(Boolean).join(" ").toLowerCase().includes(x))},[ventas,q]);
