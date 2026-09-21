@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";
+import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,Regional} from "@/src/services/regional";
 import { cerrarSesion } from "@/src/services/session";
 
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null};
 
-export default function AgendaScreen(){
+export default function AgendaScreen(){\n const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
  const [fecha,setFecha]=useState(hoyCR());
  const [citas,setCitas]=useState<Cita[]>([]);
  const [cargando,setCargando]=useState(true);
@@ -24,7 +24,7 @@ export default function AgendaScreen(){
    }finally{setCargando(false);setRefrescando(false);}
  },[fecha]);
 
- useEffect(()=>{cargar();},[cargar]);
+ useEffect(()=>{obtenerRegional().then(setRegional);cargar();},[cargar]);
  const activas=useMemo(()=>citas.filter(c=>c.estado!=="Cancelada").sort((a,b)=>timestamp(a)-timestamp(b)),[citas]);
 
  return <SafeAreaView style={s.page}>
@@ -42,7 +42,7 @@ export default function AgendaScreen(){
          <View style={s.body}><View style={s.cardTop}><Text style={s.client}>{nombre(c.cliente)||"Cliente"}</Text><Text style={[s.badge,badgeStyle(c.estado)]}>{estado(c.estado)}</Text></View>
          <Text style={s.service}>{c.servicio?.nombre??"Servicio"}{c.servicioVariante?.nombre?` · ${c.servicioVariante.nombre}`:""}</Text>
          <Text style={s.prof}>✂️ {nombre(c.profesional)||"Profesional"}</Text>
-         {c.precio!=null?<Text style={s.price}>{moneda(c.precio)}</Text>:null}</View>
+         {c.precio!=null?<Text style={s.price}>{dinero(c.precio,regional)}</Text>:null}</View>
        </Pressable>)}
      <Text style={s.hint}>Desliza hacia abajo para actualizar</Text>
    </ScrollView>}
@@ -56,6 +56,5 @@ function hora(c:Cita){const t=timestamp(c);return t?new Intl.DateTimeFormat("es-
 function duracion(c:Cita){if(!c.fechaInicio||!c.fechaFin)return"";const a=timestamp(c);const raw=c.fechaFin;const b=new Date(/Z$|[+-]\d{2}:\d{2}$/.test(raw)?raw:`${raw}Z`).getTime();const min=Math.round((b-a)/60000);return min>0?`${min} min`:"";}
 function nombre(p?:{nombre?:string;apellidos?:string}){return[p?.nombre,p?.apellidos].filter(Boolean).join(" ");}
 function estado(v?:string){return v==="EnProceso"?"En proceso":v==="NoAsistio"?"No asistió":v??"Pendiente";}
-function moneda(v:number){return new Intl.NumberFormat("es-CR",{style:"currency",currency:"CRC",maximumFractionDigits:0}).format(Number(v||0));}
 function badgeStyle(v?:string){if(v==="Completada")return{backgroundColor:"#e8f7ee",color:"#16803d"};if(v==="Confirmada")return{backgroundColor:"#eaf2ff",color:"#2563eb"};if(v==="EnProceso")return{backgroundColor:"#fff4db",color:"#9a6700"};return{backgroundColor:"#f1f5f9",color:"#475569"};}
 const s=StyleSheet.create({page:{flex:1,backgroundColor:"#f4f6f8"},top:{paddingHorizontal:20,paddingTop:14,paddingBottom:10,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},back:{color:"#2563eb",fontWeight:"700"},add:{color:"#2563eb",fontWeight:"800"},title:{fontSize:20,fontWeight:"900",color:"#111827"},dateNav:{marginHorizontal:20,marginBottom:10,backgroundColor:"#fff",borderRadius:20,padding:12,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},navBtn:{width:42,height:42,borderRadius:14,backgroundColor:"#f1f5f9",alignItems:"center",justifyContent:"center"},navText:{fontSize:28,color:"#111827",lineHeight:30},date:{fontSize:17,fontWeight:"900",color:"#111827",textAlign:"center",textTransform:"capitalize"},today:{fontSize:11,color:"#64748b",textAlign:"center",marginTop:2},loading:{flex:1,alignItems:"center",justifyContent:"center",gap:10},content:{padding:20,paddingTop:10,paddingBottom:40},muted:{color:"#64748b"},summary:{backgroundColor:"#111827",borderRadius:20,padding:18,marginBottom:14,flexDirection:"row",justifyContent:"space-around"},summaryNumber:{fontSize:26,fontWeight:"900",color:"#fff",textAlign:"center"},card:{backgroundColor:"#fff",borderRadius:20,padding:16,marginBottom:12,flexDirection:"row"},timeCol:{width:78,paddingRight:12,borderRightWidth:StyleSheet.hairlineWidth,borderRightColor:"#e2e8f0"},time:{fontSize:14,fontWeight:"900",color:"#111827"},duration:{fontSize:11,color:"#94a3b8",marginTop:4},body:{flex:1,paddingLeft:14},cardTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},client:{fontSize:16,fontWeight:"900",color:"#111827",flex:1},badge:{fontSize:10,fontWeight:"800",paddingHorizontal:8,paddingVertical:5,borderRadius:999,overflow:"hidden"},service:{color:"#475569",marginTop:6},prof:{color:"#64748b",fontSize:12,marginTop:5},price:{fontWeight:"900",color:"#111827",marginTop:8},empty:{backgroundColor:"#fff",borderRadius:20,padding:32,alignItems:"center"},emptyIcon:{fontSize:32},emptyTitle:{fontSize:18,fontWeight:"900",color:"#111827",marginTop:8,marginBottom:4},error:{backgroundColor:"#fff1f2",borderRadius:16,padding:15,marginBottom:12},errorText:{color:"#9f1239"},retry:{color:"#2563eb",fontWeight:"800",marginTop:7},hint:{textAlign:"center",color:"#94a3b8",fontSize:11,marginTop:12}});
