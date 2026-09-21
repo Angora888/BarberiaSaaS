@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "@/src/services/api";
-import {dinero,fechaCorta,horaCorta,hoyRegional,obtenerRegional,Regional} from "@/src/services/regional";
+import {dinero,fechaCorta,horaCorta,hoyRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { obtenerUsuario, UsuarioSesion } from "@/src/services/session";
 
 type Item={id:number;nombre:string;apellidos?:string;activo?:boolean;sucursalId?:number;servicios?:{id:number;nombre:string;precio:number}[]};
@@ -12,7 +12,7 @@ type Sucursal={id:number;nombre:string};
 type DisponibilidadDia={fecha:string;diaSemana:number;profesionales:{profesionalId:number;profesionalNombre:string;horas:string[]}[]};
 
 export default function NuevaCita(){
- const[regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+ const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const[usuario,setUsuario]=useState<UsuarioSesion|null>(null);const[clientes,setClientes]=useState<Item[]>([]);const[profesionales,setProfesionales]=useState<Item[]>([]);const[servicios,setServicios]=useState<Servicio[]>([]);const[sucursales,setSucursales]=useState<Sucursal[]>([]);
  const[clienteId,setClienteId]=useState<number>();const[profesionalId,setProfesionalId]=useState<number>();const[servicioId,setServicioId]=useState<number>();const[varianteId,setVarianteId]=useState<number>();const[sucursalId,setSucursalId]=useState<number>();
  const[fecha,setFecha]=useState("");const[hora,setHora]=useState("");const[duracion,setDuracion]=useState("30");const[dias,setDias]=useState<DisponibilidadDia[]>([]);const[cargandoDisponibilidad,setCargandoDisponibilidad]=useState(false);const[notas,setNotas]=useState("");const[busqueda,setBusqueda]=useState("");const[cargando,setCargando]=useState(true);const[guardando,setGuardando]=useState(false);const[error,setError]=useState("");
