@@ -10,7 +10,7 @@ import {
   Text,
   View
 } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion, obtenerUsuario, UsuarioSesion } from "@/src/services/session";
 
 type Cita = {
