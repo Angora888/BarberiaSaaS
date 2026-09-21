@@ -58,6 +58,8 @@ function Profesionales() {
   const [guardando, setGuardando] =
     useState(false);
 
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+
   const [formulario, setFormulario] =
     useState({
       sucursalId: "",
@@ -313,6 +315,24 @@ function Profesionales() {
             : value
       })
     );
+  };
+
+  const subirFotoProfesional = async (archivo) => {
+    if (!archivo) return;
+    try {
+      setSubiendoFoto(true);
+      setError("");
+      const datos = new FormData();
+      datos.append("archivo", archivo);
+      const response = await api.post("/Imagenes/subir", datos, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setFormulario((anterior) => ({ ...anterior, fotoUrl: response.data.url }));
+    } catch (error) {
+      setError(error.response?.data?.mensaje || "No fue posible subir la foto.");
+    } finally {
+      setSubiendoFoto(false);
+    }
   };
 
   const cambiarServicio = (
@@ -1234,20 +1254,27 @@ function Profesionales() {
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label">
-                        URL de foto
-                      </label>
-
+                      <label className="form-label">Foto del profesional</label>
                       <input
-                        name="fotoUrl"
+                        type="file"
                         className="form-control"
-                        value={
-                          formulario.fotoUrl
-                        }
-                        onChange={
-                          cambiarCampo
-                        }
+                        accept="image/jpeg,image/png,image/webp"
+                        disabled={subiendoFoto}
+                        onChange={(e) => subirFotoProfesional(e.target.files?.[0])}
                       />
+                      <div className="form-text">
+                        {subiendoFoto ? "Subiendo foto..." : "JPG, PNG o WEBP · máximo 5 MB"}
+                      </div>
+                      {formulario.fotoUrl && (
+                        <div className="mt-2 d-flex align-items-center gap-3">
+                          <img
+                            src={formulario.fotoUrl}
+                            alt="Vista previa"
+                            style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "50%" }}
+                          />
+                          <span className="small text-success">Foto lista ✓</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-12">

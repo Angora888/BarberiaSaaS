@@ -34,6 +34,7 @@ function Configuracion() {
   const { tenant, configuracion, cargarConfiguracion } = useConfiguracion();
   const [formulario, setFormulario] = useState(formularioInicial);
   const [guardando, setGuardando] = useState(false);
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
@@ -58,6 +59,19 @@ function Configuracion() {
   }, [tenant, configuracion]);
 
   const actualizarCampo = (campo, valor) => setFormulario(actual => ({ ...actual, [campo]: valor }));
+
+  const subirLogo = async (archivo) => {
+    if (!archivo) return;
+    setError(""); setMensaje(""); setSubiendoLogo(true);
+    try {
+      const datos = new FormData(); datos.append("archivo", archivo);
+      const response = await api.post("/Imagenes/subir", datos, { headers: { "Content-Type": "multipart/form-data" } });
+      actualizarCampo("logoUrl", response.data.url);
+      setMensaje("Imagen subida correctamente. Guarda la configuración para aplicar el nuevo logo.");
+    } catch (e) {
+      setError(e.response?.data?.mensaje || "No fue posible subir la imagen.");
+    } finally { setSubiendoLogo(false); }
+  };
 
   const guardar = async (event) => {
     event.preventDefault(); setError(""); setMensaje("");
@@ -97,7 +111,7 @@ function Configuracion() {
           <TextField label="Identificación" value={formulario.identificacion} onChange={v => actualizarCampo("identificacion", v)} />
           <TextField label="Teléfono" value={formulario.telefono} onChange={v => actualizarCampo("telefono", v)} />
           <TextField label="Correo" type="email" value={formulario.email} onChange={v => actualizarCampo("email", v)} />
-          <TextField label="URL del logo" placeholder="https://..." value={formulario.logoUrl} onChange={v => actualizarCampo("logoUrl", v)} />
+          <div className="col-md-6"><label className="form-label">Logo del negocio</label><input type="file" className="form-control" accept="image/jpeg,image/png,image/webp" disabled={subiendoLogo} onChange={e => subirLogo(e.target.files?.[0])} /><small className="text-muted">{subiendoLogo ? "Subiendo imagen..." : "JPG, PNG o WEBP · máximo 5 MB"}</small>{formulario.logoUrl && <div className="mt-2"><a href={formulario.logoUrl} target="_blank" rel="noreferrer" className="small">Ver imagen actual</a></div>}</div>
           <TextField label="Frase de presentación" placeholder="Belleza • Bienestar • Estilo" value={formulario.frasePresentacion} onChange={v => actualizarCampo("frasePresentacion", v)} />
         </div>
       </div>
