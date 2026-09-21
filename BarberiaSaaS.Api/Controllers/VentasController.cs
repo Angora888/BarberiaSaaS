@@ -270,7 +270,7 @@ namespace BarberiaSaaS.Api.Controllers
                         await _context.Clientes
                             .AnyAsync(x =>
                                 x.Id ==
-                                    request.ClienteId.Value &&
+                                    request.ClienteId!.Value &&
                                 x.TenantId ==
                                     tenantId &&
                                 x.Activo);
