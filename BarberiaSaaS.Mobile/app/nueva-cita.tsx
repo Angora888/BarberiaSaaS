@@ -1,0 +1,46 @@
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import api from "@/src/services/api";
+import { obtenerUsuario, UsuarioSesion } from "@/src/services/session";
+
+type Item={id:number;nombre:string;apellidos?:string;activo?:boolean;sucursalId?:number;servicios?:{id:number;nombre:string;precio:number}[]};
+type Variante={id:number;nombre:string;precio:number;activo?:boolean};
+type Servicio={id:number;nombre:string;precio:number;activo?:boolean;variantes?:Variante[]};
+type Sucursal={id:number;nombre:string};
+
+export default function NuevaCita(){
+ const[usuario,setUsuario]=useState<UsuarioSesion|null>(null);const[clientes,setClientes]=useState<Item[]>([]);const[profesionales,setProfesionales]=useState<Item[]>([]);const[servicios,setServicios]=useState<Servicio[]>([]);const[sucursales,setSucursales]=useState<Sucursal[]>([]);
+ const[clienteId,setClienteId]=useState<number>();const[profesionalId,setProfesionalId]=useState<number>();const[servicioId,setServicioId]=useState<number>();const[varianteId,setVarianteId]=useState<number>();const[sucursalId,setSucursalId]=useState<number>();
+ const[fecha,setFecha]=useState(hoyCR());const[hora,setHora]=useState("09:00");const[duracion,setDuracion]=useState("30");const[notas,setNotas]=useState("");const[busqueda,setBusqueda]=useState("");const[cargando,setCargando]=useState(true);const[guardando,setGuardando]=useState(false);const[error,setError]=useState("");
+
+ useEffect(()=>{(async()=>{try{const u=await obtenerUsuario();setUsuario(u);const [c,p,s,su]=await Promise.all([api.get("/Clientes"),api.get("/Profesionales"),api.get("/Servicios"),api.get("/Sucursales")]);setClientes((c.data??[]).filter((x:any)=>x.activo!==false));setProfesionales((p.data??[]).filter((x:any)=>x.activo!==false));setServicios((s.data??[]).filter((x:any)=>x.activo!==false));setSucursales(su.data??[]);const preferred=Number(u?.sucursalId);setSucursalId(preferred||su.data?.[0]?.id);}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible cargar los datos.");}finally{setCargando(false);}})();},[]);
+ const servicio=servicios.find(x=>x.id===servicioId);const variantes=(servicio?.variantes??[]).filter(v=>v.activo!==false);
+ const profesionalesDisponibles=useMemo(()=>profesionales.filter(p=>(!sucursalId||!p.sucursalId||p.sucursalId===sucursalId)&&(!servicioId||p.servicios?.some(s=>s.id===servicioId))),[profesionales,sucursalId,servicioId]);
+ const clientesFiltrados=clientes.filter(c=>nombre(c).toLowerCase().includes(busqueda.toLowerCase())).slice(0,8);
+ useEffect(()=>{if(profesionalId&&!profesionalesDisponibles.some(p=>p.id===profesionalId))setProfesionalId(undefined);},[profesionalId,profesionalesDisponibles]);
+ useEffect(()=>{setVarianteId(undefined);},[servicioId]);
+
+ const guardar=async()=>{setError("");if(!clienteId||!servicioId||!profesionalId||!sucursalId){setError("Selecciona cliente, servicio, profesional y sucursal.");return;}if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)){setError("Usa una hora válida en formato HH:mm.");return;}const mins=Number(duracion);if(!Number.isFinite(mins)||mins<=0){setError("La duración debe ser mayor a 0.");return;}if(variantes.length>0&&!varianteId){setError("Selecciona una variante para este servicio.");return;}
+ setGuardando(true);try{await api.post("/Citas",{clienteId,sucursalId,profesionalId,servicioId,servicioVarianteId:varianteId??null,fechaInicio:`${fecha}T${hora}:00`,duracionMinutos:mins,notas:notas.trim()||null});router.replace("/agenda");}catch(e:any){setError(e?.response?.data?.mensaje??e?.response?.data?.title??"No fue posible crear la cita.");}finally{setGuardando(false);}};
+
+ if(cargando)return <SafeAreaView style={s.loading}><ActivityIndicator size="large"/><Text style={s.muted}>Preparando nueva cita...</Text></SafeAreaView>;
+ return <SafeAreaView style={s.page}><View style={s.top}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Agenda</Text></Pressable><Text style={s.title}>Nueva cita</Text><View style={{width:58}}/></View>
+ <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+ {error?<View style={s.error}><Text style={s.errorText}>{error}</Text></View>:null}
+ <Section title="1. Cliente"><TextInput value={busqueda} onChangeText={setBusqueda} placeholder="Buscar cliente por nombre..." style={s.input}/><View style={s.choices}>{clientesFiltrados.map(c=><Choice key={c.id} selected={clienteId===c.id} text={nombre(c)} onPress={()=>setClienteId(c.id)}/>)}</View></Section>
+ <Section title="2. Sucursal">{sucursales.map(x=><Choice key={x.id} selected={sucursalId===x.id} text={x.nombre} onPress={()=>setSucursalId(x.id)}/>)}</Section>
+ <Section title="3. Servicio"><View style={s.choices}>{servicios.map(x=><Choice key={x.id} selected={servicioId===x.id} text={`${x.nombre} · ${moneda(x.precio)}`} onPress={()=>setServicioId(x.id)}/>)}</View>{variantes.length>0?<><Text style={s.sub}>Variante</Text><View style={s.choices}>{variantes.map(v=><Choice key={v.id} selected={varianteId===v.id} text={`${v.nombre} · ${moneda(v.precio)}`} onPress={()=>setVarianteId(v.id)}/>)}</View></>:null}</Section>
+ <Section title="4. Profesional">{profesionalesDisponibles.length?profesionalesDisponibles.map(p=><Choice key={p.id} selected={profesionalId===p.id} text={nombre(p)} onPress={()=>setProfesionalId(p.id)}/>):<Text style={s.muted}>Selecciona primero un servicio compatible.</Text>}</Section>
+ <Section title="5. Fecha y hora"><Text style={s.label}>Fecha (AAAA-MM-DD)</Text><TextInput value={fecha} onChangeText={setFecha} style={s.input} placeholder="2026-09-21"/><Text style={s.label}>Hora (24 h)</Text><TextInput value={hora} onChangeText={setHora} style={s.input} placeholder="14:30"/><Text style={s.label}>Duración en minutos</Text><TextInput value={duracion} onChangeText={setDuracion} keyboardType="number-pad" style={s.input}/></Section>
+ <Section title="6. Notas"><TextInput value={notas} onChangeText={setNotas} placeholder="Opcional" multiline style={[s.input,s.notes]}/></Section>
+ <Pressable disabled={guardando} onPress={guardar} style={[s.save,guardando&&s.disabled]}>{guardando?<ActivityIndicator color="#fff"/>:<Text style={s.saveText}>Crear cita</Text>}</Pressable>
+ <Text style={s.hint}>La API validará horario, almuerzo, bloqueos y choques antes de guardar.</Text>
+ </ScrollView></SafeAreaView>;
+}
+function Section({title,children}:{title:string;children:any}){return <View style={s.card}><Text style={s.section}>{title}</Text>{children}</View>}
+function Choice({selected,text,onPress}:{selected:boolean;text:string;onPress:()=>void}){return <Pressable onPress={onPress} style={[s.choice,selected&&s.choiceSelected]}><Text style={[s.choiceText,selected&&s.choiceTextSelected]}>{selected?"✓ ":""}{text}</Text></Pressable>}
+function nombre(x?:{nombre?:string;apellidos?:string}){return[x?.nombre,x?.apellidos].filter(Boolean).join(" ")}
+function moneda(v:number){return new Intl.NumberFormat("es-CR",{style:"currency",currency:"CRC",maximumFractionDigits:0}).format(Number(v||0))}
+function hoyCR(){try{const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Costa_Rica",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v=(t:string)=>p.find(x=>x.type===t)?.value;return `${v("year")}-${v("month")}-${v("day")}`;}catch{return new Date().toISOString().slice(0,10)}}
+const s=StyleSheet.create({page:{flex:1,backgroundColor:"#f4f6f8"},loading:{flex:1,alignItems:"center",justifyContent:"center",gap:10,backgroundColor:"#f4f6f8"},muted:{color:"#64748b"},top:{padding:20,paddingTop:14,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},back:{color:"#2563eb",fontWeight:"700"},title:{fontSize:19,fontWeight:"900",color:"#111827"},content:{padding:20,paddingTop:4,paddingBottom:40},card:{backgroundColor:"#fff",borderRadius:20,padding:18,marginBottom:14},section:{fontSize:17,fontWeight:"900",color:"#111827",marginBottom:12},sub:{fontSize:13,fontWeight:"800",color:"#475569",marginTop:14,marginBottom:8},label:{fontSize:12,fontWeight:"700",color:"#64748b",marginBottom:6,marginTop:8},input:{backgroundColor:"#f8fafc",borderWidth:1,borderColor:"#e2e8f0",borderRadius:14,paddingHorizontal:14,paddingVertical:12,color:"#111827",marginBottom:8},notes:{minHeight:90,textAlignVertical:"top"},choices:{gap:8},choice:{borderWidth:1,borderColor:"#e2e8f0",borderRadius:14,padding:13,marginBottom:8},choiceSelected:{borderColor:"#2563eb",backgroundColor:"#eff6ff"},choiceText:{color:"#334155",fontWeight:"600"},choiceTextSelected:{color:"#1d4ed8",fontWeight:"800"},error:{backgroundColor:"#fff1f2",borderRadius:16,padding:15,marginBottom:14},errorText:{color:"#9f1239"},save:{backgroundColor:"#111827",borderRadius:18,padding:17,alignItems:"center"},disabled:{opacity:.6},saveText:{color:"#fff",fontWeight:"900",fontSize:16},hint:{textAlign:"center",color:"#94a3b8",fontSize:11,lineHeight:17,marginTop:12}});
