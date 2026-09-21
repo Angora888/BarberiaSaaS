@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { obtenerUsuario } from "@/src/services/session";
 type Sucursal={id:number;nombre:string};type Cliente={id:number;nombre:string;apellidos?:string};type Producto={id:number;nombre:string;categoria?:string;codigo?:string;precioVenta?:number;stockTotal?:number;activo?:boolean};type Item={productoId:number;nombre:string;precio:number;stock:number;cantidad:number};
 export default function NuevaVenta(){const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
