@@ -1,14 +1,14 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaHora as fechaRegional,obtenerRegional,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,fechaCorta,hoyRegional,obtenerRegional,Regional} from "@/src/services/regional";
 import { cerrarSesion } from "@/src/services/session";
 
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null};
 
 export default function AgendaScreen(){
  const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
- const [fecha,setFecha]=useState(hoyCR());
+ const [fecha,setFecha]=useState("");
  const [citas,setCitas]=useState<Cita[]>([]);
  const [cargando,setCargando]=useState(true);
  const [refrescando,setRefrescando]=useState(false);
@@ -25,13 +25,13 @@ export default function AgendaScreen(){
    }finally{setCargando(false);setRefrescando(false);}
  },[fecha]);
 
- useEffect(()=>{obtenerRegional().then(setRegional);cargar();},[cargar]);
+ useEffect(()=>{obtenerRegional().then(r=>{setRegional(r);setFecha(x=>x||hoyRegional(r));});},[]);\n useEffect(()=>{if(fecha)cargar();},[cargar,fecha]);
  const activas=useMemo(()=>citas.filter(c=>c.estado!=="Cancelada").sort((a,b)=>timestamp(a)-timestamp(b)),[citas]);
 
  return <SafeAreaView style={s.page}>
    <View style={s.top}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Dashboard</Text></Pressable><Text style={s.title}>Agenda</Text><Pressable onPress={()=>router.push("/nueva-cita")}><Text style={s.add}>＋ Nueva</Text></Pressable></View>
    <View style={s.dateNav}><Pressable style={s.navBtn} onPress={()=>setFecha(mover(fecha,-1))}><Text style={s.navText}>‹</Text></Pressable>
-     <Pressable onPress={()=>setFecha(hoyCR())}><Text style={s.date}>{fechaLarga(fecha)}</Text><Text style={s.today}>{fecha===hoyCR()?"Hoy":"Tocar para volver a hoy"}</Text></Pressable>
+     <Pressable onPress={()=>setFecha(hoyRegional(regional))}><Text style={s.date}>{fechaCorta(fecha,regional)}</Text><Text style={s.today}>{fecha===hoyRegional(regional)?"Hoy":"Tocar para volver a hoy"}</Text></Pressable>
      <Pressable style={s.navBtn} onPress={()=>setFecha(mover(fecha,1))}><Text style={s.navText}>›</Text></Pressable></View>
    {cargando?<View style={s.loading}><ActivityIndicator size="large"/><Text style={s.muted}>Cargando agenda...</Text></View>:
    <ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refrescando} onRefresh={()=>cargar(true)}/>}>
@@ -39,7 +39,7 @@ export default function AgendaScreen(){
      <View style={s.summary}><View><Text style={s.summaryNumber}>{activas.length}</Text><Text style={s.muted}>citas activas</Text></View><View><Text style={s.summaryNumber}>{activas.filter(c=>c.estado==="Completada").length}</Text><Text style={s.muted}>completadas</Text></View></View>
      {activas.length===0?<View style={s.empty}><Text style={s.emptyIcon}>📅</Text><Text style={s.emptyTitle}>Día libre</Text><Text style={s.muted}>No hay citas activas para esta fecha.</Text></View>:
        activas.map(c=><Pressable key={c.id} style={s.card} onPress={()=>router.push({pathname:"/cita/[id]",params:{id:String(c.id)}})}>
-         <View style={s.timeCol}><Text style={s.time}>{hora(c)}</Text><Text style={s.duration}>{duracion(c)}</Text></View>
+         <View style={s.timeCol}><Text style={s.time}>{hora(c,regional)}</Text><Text style={s.duration}>{duracion(c)}</Text></View>
          <View style={s.body}><View style={s.cardTop}><Text style={s.client}>{nombre(c.cliente)||"Cliente"}</Text><Text style={[s.badge,badgeStyle(c.estado)]}>{estado(c.estado)}</Text></View>
          <Text style={s.service}>{c.servicio?.nombre??"Servicio"}{c.servicioVariante?.nombre?` · ${c.servicioVariante.nombre}`:""}</Text>
          <Text style={s.prof}>✂️ {nombre(c.profesional)||"Profesional"}</Text>
@@ -49,11 +49,9 @@ export default function AgendaScreen(){
    </ScrollView>}
  </SafeAreaView>;
 }
-function hoyCR(){try{const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Costa_Rica",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v=(t:string)=>p.find(x=>x.type===t)?.value;return `${v("year")}-${v("month")}-${v("day")}`;}catch{return new Date().toISOString().slice(0,10);}}
 function mover(f:string,d:number){const [y,m,day]=f.split("-").map(Number);const x=new Date(y,m-1,day+d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;}
-function fechaLarga(f:string){const[y,m,d]=f.split("-").map(Number);return new Intl.DateTimeFormat("es-CR",{weekday:"short",day:"numeric",month:"short"}).format(new Date(y,m-1,d));}
 function timestamp(c:Cita){if(!c.fechaInicio)return 0;const v=/Z$|[+-]\d{2}:\d{2}$/.test(c.fechaInicio)?c.fechaInicio:`${c.fechaInicio}Z`;return new Date(v).getTime();}
-function hora(c:Cita){const t=timestamp(c);return t?new Intl.DateTimeFormat("es-CR",{timeZone:"America/Costa_Rica",hour:"numeric",minute:"2-digit",hour12:true}).format(new Date(t)):"--:--";}
+function hora(c:Cita,r:Regional){const t=timestamp(c);return t?new Intl.DateTimeFormat(r.locale,{timeZone:r.zonaHoraria,hour:"numeric",minute:"2-digit"}).format(new Date(t)):"--:--";}
 function duracion(c:Cita){if(!c.fechaInicio||!c.fechaFin)return"";const a=timestamp(c);const raw=c.fechaFin;const b=new Date(/Z$|[+-]\d{2}:\d{2}$/.test(raw)?raw:`${raw}Z`).getTime();const min=Math.round((b-a)/60000);return min>0?`${min} min`:"";}
 function nombre(p?:{nombre?:string;apellidos?:string}){return[p?.nombre,p?.apellidos].filter(Boolean).join(" ");}
 function estado(v?:string){return v==="EnProceso"?"En proceso":v==="NoAsistio"?"No asistió":v??"Pendiente";}
