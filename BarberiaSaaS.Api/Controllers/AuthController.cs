@@ -420,6 +420,113 @@ namespace BarberiaSaaS.Api.Controllers
         }
 
         // =========================================================
+        // RECUPERAR CONTRASEÑA
+        // =========================================================
+
+        [HttpPost("solicitar-recuperacion-password")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> SolicitarRecuperacionPassword(
+            SolicitarRecuperacionPasswordDto request)
+        {
+            const string mensajeGenerico =
+                "Si existe una cuenta asociada a ese correo, recibirás un enlace para restablecer tu contraseña.";
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return Ok(new { mensaje = mensajeGenerico });
+
+            var email = request.Email.Trim().ToLowerInvariant();
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(x => x.Email.ToLower() == email && x.Activo);
+
+            if (usuario == null)
+                return Ok(new { mensaje = mensajeGenerico });
+
+            var ahora = DateTime.UtcNow;
+            var tokensAnteriores = await _context.PasswordResetTokens
+                .Where(x => x.UsuarioId == usuario.Id && x.FechaUso == null)
+                .ToListAsync();
+
+            foreach (var anterior in tokensAnteriores)
+                anterior.FechaUso = ahora;
+
+            var tokenPlano = GenerarTokenConfirmacion();
+            _context.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                UsuarioId = usuario.Id,
+                TokenHash = CalcularSha256(tokenPlano),
+                FechaCreacion = ahora,
+                FechaExpiracion = ahora.AddMinutes(30)
+            });
+            await _context.SaveChangesAsync();
+
+            var frontendUrl = _configuration["App:FrontendUrl"]
+                ?? "https://barberiasaas.vercel.app";
+            var enlace = $"{frontendUrl.TrimEnd('/')}/restablecer-password/{Uri.EscapeDataString(tokenPlano)}";
+            var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
+            var html = $"""
+                <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
+                  <h1 style="color:#111827">Restablece tu contraseña</h1>
+                  <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para cambiar tu contraseña de Barbería SaaS.</p>
+                  <p style="margin:32px 0">
+                    <a href="{enlace}" style="background:#111827;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Crear nueva contraseña</a>
+                  </p>
+                  <p>Este enlace vence en <strong>30 minutos</strong> y solo puede utilizarse una vez.</p>
+                  <p style="color:#6b7280;font-size:13px">Si no solicitaste este cambio, ignora este correo. Tu contraseña actual seguirá funcionando.</p>
+                </div>
+                """;
+
+            try
+            {
+                var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
+                await emailService.EnviarAsync(
+                    usuario.Email,
+                    "Barbería SaaS",
+                    "Restablece tu contraseña de Barbería SaaS",
+                    html);
+            }
+            catch
+            {
+                // La respuesta permanece genérica para no revelar cuentas registradas.
+            }
+
+            return Ok(new { mensaje = mensajeGenerico });
+        }
+
+        [HttpPost("restablecer-password")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> RestablecerPassword(
+            RestablecerPasswordDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Token) ||
+                string.IsNullOrWhiteSpace(request.NuevaPassword))
+                return BadRequest(new { mensaje = "El enlace o la nueva contraseña no son válidos." });
+
+            if (request.NuevaPassword.Length < 8)
+                return BadRequest(new { mensaje = "La contraseña debe tener al menos 8 caracteres." });
+
+            var ahora = DateTime.UtcNow;
+            var tokenHash = CalcularSha256(request.Token.Trim());
+            var token = await _context.PasswordResetTokens
+                .Include(x => x.Usuario)
+                .FirstOrDefaultAsync(x => x.TokenHash == tokenHash);
+
+            if (token == null || token.FechaUso.HasValue || token.FechaExpiracion < ahora)
+                return BadRequest(new { mensaje = "El enlace de recuperación no es válido o ya expiró." });
+
+            token.Usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NuevaPassword);
+            token.FechaUso = ahora;
+
+            var otrosTokens = await _context.PasswordResetTokens
+                .Where(x => x.UsuarioId == token.UsuarioId && x.Id != token.Id && x.FechaUso == null)
+                .ToListAsync();
+            foreach (var otro in otrosTokens)
+                otro.FechaUso = ahora;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Tu contraseña fue actualizada correctamente." });
+        }
+
+        // =========================================================
         // TURNSTILE
         // =========================================================
 

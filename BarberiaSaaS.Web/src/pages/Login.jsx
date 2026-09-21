@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 const WHATSAPP_ADMIN = "50660662375";
@@ -370,7 +370,7 @@ function Login() {
               />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-2">
               <label className="form-label login-form-label">
                 Contraseña
               </label>
@@ -387,6 +387,8 @@ function Login() {
                 required
               />
             </div>
+
+            <div className="text-end mb-4"><Link to="/olvide-password" className="text-decoration-none">¿Olvidaste tu contraseña?</Link></div>
 
             <button
               type="submit"

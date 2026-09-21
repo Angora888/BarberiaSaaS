@@ -19,6 +19,8 @@ import LandingPublica from "./pages/LandingPublica";
 import ManualPublico from "./pages/ManualPublico";
 import Prueba from "./pages/Prueba";
 import ConfirmarRegistro from "./pages/ConfirmarRegistro";
+import OlvidePassword from "./pages/OlvidePassword";
+import RestablecerPassword from "./pages/RestablecerPassword";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
@@ -72,6 +74,8 @@ function App() {
       <Route path="/confirmarcreacion/:token" element={<ConfirmarRegistro />} />
       <Route path="/negocio/:slug" element={<><LandingPublica /><ReservaPublicaSidecar /></>} />
       <Route path="/login" element={<Login />} />
+      <Route path="/olvide-password" element={<OlvidePassword />} />
+      <Route path="/restablecer-password/:token" element={<RestablecerPassword />} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
         <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
