@@ -31,7 +31,8 @@ type ResumenFinanciero = {
 };
 
 export default function DashboardScreen() {
-  const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});\n  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
+  const [regional,setRegional]=useState<Regional>({moneda:"CRC",zonaHoraria:"America/Costa_Rica",idioma:"es",locale:"es-CR"});
+  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [profesionales, setProfesionales] = useState<any[]>([]);
@@ -43,7 +44,7 @@ export default function DashboardScreen() {
   const fechaHoy = useMemo(() => {
     try {
       const partes = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/Costa_Rica",
+        timeZone: regional.zonaHoraria,
         year: "numeric",
         month: "2-digit",
         day: "2-digit"
@@ -53,7 +54,7 @@ export default function DashboardScreen() {
     } catch {
       return new Date().toISOString().slice(0, 10);
     }
-  }, []);
+  }, [regional.zonaHoraria]);
 
   const cargarDashboard = useCallback(async (esRefresh = false) => {
     esRefresh ? setRefrescando(true) : setCargando(true);
@@ -92,7 +93,8 @@ export default function DashboardScreen() {
   }, [fechaHoy]);
 
   useEffect(() => {
-    obtenerRegional().then(setRegional);\n    obtenerUsuario().then((u) => {
+    obtenerRegional().then(setRegional);
+    obtenerUsuario().then((u) => {
       if (!u) {
         router.replace("/login");
         return;
@@ -156,7 +158,7 @@ export default function DashboardScreen() {
         <View style={styles.titleRow}>
           <View>
             <Text style={styles.heading}>Hoy</Text>
-            <Text style={styles.date}>{formatearFecha(fechaHoy)}</Text>
+            <Text style={styles.date}>{formatearFecha(fechaHoy,regional)}</Text>
           </View>
           <View style={styles.livePill}><Text style={styles.liveText}>● En vivo</Text></View>
         </View>
@@ -198,7 +200,7 @@ export default function DashboardScreen() {
           ) : (
             proximas.map((cita, index) => (
               <View key={cita.id} style={[styles.appointment, index === proximas.length - 1 && styles.last]}>
-                <View style={styles.timeBox}><Text style={styles.time}>{horaCita(cita)}</Text></View>
+                <View style={styles.timeBox}><Text style={styles.time}>{horaCita(cita,regional)}</Text></View>
                 <View style={styles.appointmentBody}>
                   <Text style={styles.client}>{nombre(cita.cliente) || "Cliente"}</Text>
                   <Text style={styles.appointmentDetail}>
@@ -235,10 +237,10 @@ function fechaCita(cita: Cita) {
   return new Date(value).getTime();
 }
 
-function horaCita(cita: Cita) {
+function horaCita(cita: Cita, regional: Regional) {
   const timestamp = fechaCita(cita);
   if (!timestamp) return "--:--";
-  return new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat(regional.locale, { timeZone: regional.zonaHoraria, hour: "numeric", minute: "2-digit" }).format(new Date(timestamp));
 }
 
 function estado(valor?: string) {
@@ -246,9 +248,9 @@ function estado(valor?: string) {
   return valor ?? "Pendiente";
 }
 
-function formatearFecha(fecha: string) {
+function formatearFecha(fecha: string, regional: Regional) {
   const [y, m, d] = fecha.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-CR", { weekday: "long", day: "numeric", month: "long" }).format(new Date(y, m - 1, d));
+  return new Intl.DateTimeFormat(regional.locale, { weekday: "long", day: "numeric", month: "long" }).format(new Date(y, m - 1, d));
 }
 
 const styles = StyleSheet.create({
