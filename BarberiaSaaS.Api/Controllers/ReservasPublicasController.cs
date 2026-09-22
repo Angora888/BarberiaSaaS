@@ -15,15 +15,18 @@ namespace BarberiaSaaS.Api.Controllers
         private readonly AppDbContext _context;
         private readonly ITimeZoneService _timeZoneService;
         private readonly IInternacionalizacionService _internacionalizacion;
+        private readonly IPushNotificationService _push;
 
         public ReservasPublicasController(
             AppDbContext context,
             ITimeZoneService timeZoneService,
-            IInternacionalizacionService internacionalizacion)
+            IInternacionalizacionService internacionalizacion,
+            IPushNotificationService push)
         {
             _context = context;
             _timeZoneService = timeZoneService;
             _internacionalizacion = internacionalizacion;
+            _push = push;
         }
 
         [HttpPost]
@@ -319,6 +322,12 @@ namespace BarberiaSaaS.Api.Controllers
             _context.Citas.Add(cita);
 
             await _context.SaveChangesAsync();
+
+            await _push.EnviarTenantAsync(
+                tenantId,
+                "📅 Nueva cita",
+                $"{request.NombreCompleto.Trim()} reservó {servicio.Nombre} para {inicioLocal:dd/MM/yyyy HH:mm}.",
+                new { tipo = "nueva_cita", citaId = cita.Id });
 
             return Ok(new
             {
