@@ -231,7 +231,8 @@ function EnviarDisponibilidadClientes() {
                 Number(formulario.profesionalId)
             )
           : null,
-        nombreNegocio
+        nombreNegocio,
+        locale
       );
 
       const telefono =
