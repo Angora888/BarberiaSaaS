@@ -1,0 +1,2 @@
+namespace BarberiaSaaS.Api.Models;
+public class PushToken { public int Id {get;set;} public int TenantId {get;set;} public int UsuarioId {get;set;} public string Token {get;set;}=string.Empty; public string Plataforma {get;set;}=string.Empty; public bool Activo {get;set;}=true; public DateTime FechaActualizacion {get;set;}=DateTime.UtcNow; public Tenant Tenant {get;set;}=null!; public Usuario Usuario {get;set;}=null!; }
