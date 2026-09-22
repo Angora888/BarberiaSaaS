@@ -349,7 +349,14 @@ function Ventas() {
       return;
     }
 
-    if (!clienteId) {\n      setError(\n        "Selecciona un cliente para registrar la venta."\n      );\n      return;\n    }\n\n    if (carrito.length === 0) {
+    if (!clienteId) {
+      setError(
+        "Selecciona un cliente para registrar la venta."
+      );
+      return;
+    }
+
+    if (carrito.length === 0) {
       setError(
         "Agrega al menos un producto a la venta."
       );
