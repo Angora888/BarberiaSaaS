@@ -349,6 +349,13 @@ function Ventas() {
       return;
     }
 
+    if (!clienteId) {
+      setError(
+        "Selecciona un cliente para registrar la venta."
+      );
+      return;
+    }
+
     if (carrito.length === 0) {
       setError(
         "Agrega al menos un producto a la venta."
@@ -715,7 +722,7 @@ function Ventas() {
 
               <div className="mb-3">
                 <label className="form-label">
-                  Cliente opcional
+                  Cliente *
                 </label>
 
                 <select
