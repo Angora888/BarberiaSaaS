@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "@/src/services/api";
 import { guardarSesion } from "@/src/services/session";
+import { registrarPushNotifications } from "@/src/services/push";
 
 export default function LoginScreen() {
   const [email,setEmail]=useState("");
@@ -16,6 +17,11 @@ export default function LoginScreen() {
     try{
       const {data}=await api.post("/Auth/login",{email:email.trim(),password});
       await guardarSesion(data.token,data.usuario);
+      try {
+        await registrarPushNotifications();
+      } catch (pushError) {
+        console.warn("No fue posible registrar push:", pushError);
+      }
       router.replace("/dashboard");
     }catch(err:any){
       setError(err?.response?.data?.mensaje ?? "No fue posible iniciar sesión.");

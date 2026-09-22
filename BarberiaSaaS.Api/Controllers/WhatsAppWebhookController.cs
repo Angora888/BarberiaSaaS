@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.Models;
+using BarberiaSaaS.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +16,11 @@ public sealed class WhatsAppWebhookController : ControllerBase
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
     private readonly ILogger<WhatsAppWebhookController> _logger;
+    private readonly IPushNotificationService _push;
 
-    public WhatsAppWebhookController(AppDbContext db, IConfiguration config, ILogger<WhatsAppWebhookController> logger)
+    public WhatsAppWebhookController(AppDbContext db, IConfiguration config, ILogger<WhatsAppWebhookController> logger, IPushNotificationService push)
     {
-        _db = db; _config = config; _logger = logger;
+        _db = db; _config = config; _logger = logger; _push = push;
     }
 
     [HttpGet]
@@ -55,12 +57,14 @@ public sealed class WhatsAppWebhookController : ControllerBase
                         if (payloadBoton == null || !payloadBoton.StartsWith("confirmar_cita:", StringComparison.Ordinal)) continue;
                         if (!int.TryParse(payloadBoton["confirmar_cita:".Length..], out var citaId)) continue;
 
-                        var cita = await _db.Citas.FirstOrDefaultAsync(x => x.Id == citaId, ct);
+                        var cita = await _db.Citas.Include(x => x.Cliente).Include(x => x.Servicio).FirstOrDefaultAsync(x => x.Id == citaId, ct);
                         if (cita != null && cita.Estado == EstadosCita.Pendiente)
                         {
                             cita.Estado = EstadosCita.Confirmada;
                             await _db.SaveChangesAsync(ct);
                             _logger.LogInformation("Cita {CitaId} confirmada desde WhatsApp.", citaId);
+                            var cliente = $"{cita.Cliente.Nombre} {cita.Cliente.Apellidos}".Trim();
+                            await _push.EnviarTenantAsync(cita.TenantId, "✅ Cita confirmada", $"{cliente} confirmó su cita de {cita.Servicio.Nombre}.", new { tipo = "cita_confirmada", citaId = cita.Id }, ct);
                         }
                     }
                 }

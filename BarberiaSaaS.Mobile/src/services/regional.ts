@@ -26,11 +26,15 @@ export async function obtenerRegional(force=false):Promise<Regional>{
 export function limpiarRegional(){cache=null}
 
 export function dinero(v:number|undefined,r:Regional){
- try{return new Intl.NumberFormat(r.locale,{style:"currency",currency:r.moneda}).format(Number(v??0))}
- catch{return `${r.moneda} ${Number(v??0).toFixed(2)}`}
+ const n=Number(v??0);
+ const simbolos:Record<string,string>={CRC:"₡",USD:"$",GTQ:"Q",HNL:"L",NIO:"C$",PAB:"B/.",BZD:"BZ$",SVC:"$"};
+ try{
+  const numero=new Intl.NumberFormat(r.locale,{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+  return `${simbolos[r.moneda]??r.moneda} ${numero}`;
+ }catch{return `${simbolos[r.moneda]??r.moneda} ${n.toFixed(2)}`}
 }
 
-export function fechaHora(v:string|undefined,r:Regional,opts:Intl.DateTimeFormatOptions={dateStyle:"medium",timeStyle:"short"}){
+export function fechaHora(v:string|undefined,r:Regional,opts:Intl.DateTimeFormatOptions={day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",hour12:true}){
  if(!v)return"Sin fecha";
  const z=/Z$|[+-]\d{2}:\d{2}$/.test(v)?v:`${v}Z`;
  try{return new Intl.DateTimeFormat(r.locale,{timeZone:r.zonaHoraria,...opts}).format(new Date(z))}
@@ -53,6 +57,15 @@ export function fechaCorta(v:string,r:Regional){
 
 export function horaCorta(v:string,r:Regional){
  const[h,m]=v.split(":").map(Number);
- try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit"}).format(new Date(2000,0,1,h,m))}
+ try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit",hour12:true}).format(new Date(2000,0,1,h,m))}
  catch{return v}
+}
+
+export function duracionCorta(minutos:number|undefined|null){
+ const total=Math.max(0,Math.round(Number(minutos??0)));
+ if(!total)return"";
+ const h=Math.floor(total/60),m=total%60;
+ if(h&&m)return `${h}h ${m} min`;
+ if(h)return `${h}h`;
+ return `${m} min`;
 }
