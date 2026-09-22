@@ -39,7 +39,11 @@ export default function DashboardScreen() {
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
-  const [error, setError] = useState("");\n  const [sucursales,setSucursales]=useState<any[]>([]);\n  const [sucursalId,setSucursalId]=useState<number|null>(null);\n  const [suscripcion,setSuscripcion]=useState<any>(null);\n  const [fechaCreacion,setFechaCreacion]=useState<string|null>(null);
+  const [error, setError] = useState("");
+  const [sucursales,setSucursales]=useState<any[]>([]);
+  const [sucursalId,setSucursalId]=useState<number|null>(null);
+  const [suscripcion,setSuscripcion]=useState<any>(null);
+  const [fechaCreacion,setFechaCreacion]=useState<string|null>(null);
 
   const fechaHoy = useMemo(() => {
     try {
@@ -68,13 +72,19 @@ export default function DashboardScreen() {
         api.get("/Citas", { params: { desde, hasta } }),
         api.get("/Clientes"),
         api.get("/Profesionales"),
-        api.get("/ResumenFinanciero/diario", { params: { fecha: fechaHoy, ...(sucursalId ? { sucursalId } : {}) } }),\n        api.get("/Sucursales"),\n        api.get("/paypal/subscription-current"),\n        api.get("/Configuracion")
+        api.get("/ResumenFinanciero/diario", { params: { fecha: fechaHoy, ...(sucursalId ? { sucursalId } : {}) } }),
+        api.get("/Sucursales"),
+        api.get("/paypal/subscription-current"),
+        api.get("/Configuracion")
       ]);
 
       setCitas(Array.isArray(rCitas.data) ? rCitas.data : []);
       setClientes(Array.isArray(rClientes.data) ? rClientes.data : []);
       setProfesionales(Array.isArray(rProfesionales.data) ? rProfesionales.data : []);
-      setResumen(rResumen.data ?? null);\n      setSucursales(Array.isArray(rSucursales.data)?rSucursales.data:[]);\n      setSuscripcion(rSuscripcion.data??null);\n      setFechaCreacion(rConfig.data?.fechaCreacion??null);
+      setResumen(rResumen.data ?? null);
+      setSucursales(Array.isArray(rSucursales.data)?rSucursales.data:[]);
+      setSuscripcion(rSuscripcion.data??null);
+      setFechaCreacion(rConfig.data?.fechaCreacion??null);
     } catch (e: any) {
       if (e?.response?.status === 401) {
         await cerrarSesion();
@@ -153,7 +163,9 @@ export default function DashboardScreen() {
         <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/profesionales")}><Text style={styles.agendaButtonText}>✂️ Profesionales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}><Text style={styles.agendaButtonText}>✨ Servicios</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/reportes")}><Text style={styles.agendaButtonText}>📊 Reportes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/mi-suscripcion")}><Text style={styles.agendaButtonText}>💎 Mi suscripción</Text><Text style={styles.agendaArrow}>›</Text></Pressable>\n        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/reportes")}><Text style={styles.agendaButtonText}>📊 Reportes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/mi-suscripcion")}><Text style={styles.agendaButtonText}>💎 Mi suscripción</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/sucursales")}><Text style={styles.agendaButtonText}>🏢 Sucursales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/inventario")}><Text style={styles.agendaButtonText}>📦 Inventario</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
         <Pressable style={styles.clientsButton} onPress={() => router.push("/cuentas-por-cobrar")}><Text style={styles.agendaButtonText}>💰 Cuentas por cobrar</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
@@ -260,7 +272,8 @@ function formatearFecha(fecha: string, regional: Regional) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#f4f6f8" },
-  branchBox:{marginTop:20,backgroundColor:"#fff",borderRadius:18,padding:14},branchLabel:{fontSize:12,color:"#64748b",fontWeight:"800",marginBottom:9},branchChoices:{gap:8},branchChip:{backgroundColor:"#f1f5f9",borderRadius:999,paddingHorizontal:13,paddingVertical:8},branchChipOn:{backgroundColor:"#111827"},branchChipText:{color:"#475569",fontWeight:"800",fontSize:12},branchChipTextOn:{color:"#fff"},trialCard:{marginTop:14,backgroundColor:"#fff7fb",borderRadius:22,padding:20,borderWidth:1,borderColor:"#fce7f3"},trialKicker:{color:"#ec2f7b",fontSize:11,fontWeight:"900",letterSpacing:1.2},trialTitle:{fontSize:20,fontWeight:"900",color:"#111827",marginTop:8},trialText:{color:"#64748b",fontSize:15,lineHeight:22,marginTop:7},trialStrong:{fontWeight:"900",color:"#334155"},trialButton:{alignSelf:"flex-start",backgroundColor:"#ec2f7b",borderRadius:14,paddingHorizontal:16,paddingVertical:12,marginTop:14},trialButtonText:{color:"#fff",fontWeight:"900"},\n  agendaButton: { marginTop: 14, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  branchBox:{marginTop:20,backgroundColor:"#fff",borderRadius:18,padding:14},branchLabel:{fontSize:12,color:"#64748b",fontWeight:"800",marginBottom:9},branchChoices:{gap:8},branchChip:{backgroundColor:"#f1f5f9",borderRadius:999,paddingHorizontal:13,paddingVertical:8},branchChipOn:{backgroundColor:"#111827"},branchChipText:{color:"#475569",fontWeight:"800",fontSize:12},branchChipTextOn:{color:"#fff"},trialCard:{marginTop:14,backgroundColor:"#fff7fb",borderRadius:22,padding:20,borderWidth:1,borderColor:"#fce7f3"},trialKicker:{color:"#ec2f7b",fontSize:11,fontWeight:"900",letterSpacing:1.2},trialTitle:{fontSize:20,fontWeight:"900",color:"#111827",marginTop:8},trialText:{color:"#64748b",fontSize:15,lineHeight:22,marginTop:7},trialStrong:{fontWeight:"900",color:"#334155"},trialButton:{alignSelf:"flex-start",backgroundColor:"#ec2f7b",borderRadius:14,paddingHorizontal:16,paddingVertical:12,marginTop:14},trialButtonText:{color:"#fff",fontWeight:"900"},
+  agendaButton: { marginTop: 14, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   agendaButtonText: { color: "#111827", fontWeight: "800" },
   clientsButton: { marginTop: 10, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   agendaArrow: { color: "#2563eb", fontSize: 26, lineHeight: 26 },
