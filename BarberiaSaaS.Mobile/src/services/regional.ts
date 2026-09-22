@@ -34,7 +34,7 @@ export function dinero(v:number|undefined,r:Regional){
  }catch{return `${simbolos[r.moneda]??r.moneda} ${n.toFixed(2)}`}
 }
 
-export function fechaHora(v:string|undefined,r:Regional,opts:Intl.DateTimeFormatOptions={dateStyle:"medium",timeStyle:"short"}){
+export function fechaHora(v:string|undefined,r:Regional,opts:Intl.DateTimeFormatOptions={day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",hour12:true}){
  if(!v)return"Sin fecha";
  const z=/Z$|[+-]\d{2}:\d{2}$/.test(v)?v:`${v}Z`;
  try{return new Intl.DateTimeFormat(r.locale,{timeZone:r.zonaHoraria,...opts}).format(new Date(z))}
@@ -57,7 +57,7 @@ export function fechaCorta(v:string,r:Regional){
 
 export function horaCorta(v:string,r:Regional){
  const[h,m]=v.split(":").map(Number);
- try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit"}).format(new Date(2000,0,1,h,m))}
+ try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit",hour12:true}).format(new Date(2000,0,1,h,m))}
  catch{return v}
 }
 
