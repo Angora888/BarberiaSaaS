@@ -735,7 +735,7 @@ function Ventas() {
                   }
                 >
                   <option value="">
-                    Venta sin cliente
+                    Seleccionar cliente
                   </option>
 
                   {clientes.map(
