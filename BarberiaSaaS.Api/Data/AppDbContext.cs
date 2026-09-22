@@ -20,6 +20,8 @@ namespace BarberiaSaaS.Api.Data
 
         public DbSet<Usuario> Usuarios => Set<Usuario>();
 
+        public DbSet<PushToken> PushTokens => Set<PushToken>();
+
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
         public DbSet<Profesional> Profesionales => Set<Profesional>();
@@ -158,6 +160,17 @@ namespace BarberiaSaaS.Api.Data
                     .WithMany(x => x.Usuarios)
                     .HasForeignKey(x => x.SucursalId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<PushToken>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Token).IsRequired().HasMaxLength(300);
+                entity.Property(x => x.Plataforma).HasMaxLength(30);
+                entity.HasIndex(x => x.Token).IsUnique();
+                entity.HasIndex(x => new { x.TenantId, x.UsuarioId });
+                entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<PasswordResetToken>(entity =>
