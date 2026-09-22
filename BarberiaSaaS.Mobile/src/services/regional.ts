@@ -26,8 +26,12 @@ export async function obtenerRegional(force=false):Promise<Regional>{
 export function limpiarRegional(){cache=null}
 
 export function dinero(v:number|undefined,r:Regional){
- try{return new Intl.NumberFormat(r.locale,{style:"currency",currency:r.moneda}).format(Number(v??0))}
- catch{return `${r.moneda} ${Number(v??0).toFixed(2)}`}
+ const n=Number(v??0);
+ const simbolos:Record<string,string>={CRC:"₡",USD:"$",GTQ:"Q",HNL:"L",NIO:"C$",PAB:"B/.",BZD:"BZ$",SVC:"$"};
+ try{
+  const numero=new Intl.NumberFormat(r.locale,{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+  return `${simbolos[r.moneda]??r.moneda} ${numero}`;
+ }catch{return `${simbolos[r.moneda]??r.moneda} ${n.toFixed(2)}`}
 }
 
 export function fechaHora(v:string|undefined,r:Regional,opts:Intl.DateTimeFormatOptions={dateStyle:"medium",timeStyle:"short"}){
