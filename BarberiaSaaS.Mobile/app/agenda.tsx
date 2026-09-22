@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import api from "@/src/services/api";import {dinero,fechaCorta,hoyRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
+import api from "@/src/services/api";import {dinero,duracionCorta,fechaCorta,hoyRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion } from "@/src/services/session";
 
 type Cita={id:number;fechaInicio?:string;fechaFin?:string;fechaInicioLocal?:string;precio?:number;estado?:string;notas?:string;cliente?:{nombre?:string;apellidos?:string;telefono?:string};profesional?:{nombre?:string;apellidos?:string};servicio?:{nombre?:string};servicioVariante?:{nombre?:string}|null};
@@ -58,7 +58,7 @@ function mover(f:string,d:number){const[y,m,day]=f.split("-").map(Number),x=new 
 function timestamp(c:Cita){if(!c.fechaInicio)return 0;const v=/Z$|[+-]\d{2}:\d{2}$/.test(c.fechaInicio)?c.fechaInicio:`${c.fechaInicio}Z`;return new Date(v).getTime()}
 function fechaLocalCita(c:Cita,r:Regional){if(c.fechaInicioLocal?.includes("T"))return c.fechaInicioLocal.slice(0,10);const t=timestamp(c);if(!t)return"";try{const p=new Intl.DateTimeFormat("en-CA",{timeZone:r.zonaHoraria,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(t)),v=(k:string)=>p.find(x=>x.type===k)?.value;return `${v("year")}-${v("month")}-${v("day")}`}catch{return""}}
 function hora(c:Cita,r:Regional){if(c.fechaInicioLocal?.includes("T")){const raw=c.fechaInicioLocal.slice(11,16),[h,m]=raw.split(":").map(Number);try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit"}).format(new Date(2000,0,1,h,m))}catch{return raw}}const t=timestamp(c);return t?new Intl.DateTimeFormat(r.locale,{timeZone:r.zonaHoraria,hour:"numeric",minute:"2-digit"}).format(new Date(t)):"--:--"}
-function duracion(c:Cita){if(!c.fechaInicio||!c.fechaFin)return"";const a=timestamp(c),raw=c.fechaFin,b=new Date(/Z$|[+-]\d{2}:\d{2}$/.test(raw)?raw:`${raw}Z`).getTime(),min=Math.round((b-a)/60000);return min>0?`${min} min`:""}
+function duracion(c:Cita){if(!c.fechaInicio||!c.fechaFin)return"";const a=timestamp(c),raw=c.fechaFin,b=new Date(/Z$|[+-]\d{2}:\d{2}$/.test(raw)?raw:`${raw}Z`).getTime(),min=Math.round((b-a)/60000);return min>0?duracionCorta(min):""}
 function etiquetaSemana(a:string,b:string,r:Regional){if(!a||!b)return"";return `${fechaCorta(a,r)} – ${fechaCorta(b,r)}`}
 function nombre(p?:{nombre?:string;apellidos?:string}){return[p?.nombre,p?.apellidos].filter(Boolean).join(" ")}
 function estado(v?:string){return v==="EnProceso"?"En proceso":v==="NoAsistio"?"No asistió":v??"Pendiente"}
