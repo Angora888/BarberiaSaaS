@@ -60,3 +60,12 @@ export function horaCorta(v:string,r:Regional){
  try{return new Intl.DateTimeFormat(r.locale,{hour:"numeric",minute:"2-digit"}).format(new Date(2000,0,1,h,m))}
  catch{return v}
 }
+
+export function duracionCorta(minutos:number|undefined|null){
+ const total=Math.max(0,Math.round(Number(minutos??0)));
+ if(!total)return"";
+ const h=Math.floor(total/60),m=total%60;
+ if(h&&m)return `${h}h ${m} min`;
+ if(h)return `${h}h`;
+ return `${m} min`;
+}
