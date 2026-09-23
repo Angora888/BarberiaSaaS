@@ -7,6 +7,7 @@ import Clientes from "./pages/Clientes";
 import Servicios from "./pages/Servicios";
 import Profesionales from "./pages/Profesionales";
 import Agenda from "./pages/Agenda";
+import ImportarCitas from "./pages/ImportarCitas";
 import Productos from "./pages/Productos";
 import Ventas from "./pages/Ventas";
 import Reportes from "./pages/Reportes";
@@ -82,6 +83,7 @@ function App() {
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/profesionales" element={<><Profesionales /><HorariosProfesionalEditor /></>} />
         <Route path="/agenda" element={<><Agenda /><AgendaAvailabilityFeedback /><AgendaQuickTimeSelection /><AgendaCobroCompletada /><AgendaWhatsAppFormato12 /><EditarCitaSidecar /></>} />
+        <Route path="/agenda/importar" element={<ImportarCitas />} />
         <Route path="/productos" element={<Productos />} />
         <Route path="/ventas" element={<><Ventas /><VentaCobroCompletada /></>} />
         <Route path="/cuentas-por-cobrar" element={<CuentasPorCobrar />} />
