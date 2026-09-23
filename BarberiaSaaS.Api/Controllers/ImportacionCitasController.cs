@@ -303,12 +303,13 @@ namespace BarberiaSaaS.Api.Controllers
 
                 if (columnas == null)
                 {
-                    var encabezados = valores.ToDictionary(
-                        x => NormalizarTexto(x.Value),
-                        x => ColumnaAIndice(x.Key),
-                        StringComparer.OrdinalIgnoreCase);
-
                     var requeridos = new[] { "fecha", "hora inicio", "hora fin", "cliente", "celular", "servicio" };
+                    var encabezados = valores
+                        .Select(x => new { Nombre = NormalizarTexto(x.Value), Indice = ColumnaAIndice(x.Key) })
+                        .Where(x => requeridos.Contains(x.Nombre, StringComparer.OrdinalIgnoreCase))
+                        .GroupBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(x => x.Key, x => x.First().Indice, StringComparer.OrdinalIgnoreCase);
+
                     if (requeridos.All(encabezados.ContainsKey))
                     {
                         columnas = encabezados;
@@ -431,8 +432,19 @@ namespace BarberiaSaaS.Api.Controllers
         private static string LimpiarTelefono(string valor)
         {
             if (string.IsNullOrWhiteSpace(valor)) return "";
-            var limpio = new string(valor.Where(c => char.IsDigit(c) || c == '+').ToArray());
-            return limpio.StartsWith("+") ? "+" + new string(limpio.Skip(1).Where(char.IsDigit).ToArray()) : limpio;
+
+            var digitos = new string(valor.Where(char.IsDigit).ToArray());
+
+            // Excel suele quitar el signo + cuando el teléfono se escribe como número.
+            // Para Costa Rica aceptamos 506XXXXXXXX y lo normalizamos a +506XXXXXXXX.
+            if (digitos.Length == 11 && digitos.StartsWith("506"))
+                return "+" + digitos;
+
+            // Si el usuario sí escribió el +, conservamos cualquier número internacional válido.
+            if (valor.TrimStart().StartsWith("+"))
+                return "+" + digitos;
+
+            return digitos;
         }
 
         private static string NormalizarTexto(string valor)
