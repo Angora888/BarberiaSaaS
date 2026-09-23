@@ -10,6 +10,7 @@ function ImportarCitas() {
   const [profesionales, setProfesionales] = useState([]);
   const [sucursalId, setSucursalId] = useState("");
   const [profesionalId, setProfesionalId] = useState("");
+  const [estado, setEstado] = useState("Confirmada");
   const [resultado, setResultado] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -54,6 +55,7 @@ function ImportarCitas() {
     form.append("archivo", archivo);
     form.append("sucursalId", sucursalId);
     form.append("profesionalId", profesionalId);
+    form.append("estado", estado);
     return form;
   };
 
@@ -164,6 +166,21 @@ function ImportarCitas() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="col-12 col-lg-4">
+                <label className="form-label fw-semibold">Estado de las citas</label>
+                <select
+                  className="form-select"
+                  value={estado}
+                  onChange={(e) => { setEstado(e.target.value); setResultado(null); }}
+                >
+                  <option value="Confirmada">Confirmadas</option>
+                  <option value="Pendiente">Pendientes</option>
+                </select>
+                <div className="form-text">
+                  Pendientes: enviarán el recordatorio para confirmar. Confirmadas: no enviarán recordatorio por WhatsApp.
+                </div>
               </div>
 
               <div className="col-12 col-lg-4">

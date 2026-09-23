@@ -53,6 +53,10 @@ namespace BarberiaSaaS.Api.Controllers
         public async Task<IActionResult> Importar([FromForm] ImportarCitasRequest request)
         {
             var tenantId = _tenantContext.TenantId;
+            var estadoImportacion = NormalizarEstadoImportacion(request.Estado);
+            if (estadoImportacion == null)
+                return BadRequest(new { mensaje = "Selecciona un estado válido: Pendiente o Confirmada." });
+
             var resultado = await PrepararAsync(request);
 
             if (resultado.ErrorGeneral != null)
@@ -124,7 +128,7 @@ namespace BarberiaSaaS.Api.Controllers
                     FechaFin = finUtc,
                     DuracionMinutos = fila.DuracionMinutos,
                     Precio = fila.Precio,
-                    Estado = EstadosCita.Confirmada,
+                    Estado = estadoImportacion,
                     Notas = "Importada desde Excel.",
                     FechaCreacion = DateTime.UtcNow
                 });
@@ -447,6 +451,17 @@ namespace BarberiaSaaS.Api.Controllers
             return digitos;
         }
 
+        private static string? NormalizarEstadoImportacion(string? estado)
+        {
+            if (string.Equals(estado, EstadosCita.Pendiente, StringComparison.OrdinalIgnoreCase))
+                return EstadosCita.Pendiente;
+
+            if (string.Equals(estado, EstadosCita.Confirmada, StringComparison.OrdinalIgnoreCase))
+                return EstadosCita.Confirmada;
+
+            return null;
+        }
+
         private static string NormalizarTexto(string valor)
         {
             var texto = (valor ?? "").Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
@@ -484,6 +499,7 @@ namespace BarberiaSaaS.Api.Controllers
             public IFormFile? Archivo { get; set; }
             public int SucursalId { get; set; }
             public int ProfesionalId { get; set; }
+            public string Estado { get; set; } = EstadosCita.Confirmada;
         }
 
         private class FilaImportacion
