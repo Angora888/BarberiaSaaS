@@ -92,6 +92,38 @@ function formatearFecha(fechaTexto, locale) {
   );
 }
 
+function normalizarHoraReserva(hora) {
+  const valor = String(hora || "").trim();
+
+  const formato24 = valor.match(/^(\d{1,2}):(\d{2})$/);
+  if (formato24) {
+    const horas = Number(formato24[1]);
+    const minutos = Number(formato24[2]);
+
+    if (horas >= 0 && horas <= 23 && minutos >= 0 && minutos <= 59) {
+      return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+    }
+  }
+
+  const formato12 = valor.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!formato12) {
+    return valor;
+  }
+
+  let horas = Number(formato12[1]);
+  const minutos = Number(formato12[2]);
+  const periodo = formato12[3].toUpperCase();
+
+  if (horas < 1 || horas > 12 || minutos < 0 || minutos > 59) {
+    return valor;
+  }
+
+  if (periodo === "AM" && horas === 12) horas = 0;
+  if (periodo === "PM" && horas !== 12) horas += 12;
+
+  return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+}
+
 function formatearHora12(hora) {
   const match = String(hora || "").match(
     /^(\d{1,2}):(\d{2})$/
@@ -324,7 +356,7 @@ function ReservaPublicaSidecar() {
           servicioId: Number(reserva.servicio.id),
           profesionalId: Number(reserva.profesional.id),
           fecha: `${reserva.fecha}T00:00:00`,
-          horaInicio: reserva.hora,
+          horaInicio: normalizarHoraReserva(reserva.hora),
           duracionMinutos: Number(
             reserva.duracionMinutos
           )

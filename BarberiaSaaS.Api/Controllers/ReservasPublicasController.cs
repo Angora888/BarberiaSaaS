@@ -60,7 +60,7 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            if (!TimeSpan.TryParse(request.HoraInicio, out var horaInicio))
+            if (!TryParseHoraReserva(request.HoraInicio, out var horaInicio))
             {
                 return BadRequest(new
                 {
@@ -366,6 +366,41 @@ namespace BarberiaSaaS.Api.Controllers
                 partes[0],
                 string.Join(" ", partes.Skip(1)));
         }
+
+        private static bool TryParseHoraReserva(string? valor, out TimeSpan hora)
+        {
+            hora = default;
+
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            var formatos = new[]
+            {
+                "H:mm",
+                "HH:mm",
+                "H:mm:ss",
+                "HH:mm:ss",
+                "h:mm tt",
+                "hh:mm tt"
+            };
+
+            if (DateTime.TryParseExact(
+                    valor.Trim(),
+                    formatos,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AllowWhiteSpaces,
+                    out var fechaHora))
+            {
+                hora = fechaHora.TimeOfDay;
+                return true;
+            }
+
+            return TimeSpan.TryParse(
+                valor.Trim(),
+                System.Globalization.CultureInfo.InvariantCulture,
+                out hora);
+        }
+
     }
 
     public class CrearReservaPublicaDto
@@ -378,5 +413,7 @@ namespace BarberiaSaaS.Api.Controllers
         public DateTime Fecha { get; set; }
         public string HoraInicio { get; set; } = string.Empty;
         public int DuracionMinutos { get; set; }
+
+
     }
 }
