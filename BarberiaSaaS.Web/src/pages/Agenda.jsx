@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaBell,
   FaCalendarAlt,
@@ -6,6 +7,7 @@ import {
   FaChevronRight,
   FaClock,
   FaList,
+  FaFileImport,
   FaPlus,
   FaThLarge,
   FaTimes,
@@ -20,6 +22,8 @@ import AgendaSemanaCompacta from "../components/AgendaSemanaCompacta";
 import "./Agenda.css";
 
 function Agenda() {
+  const navigate = useNavigate();
+
   const {
     formatearMoneda,
     zonaHoraria,
@@ -2294,6 +2298,15 @@ function Agenda() {
             </div>
 
           )}
+
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={() => navigate("/agenda/importar")}
+          >
+            <FaFileImport className="me-2" />
+            Importar
+          </button>
 
           <button
             className="btn btn-primary"
