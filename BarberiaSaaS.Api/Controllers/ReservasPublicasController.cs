@@ -366,18 +366,7 @@ namespace BarberiaSaaS.Api.Controllers
                 partes[0],
                 string.Join(" ", partes.Skip(1)));
         }
-    }
 
-    public class CrearReservaPublicaDto
-    {
-        public string NombreCompleto { get; set; } = string.Empty;
-        public string Telefono { get; set; } = string.Empty;
-        public string? PaisCodigoTelefono { get; set; }
-        public int ServicioId { get; set; }
-        public int ProfesionalId { get; set; }
-        public DateTime Fecha { get; set; }
-        public string HoraInicio { get; set; } = string.Empty;
-        public int DuracionMinutos { get; set; }
         private static bool TryParseHoraReserva(string? valor, out TimeSpan hora)
         {
             hora = default;
@@ -411,6 +400,19 @@ namespace BarberiaSaaS.Api.Controllers
                 System.Globalization.CultureInfo.InvariantCulture,
                 out hora);
         }
+
+    }
+
+    public class CrearReservaPublicaDto
+    {
+        public string NombreCompleto { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public string? PaisCodigoTelefono { get; set; }
+        public int ServicioId { get; set; }
+        public int ProfesionalId { get; set; }
+        public DateTime Fecha { get; set; }
+        public string HoraInicio { get; set; } = string.Empty;
+        public int DuracionMinutos { get; set; }
 
 
     }
