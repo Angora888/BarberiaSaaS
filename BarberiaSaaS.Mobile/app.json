@@ -4,7 +4,7 @@
     "slug": "barberiasaas-mobile",
     "scheme": "barberiasaas",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
