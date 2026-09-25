@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Linking, Modal, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "@/src/services/api";
 import { fechaCorta, horaCorta, obtenerRegional, REGIONAL_DEFAULT, Regional } from "@/src/services/regional";
 
@@ -10,6 +11,7 @@ type Profesional={id:number;nombre:string;apellidos?:string;activo?:boolean;serv
 type Dia={fecha:string;profesionales:{profesionalId:number;horas:string[]}[]};
 
 export default function ClientesScreen(){
+ const insets=useSafeAreaInsets();
  const [regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const [clientes,setClientes]=useState<Cliente[]>([]),[servicios,setServicios]=useState<Servicio[]>([]),[profesionales,setProfesionales]=useState<Profesional[]>([]);
  const [q,setQ]=useState(""),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
@@ -28,7 +30,7 @@ export default function ClientesScreen(){
   {error?<Text style={s.error}>{error}</Text>:null}
   <View style={s.card}>{lista.length?lista.map((c,i)=><Pressable key={c.id} onPress={()=>router.push(`/cliente/${c.id}`)} style={[s.row,i===lista.length-1&&s.last]}><View style={s.avatar}><Text style={s.avatarText}>{(c.nombre?.[0]??"?").toUpperCase()}</Text></View><View style={s.body}><Text style={s.name}>{[c.nombre,c.apellidos].filter(Boolean).join(" ")}</Text><Text style={s.detail}>{c.telefono||c.email||"Sin datos de contacto"}</Text>{Number(c.deuda)>0?<Text style={s.debt}>Saldo pendiente: {money(c.deuda)}</Text>:null}</View><Text style={s.chevron}>›</Text></Pressable>):<Text style={s.empty}>No encontramos clientes.</Text>}</View>
  </ScrollView>
- <View style={s.availabilityBar}><Pressable style={s.waBtn} onPress={()=>{setError("");setClienteId(undefined);setServicioId(undefined);setProfesionalId(undefined);setHoras("1");setMinutos("0");setModal(true)}}><Text style={s.waText}>💬 Enviar disponibilidad</Text></Pressable></View>
+ <View style={[s.availabilityBar,{paddingBottom:Math.max(insets.bottom,12)}]}><Pressable style={s.waBtn} onPress={()=>{setError("");setClienteId(undefined);setServicioId(undefined);setProfesionalId(undefined);setHoras("1");setMinutos("0");setModal(true)}}><Text style={s.waText}>💬 Enviar disponibilidad</Text></Pressable></View>
  <Modal visible={modal} animationType="slide" presentationStyle="pageSheet" onRequestClose={()=>setModal(false)}><SafeAreaView style={s.modalPage}><ScrollView contentContainerStyle={s.modalContent}><View style={s.modalHead}><Text style={s.modalTitle}>Enviar disponibilidad</Text><Pressable onPress={()=>setModal(false)}><Text style={s.close}>✕</Text></Pressable></View><Text style={s.muted}>Consulta los próximos 15 días y abre WhatsApp con los horarios disponibles.</Text>
  <Text style={s.label}>Cliente *</Text><View style={s.choices}>{clientes.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")).map(x=><Choice key={x.id} selected={clienteId===x.id} text={`${x.nombre} ${x.apellidos??""}${x.telefono?` · ${x.telefono}`:" · sin teléfono"}`} onPress={()=>setClienteId(x.id)}/>)}</View>
  <Text style={s.label}>Servicio *</Text><View style={s.choices}>{servicios.map(x=><Choice key={x.id} selected={servicioId===x.id} text={x.nombre} onPress={()=>{setServicioId(x.id);setProfesionalId(undefined)}}/>)}</View>
