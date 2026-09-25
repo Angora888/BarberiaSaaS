@@ -4,7 +4,13 @@ import * as Notifications from "expo-notifications";
 import api from "./api";
 
 export async function registrarPushNotifications() {
-  if (!Constants.isDevice) return;
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "General",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+    });
+  }
 
   const actual = (await Notifications.getPermissionsAsync()) as any;
   let status = actual?.status;
@@ -21,9 +27,7 @@ export async function registrarPushNotifications() {
     Constants.easConfig?.projectId;
 
   if (!projectId) {
-    console.warn(
-      "EAS projectId no configurado; push se activará al preparar el development build."
-    );
+    console.warn("EAS projectId no configurado; no se pudo registrar push.");
     return;
   }
 
@@ -33,6 +37,6 @@ export async function registrarPushNotifications() {
 
   await api.post("/push-tokens", {
     token,
-    plataforma: Platform.OS
+    plataforma: Platform.OS,
   });
 }
