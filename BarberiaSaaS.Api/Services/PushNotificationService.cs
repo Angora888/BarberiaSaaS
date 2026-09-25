@@ -39,7 +39,7 @@ public sealed class ExpoPushNotificationService : IPushNotificationService
                 return;
             }
 
-            _logger.LogInformation("Expo Push: enviando {TokenCount} notificación(es) para tenant {TenantId}.", tokens.Count, tenantId);
+            _logger.LogWarning("Expo Push DIAGNOSTIC: enviando {TokenCount} notificación(es) para tenant {TenantId}.", tokens.Count, tenantId);
 
             var mensajes = tokens.Select(token => new
             {
@@ -63,8 +63,8 @@ public sealed class ExpoPushNotificationService : IPushNotificationService
                 return;
             }
 
-            _logger.LogInformation(
-                "Expo Push respondió HTTP {StatusCode} para tenant {TenantId}. Body: {ResponseBody}",
+            _logger.LogWarning(
+                "Expo Push DIAGNOSTIC: respondió HTTP {StatusCode} para tenant {TenantId}. Body: {ResponseBody}",
                 (int)response.StatusCode,
                 tenantId,
                 responseBody);
