@@ -6,13 +6,15 @@ import api from "./api";
 export async function registrarPushNotifications() {
   if (!Constants.isDevice) return;
 
-  let permisos = await Notifications.getPermissionsAsync();
+  const actual = (await Notifications.getPermissionsAsync()) as any;
+  let status = actual?.status;
 
-  if (!permisos.granted) {
-    permisos = await Notifications.requestPermissionsAsync();
+  if (status !== "granted") {
+    const solicitado = (await Notifications.requestPermissionsAsync()) as any;
+    status = solicitado?.status;
   }
 
-  if (!permisos.granted) return;
+  if (status !== "granted") return;
 
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ??
