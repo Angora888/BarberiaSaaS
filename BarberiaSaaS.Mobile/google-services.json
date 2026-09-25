@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "387127653753",
+    "project_id": "barberiasaas-12a92",
+    "storage_bucket": "barberiasaas-12a92.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:387127653753:android:9501449ca390284bdfeba8",
+        "android_client_info": {
+          "package_name": "com.barberiasaas.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6oIbaaINJFfqvjwsYfxr0EXnb5eZ8evU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

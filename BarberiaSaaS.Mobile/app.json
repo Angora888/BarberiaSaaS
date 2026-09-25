@@ -11,7 +11,12 @@
       "bundleIdentifier": "com.barberiasaas.mobile"
     },
     "android": {
-      "package": "com.barberiasaas.mobile"
+      "package": "com.barberiasaas.mobile",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -23,6 +28,12 @@
         }
       ],
       "expo-notifications"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aed50576-93e9-479c-b518-e005fbd49e91"
+      }
+    }
   }
 }
