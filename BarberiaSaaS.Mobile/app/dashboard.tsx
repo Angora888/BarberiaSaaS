@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#f4f6f8" },
   branchBox:{marginTop:20,backgroundColor:"#fff",borderRadius:18,padding:14},branchLabel:{fontSize:12,color:"#64748b",fontWeight:"800",marginBottom:9},branchChoices:{gap:8,paddingRight:4},branchChip:{backgroundColor:"#f1f5f9",borderRadius:999,paddingHorizontal:14,height:40,alignItems:"center",justifyContent:"center"},branchChipOn:{backgroundColor:"#111827"},branchChipText:{color:"#475569",fontWeight:"800",fontSize:12},branchChipTextOn:{color:"#fff"},trialCard:{marginTop:14,backgroundColor:"#fff7fb",borderRadius:22,padding:20,borderWidth:1,borderColor:"#fce7f3"},trialKicker:{color:"#ec2f7b",fontSize:11,fontWeight:"900",letterSpacing:1.2},trialTitle:{fontSize:20,fontWeight:"900",color:"#111827",marginTop:8},trialText:{color:"#64748b",fontSize:15,lineHeight:22,marginTop:7},trialStrong:{fontWeight:"900",color:"#334155"},trialButton:{alignSelf:"flex-start",backgroundColor:"#ec2f7b",borderRadius:14,paddingHorizontal:16,paddingVertical:12,marginTop:14},trialButtonText:{color:"#fff",fontWeight:"900"},
   agendaButton: { marginTop: 14, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  agendaButtonText: { color: "#111827", fontWeight: "800" },
+  agendaButtonText: { color: "#111827", fontWeight: "800", flex: 1, paddingRight: 12 },
   clientsButton: { marginTop: 10, backgroundColor: "#fff", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   agendaArrow: { color: "#2563eb", fontSize: 26, lineHeight: 26 },
   content: { padding: 20, paddingBottom: 40 },
