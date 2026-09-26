@@ -1,42 +1,234 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import api from "./api";
+import { obtenerToken } from "./session";
 
-export async function registrarPushNotifications() {
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "General",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
+const INSTALLATION_ID_KEY = "barberiasaas_push_installation_id";
+const PUSH_DIAGNOSTIC_KEY = "barberiasaas_push_diagnostic";
+const EAS_PROJECT_ID = "aed50576-93e9-479c-b518-e005fbd49e91";
+
+export type PushDiagnostic = {
+  ok: boolean;
+  permissionStatus: string;
+  canAskAgain?: boolean;
+  projectId: string;
+  installationId: string;
+  nativeToken?: string;
+  expoToken?: string;
+  apiRegistered: boolean;
+  updatedAt: string;
+  error?: string;
+};
+
+function crearInstallationId() {
+  const rnd = () => Math.random().toString(36).slice(2, 10);
+  return `inst-${Date.now().toString(36)}-${rnd()}-${rnd()}`;
+}
+
+async function obtenerInstallationId() {
+  const actual = await SecureStore.getItemAsync(INSTALLATION_ID_KEY);
+  if (actual) return actual;
+  const nuevo = crearInstallationId();
+  await SecureStore.setItemAsync(INSTALLATION_ID_KEY, nuevo);
+  return nuevo;
+}
+
+function projectIdActual() {
+  return (
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId ??
+    EAS_PROJECT_ID
+  );
+}
+
+function tokenNativoComoTexto(token: Notifications.DevicePushToken) {
+  return typeof token.data === "string"
+    ? token.data
+    : JSON.stringify(token.data);
+}
+
+async function guardarDiagnostico(diag: PushDiagnostic) {
+  await SecureStore.setItemAsync(PUSH_DIAGNOSTIC_KEY, JSON.stringify(diag));
+  return diag;
+}
+
+async function asegurarCanalAndroid() {
+  if (Platform.OS !== "android") return;
+  await Notifications.setNotificationChannelAsync("default", {
+    name: "General",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
+
+async function obtenerExpoTokenConReintento(
+  projectId: string,
+  devicePushToken: Notifications.DevicePushToken
+) {
+  let ultimoError: unknown;
+  for (let intento = 1; intento <= 3; intento++) {
+    try {
+      return await Notifications.getExpoPushTokenAsync({
+        projectId,
+        devicePushToken,
+      });
+    } catch (error) {
+      ultimoError = error;
+      if (intento < 3) {
+        await new Promise((resolve) => setTimeout(resolve, intento * 1000));
+      }
+    }
+  }
+  throw ultimoError;
+}
+
+async function registrarConTokenNativo(
+  devicePushToken: Notifications.DevicePushToken,
+  permissionStatus = "granted",
+  canAskAgain?: boolean
+): Promise<PushDiagnostic> {
+  const projectId = projectIdActual();
+  const installationId = await obtenerInstallationId();
+  const nativeToken = tokenNativoComoTexto(devicePushToken);
+
+  try {
+    const expo = await obtenerExpoTokenConReintento(projectId, devicePushToken);
+
+    await api.post("/push-tokens", {
+      token: expo.data,
+      plataforma: Platform.OS,
+      installationId,
+      nativeToken,
+      projectId,
+    });
+
+    return guardarDiagnostico({
+      ok: true,
+      permissionStatus,
+      canAskAgain,
+      projectId,
+      installationId,
+      nativeToken,
+      expoToken: expo.data,
+      apiRegistered: true,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return guardarDiagnostico({
+      ok: false,
+      permissionStatus,
+      canAskAgain,
+      projectId,
+      installationId,
+      nativeToken,
+      apiRegistered: false,
+      updatedAt: new Date().toISOString(),
+      error:
+        error?.response?.data?.mensaje ??
+        error?.response?.data?.title ??
+        error?.message ??
+        String(error),
+    });
+  }
+}
+
+export async function registrarPushNotifications(): Promise<PushDiagnostic> {
+  await asegurarCanalAndroid();
+
+  let permisos = (await Notifications.getPermissionsAsync()) as any;
+
+  if (permisos?.status !== "granted") {
+    if (permisos?.canAskAgain === false) {
+      const installationId = await obtenerInstallationId();
+      return guardarDiagnostico({
+        ok: false,
+        permissionStatus: permisos?.status ?? "denied",
+        canAskAgain: false,
+        projectId: projectIdActual(),
+        installationId,
+        apiRegistered: false,
+        updatedAt: new Date().toISOString(),
+        error: "El permiso de notificaciones está desactivado en el sistema.",
+      });
+    }
+
+    permisos = (await Notifications.requestPermissionsAsync()) as any;
+  }
+
+  if (permisos?.status !== "granted") {
+    const installationId = await obtenerInstallationId();
+    return guardarDiagnostico({
+      ok: false,
+      permissionStatus: permisos?.status ?? "denied",
+      canAskAgain: permisos?.canAskAgain,
+      projectId: projectIdActual(),
+      installationId,
+      apiRegistered: false,
+      updatedAt: new Date().toISOString(),
+      error: "No se concedió permiso para notificaciones.",
     });
   }
 
-  const actual = (await Notifications.getPermissionsAsync()) as any;
-  let status = actual?.status;
+  try {
+    // Importante: obtenemos primero el token nativo FCM/APNs y lo pasamos
+    // explícitamente a Expo para refrescar la asociación del dispositivo.
+    const devicePushToken = await Notifications.getDevicePushTokenAsync();
 
-  if (status !== "granted") {
-    const solicitado = (await Notifications.requestPermissionsAsync()) as any;
-    status = solicitado?.status;
+    return registrarConTokenNativo(
+      devicePushToken,
+      permisos.status,
+      permisos.canAskAgain
+    );
+  } catch (error: any) {
+    const installationId = await obtenerInstallationId();
+    return guardarDiagnostico({
+      ok: false,
+      permissionStatus: permisos?.status ?? "granted",
+      canAskAgain: permisos?.canAskAgain,
+      projectId: projectIdActual(),
+      installationId,
+      apiRegistered: false,
+      updatedAt: new Date().toISOString(),
+      error: error?.message ?? String(error),
+    });
   }
+}
 
-  if (status !== "granted") return;
+export async function sincronizarPushSiHaySesion() {
+  const tokenSesion = await obtenerToken();
+  if (!tokenSesion) return null;
+  return registrarPushNotifications();
+}
 
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
+export function escucharCambiosTokenPush() {
+  return Notifications.addPushTokenListener(async (devicePushToken) => {
+    try {
+      const tokenSesion = await obtenerToken();
+      if (!tokenSesion) return;
+      const permisos = (await Notifications.getPermissionsAsync()) as any;
+      if (permisos?.status !== "granted") return;
 
-  if (!projectId) {
-    console.warn("EAS projectId no configurado; no se pudo registrar push.");
-    return;
-  }
-
-  const token = (
-    await Notifications.getExpoPushTokenAsync({ projectId })
-  ).data;
-
-  await api.post("/push-tokens", {
-    token,
-    plataforma: Platform.OS,
+      // No llamar getDevicePushTokenAsync aquí: el listener ya entrega
+      // el nuevo token nativo y hacerlo dispararía el listener otra vez.
+      await registrarConTokenNativo(
+        devicePushToken,
+        permisos.status,
+        permisos.canAskAgain
+      );
+    } catch (error) {
+      console.warn("No fue posible renovar el token push:", error);
+    }
   });
+}
+
+export async function obtenerDiagnosticoPush(): Promise<PushDiagnostic | null> {
+  const raw = await SecureStore.getItemAsync(PUSH_DIAGNOSTIC_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PushDiagnostic;
+  } catch {
+    return null;
+  }
 }
