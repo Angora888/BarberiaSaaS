@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import {
   obtenerDiagnosticoPush,
+  probarPushActual,
   PushDiagnostic,
   registrarPushNotifications,
 } from "@/src/services/push";
@@ -34,6 +35,16 @@ export default function NotificacionesScreen() {
     setRefreshing(true);
     try {
       const resultado = await registrarPushNotifications();
+      setDiag(resultado);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const probar = async () => {
+    setRefreshing(true);
+    try {
+      const resultado = await probarPushActual();
       setDiag(resultado);
     } finally {
       setRefreshing(false);
@@ -83,6 +94,18 @@ export default function NotificacionesScreen() {
             value={diag?.updatedAt ? new Date(diag.updatedAt).toLocaleString() : "—"}
           />
           {diag?.error ? <Row label="Último error" value={diag.error} /> : null}
+          {diag?.lastTestStatus ? (
+            <Row label="Última prueba" value={diag.lastTestStatus} />
+          ) : null}
+          {diag?.lastTestMessage ? (
+            <Row label="Resultado de prueba" value={diag.lastTestMessage} />
+          ) : null}
+          {diag?.lastTestAt ? (
+            <Row
+              label="Fecha de prueba"
+              value={new Date(diag.lastTestAt).toLocaleString()}
+            />
+          ) : null}
         </View>
 
         <Pressable
@@ -95,6 +118,14 @@ export default function NotificacionesScreen() {
           ) : (
             <Text style={s.primaryText}>🔔 Renovar registro push</Text>
           )}
+        </Pressable>
+
+        <Pressable
+          disabled={refreshing}
+          onPress={probar}
+          style={[s.testButton, refreshing && s.disabled]}
+        >
+          <Text style={s.testButtonText}>🧪 Enviar prueba a este teléfono</Text>
         </Pressable>
 
         <Pressable style={s.secondary} onPress={() => Linking.openSettings()}>
@@ -167,6 +198,14 @@ const s = StyleSheet.create({
     marginTop: 16,
   },
   primaryText: { color: "#fff", fontWeight: "900" },
+  testButton: {
+    backgroundColor: "#111827",
+    borderRadius: 16,
+    padding: 15,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  testButtonText: { color: "#fff", fontWeight: "900" },
   secondary: {
     backgroundColor: "#fff",
     borderRadius: 16,
