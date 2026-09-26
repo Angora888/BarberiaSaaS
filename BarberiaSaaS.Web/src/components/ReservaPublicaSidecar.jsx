@@ -182,6 +182,7 @@ function ReservaPublicaSidecar() {
   const [reserva, setReserva] = useState(null);
   const [nombreCompleto, setNombreCompleto] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [email, setEmail] = useState("");
   const [paisCodigoTelefono, setPaisCodigoTelefono] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -284,6 +285,7 @@ function ReservaPublicaSidecar() {
             setExito(null);
             setNombreCompleto("");
             setTelefono("");
+            setEmail("");
             setPaisCodigoTelefono(landing?.negocio?.paisCodigo || "CR");
             setReserva({
               servicio,
@@ -380,7 +382,7 @@ function ReservaPublicaSidecar() {
       `DTSTART:${formatearFechaIcsLocal(inicio)}`,
       `DTEND:${formatearFechaIcsLocal(fin)}`,
       `SUMMARY:${escaparIcs(`Cita - ${servicio} - ${negocio}`)}`,
-      `DESCRIPTION:${escaparIcs(`Reserva solicitada desde Barbería SaaS. Profesional: ${profesional}. El negocio puede confirmar o ajustar detalles de la cita.`)}`,
+      `DESCRIPTION:${escaparIcs(`Reserva solicitada desde Barbería SaaS. Profesional: ${profesional}. El negocio puede confirmar o ajustar detalles de la cita. Ver o cancelar cita: ${exito?.gestionUrl || ""}`)}`,
       "STATUS:TENTATIVE",
       "END:VEVENT",
       "END:VCALENDAR"
@@ -426,6 +428,7 @@ function ReservaPublicaSidecar() {
         {
           nombreCompleto: nombreCompleto.trim(),
           telefono: telefono.trim(),
+          email: email.trim() || null,
           paisCodigoTelefono: paisCodigoTelefono || landing?.negocio?.paisCodigo || "CR",
           servicioId: Number(reserva.servicio.id),
           profesionalId: Number(reserva.profesional.id),
@@ -664,6 +667,12 @@ function ReservaPublicaSidecar() {
                   La reserva quedó registrada como pendiente. El negocio podrá ajustar detalles como variante, duración o precio antes de confirmarla.
                 </p>
 
+                {exito?.gestionUrl && (
+                  <p style={{ fontSize: 13 }}>
+                    El enlace para consultar o cancelar tu cita también se incluirá cuando la agregues al calendario.
+                  </p>
+                )}
+
                 <button
                   type="button"
                   className="landing-calendar-add"
@@ -777,6 +786,24 @@ function ReservaPublicaSidecar() {
                   />
                   <small style={{ display: "block", marginTop: 6, color: "#6b7280", fontSize: 12 }}>
                     Selecciona el país del número. Lo validaremos antes de reservar.
+                  </small>
+                </div>
+
+                <div className="landing-reserva-field">
+                  <label htmlFor="reserva-email">
+                    Correo electrónico <span style={{ fontWeight: 400, color: "#6b7280" }}>(opcional)</span>
+                  </label>
+                  <input
+                    id="reserva-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="tu@correo.com"
+                  />
+                  <small style={{ display: "block", marginTop: 6, color: "#6b7280", fontSize: 12 }}>
+                    Si lo agregas, te enviaremos los detalles y un enlace para consultar o cancelar tu cita.
                   </small>
                 </div>
 
