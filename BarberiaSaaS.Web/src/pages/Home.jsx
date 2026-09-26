@@ -559,6 +559,15 @@ function Home() {
             <Link to="/manual" className="text-secondary text-decoration-none">
               Manual
             </Link>
+            <Link to="/privacidad" className="text-secondary text-decoration-none">
+              Privacidad
+            </Link>
+            <Link to="/terminos" className="text-secondary text-decoration-none">
+              Términos
+            </Link>
+            <Link to="/eliminar-cuenta" className="text-secondary text-decoration-none">
+              Eliminar cuenta
+            </Link>
             <Link to="/prueba" className="text-secondary text-decoration-none">
               Probar la aplicación
             </Link>
