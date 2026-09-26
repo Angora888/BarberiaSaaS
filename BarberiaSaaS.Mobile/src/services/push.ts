@@ -20,6 +20,9 @@ export type PushDiagnostic = {
   apiRegistered: boolean;
   updatedAt: string;
   error?: string;
+  lastTestStatus?: string;
+  lastTestMessage?: string;
+  lastTestAt?: string;
 };
 
 function crearInstallationId() {
@@ -221,6 +224,89 @@ export function escucharCambiosTokenPush() {
       console.warn("No fue posible renovar el token push:", error);
     }
   });
+}
+
+
+export async function probarPushActual() {
+  const registro = await registrarPushNotifications();
+  if (!registro.ok || !registro.expoToken) return registro;
+
+  try {
+    const sendResponse = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: registro.expoToken,
+        sound: "default",
+        title: "Barbería SaaS",
+        body: "✅ Prueba de notificaciones completada",
+        data: { tipo: "push_test" },
+      }),
+    });
+
+    const ticket = await sendResponse.json();
+    const ticketData = Array.isArray(ticket?.data) ? ticket.data[0] : ticket?.data;
+    const receiptId = ticketData?.id;
+
+    if (!sendResponse.ok || ticketData?.status === "error" || !receiptId) {
+      return guardarDiagnostico({
+        ...registro,
+        ok: false,
+        lastTestStatus: ticketData?.details?.error ?? "send_error",
+        lastTestMessage:
+          ticketData?.message ??
+          `Expo respondió HTTP ${sendResponse.status} al enviar la prueba.`,
+        lastTestAt: new Date().toISOString(),
+      });
+    }
+
+    let receipt: any = null;
+    for (const espera of [2000, 4000, 7000]) {
+      await new Promise((resolve) => setTimeout(resolve, espera));
+      const receiptResponse = await fetch(
+        "https://exp.host/--/api/v2/push/getReceipts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [receiptId] }),
+        }
+      );
+      const body = await receiptResponse.json();
+      receipt = body?.data?.[receiptId];
+      if (receipt) break;
+    }
+
+    if (!receipt) {
+      return guardarDiagnostico({
+        ...registro,
+        lastTestStatus: "pending",
+        lastTestMessage:
+          "Expo aceptó la prueba, pero el receipt todavía no estaba disponible.",
+        lastTestAt: new Date().toISOString(),
+      });
+    }
+
+    const receiptOk = receipt.status === "ok";
+    return guardarDiagnostico({
+      ...registro,
+      ok: receiptOk,
+      lastTestStatus: receiptOk
+        ? "ok"
+        : receipt?.details?.error ?? receipt?.status ?? "error",
+      lastTestMessage: receiptOk
+        ? "Expo y FCM aceptaron la notificación de prueba."
+        : receipt?.message ?? "FCM rechazó la notificación de prueba.",
+      lastTestAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return guardarDiagnostico({
+      ...registro,
+      ok: false,
+      lastTestStatus: "exception",
+      lastTestMessage: error?.message ?? String(error),
+      lastTestAt: new Date().toISOString(),
+    });
+  }
 }
 
 export async function obtenerDiagnosticoPush(): Promise<PushDiagnostic | null> {
