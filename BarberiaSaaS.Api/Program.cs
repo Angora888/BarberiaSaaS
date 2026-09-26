@@ -22,6 +22,7 @@ builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 builder.Services.AddHttpClient<IWhatsAppService, MetaWhatsAppService>();
 builder.Services.AddHttpClient<IPushNotificationService, ExpoPushNotificationService>();
 builder.Services.AddScoped<INotificacionCitaService, NotificacionCitaService>();
+builder.Services.AddSingleton<IPublicAppointmentLinkService, PublicAppointmentLinkService>();
 builder.Services.AddSingleton<IInternacionalizacionService, InternacionalizacionService>();
 builder.Services.AddHostedService<NotificacionesWorker>();
 
