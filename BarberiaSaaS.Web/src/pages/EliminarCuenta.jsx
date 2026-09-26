@@ -1,27 +1,49 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import LegalLayout from "../components/LegalLayout";
-
-const SOPORTE = "soporte@barberiasaas.com";
+import api from "../services/api";
 
 export default function EliminarCuenta() {
   const [email, setEmail] = useState("");
   const [negocio, setNegocio] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const [error, setError] = useState("");
 
-  const mailto = useMemo(() => {
-    const subject = "Solicitud de eliminación de cuenta - Barbería SaaS";
-    const body = [
-      "Solicito iniciar la eliminación de mi cuenta y los datos asociados en Barbería SaaS.",
-      "",
-      `Correo de la cuenta: ${email || "[indicar correo]"}`,
-      `Negocio: ${negocio || "[indicar negocio]"}`,
-      `Motivo opcional: ${motivo || "[sin indicar]"}`,
-      "",
-      "Entiendo que Barbería SaaS puede contactarme para verificar mi identidad antes de completar la eliminación."
-    ].join("\n");
+  const enviar = async (e) => {
+    e.preventDefault();
+    setMensaje("");
+    setError("");
 
-    return `mailto:${SOPORTE}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [email, negocio, motivo]);
+    if (!email.trim()) {
+      setError("Ingresa el correo asociado a tu cuenta.");
+      return;
+    }
+
+    try {
+      setEnviando(true);
+      const { data } = await api.post("/account-deletion/request", {
+        email: email.trim(),
+        negocio: negocio.trim() || null,
+        motivo: motivo.trim() || null
+      });
+
+      setMensaje(
+        data?.mensaje ||
+          "Solicitud recibida. Revisa tu correo para continuar con el proceso."
+      );
+      setEmail("");
+      setNegocio("");
+      setMotivo("");
+    } catch (e) {
+      setError(
+        e?.response?.data?.mensaje ||
+          "No fue posible registrar la solicitud. Intenta nuevamente más tarde."
+      );
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
     <LegalLayout
@@ -44,56 +66,61 @@ export default function EliminarCuenta() {
 
       <h2 className="h4 fw-bold mt-4">Solicitar eliminación</h2>
       <p className="text-secondary">
-        Completa los datos y toca el botón. Se abrirá tu aplicación de correo con la
-        solicitud preparada para enviarla a nuestro equipo de soporte.
+        Completa el formulario. No necesitas tener la aplicación instalada para
+        iniciar la solicitud.
       </p>
 
-      <div className="mb-3">
-        <label className="form-label fw-semibold">Correo de la cuenta</label>
-        <input
-          className="form-control"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="tu@correo.com"
-        />
-      </div>
+      {mensaje ? <div className="alert alert-success">{mensaje}</div> : null}
+      {error ? <div className="alert alert-danger">{error}</div> : null}
 
-      <div className="mb-3">
-        <label className="form-label fw-semibold">Nombre del negocio</label>
-        <input
-          className="form-control"
-          value={negocio}
-          onChange={(e) => setNegocio(e.target.value)}
-          placeholder="Nombre del negocio"
-        />
-      </div>
+      <form onSubmit={enviar}>
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Correo de la cuenta</label>
+          <input
+            className="form-control"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@correo.com"
+          />
+        </div>
 
-      <div className="mb-3">
-        <label className="form-label fw-semibold">Motivo (opcional)</label>
-        <textarea
-          className="form-control"
-          rows="4"
-          value={motivo}
-          onChange={(e) => setMotivo(e.target.value)}
-          placeholder="Puedes agregar cualquier detalle que nos ayude a procesar la solicitud."
-        />
-      </div>
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Nombre del negocio</label>
+          <input
+            className="form-control"
+            value={negocio}
+            onChange={(e) => setNegocio(e.target.value)}
+            placeholder="Nombre del negocio"
+          />
+        </div>
 
-      <a className="btn btn-danger btn-lg" href={mailto}>
-        Solicitar eliminación de cuenta
-      </a>
+        <div className="mb-3">
+          <label className="form-label fw-semibold">Motivo (opcional)</label>
+          <textarea
+            className="form-control"
+            rows="4"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Puedes agregar cualquier detalle que nos ayude a procesar la solicitud."
+          />
+        </div>
+
+        <button className="btn btn-danger btn-lg" type="submit" disabled={enviando}>
+          {enviando ? "Enviando solicitud..." : "Solicitar eliminación de cuenta"}
+        </button>
+      </form>
 
       <p className="small text-secondary mt-3">
-        También puedes escribir directamente a <a href={`mailto:${SOPORTE}`}>{SOPORTE}</a>.
         No envíes contraseñas, códigos de acceso ni información de tarjetas.
       </p>
 
       <h2 className="h4 fw-bold mt-4">Tiempo de procesamiento</h2>
       <p>
-        Procesaremos las solicitudes en un plazo razonable y podremos pedir
-        información adicional únicamente para verificar identidad o determinar el
-        alcance de la eliminación.
+        Una solicitud válida se procesará normalmente dentro de 30 días. Podemos
+        solicitar una verificación razonable de identidad antes de completar la
+        eliminación y te enviaremos una confirmación cuando el proceso termine.
       </p>
     </LegalLayout>
   );
