@@ -17,6 +17,7 @@ namespace BarberiaSaaS.Api.Controllers
         private readonly IInternacionalizacionService _internacionalizacion;
         private readonly IPushNotificationService _push;
         private readonly IEmailService _email;
+        private readonly IPublicAppointmentLinkService _publicLinks;
         private readonly ILogger<ReservasPublicasController> _logger;
 
         public ReservasPublicasController(
@@ -25,6 +26,7 @@ namespace BarberiaSaaS.Api.Controllers
             IInternacionalizacionService internacionalizacion,
             IPushNotificationService push,
             IEmailService email,
+            IPublicAppointmentLinkService publicLinks,
             ILogger<ReservasPublicasController> logger)
         {
             _context = context;
@@ -32,6 +34,7 @@ namespace BarberiaSaaS.Api.Controllers
             _internacionalizacion = internacionalizacion;
             _push = push;
             _email = email;
+            _publicLinks = publicLinks;
             _logger = logger;
         }
 
@@ -105,6 +108,15 @@ namespace BarberiaSaaS.Api.Controllers
             }
 
             var tenantId = tenant.Id;
+
+            var emailSolicitado = NotificacionCitaService.NormalizarEmail(request.Email);
+            if (!string.IsNullOrWhiteSpace(request.Email) && emailSolicitado == null)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El correo electrónico no es válido."
+                });
+            }
 
             var servicio = await _context.Servicios
                 .FirstOrDefaultAsync(x =>
@@ -295,6 +307,7 @@ namespace BarberiaSaaS.Api.Controllers
                     Apellidos = nombrePartes.Apellidos,
                     Telefono = telefonoE164,
                     PaisCodigoTelefono = paisTelefono,
+                    Email = emailSolicitado,
                     Activo = true,
                     FechaCreacion = DateTime.UtcNow
                 };
@@ -306,6 +319,8 @@ namespace BarberiaSaaS.Api.Controllers
             {
                 cliente.Telefono = telefonoE164;
                 cliente.PaisCodigoTelefono = paisTelefono;
+                if (emailSolicitado != null)
+                    cliente.Email = emailSolicitado;
             }
 
             var cita = new Cita
@@ -329,11 +344,61 @@ namespace BarberiaSaaS.Api.Controllers
 
             await _context.SaveChangesAsync();
 
+            var gestionUrl = _publicLinks.CrearUrl(cita);
+
             await _push.EnviarTenantAsync(
                 tenantId,
                 "📅 Nueva cita",
                 $"{request.NombreCompleto.Trim()} reservó {servicio.Nombre} para {inicioLocal:dd/MM/yyyy HH:mm}.",
                 new { tipo = "nueva_cita", citaId = cita.Id });
+
+            var emailCliente = NotificacionCitaService.NormalizarEmail(cliente.Email);
+            if (emailCliente != null)
+            {
+                try
+                {
+                    var clienteSeguro = System.Net.WebUtility.HtmlEncode(request.NombreCompleto.Trim());
+                    var servicioSeguro = System.Net.WebUtility.HtmlEncode(servicio.Nombre);
+                    var profesionalSeguro = System.Net.WebUtility.HtmlEncode(
+                        $"{profesional.Nombre} {profesional.Apellidos}".Trim());
+                    var negocioSeguro = System.Net.WebUtility.HtmlEncode(
+                        string.IsNullOrWhiteSpace(tenant.NombreComercial) ? tenant.Nombre : tenant.NombreComercial);
+                    var gestionUrlSeguro = System.Net.WebUtility.HtmlEncode(gestionUrl);
+
+                    var htmlCliente = $"""
+                        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222">
+                          <h2 style="margin-bottom:8px">📅 Tu cita fue registrada</h2>
+                          <p>Hola <strong>{clienteSeguro}</strong>. Tu solicitud de cita en <strong>{negocioSeguro}</strong> quedó registrada.</p>
+                          <div style="background:#f7f7f8;border-radius:12px;padding:18px;margin:18px 0">
+                            <p style="margin:6px 0"><strong>Servicio:</strong> {servicioSeguro}</p>
+                            <p style="margin:6px 0"><strong>Profesional:</strong> {profesionalSeguro}</p>
+                            <p style="margin:6px 0"><strong>Fecha:</strong> {inicioLocal:dd/MM/yyyy}</p>
+                            <p style="margin:6px 0"><strong>Hora:</strong> {inicioLocal:HH:mm}</p>
+                            <p style="margin:6px 0"><strong>Duración aproximada:</strong> {cita.DuracionMinutos} min</p>
+                          </div>
+                          <p style="margin:22px 0">
+                            <a href="{gestionUrlSeguro}" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:700">
+                              Ver o cancelar mi cita
+                            </a>
+                          </p>
+                          <p style="color:#666;font-size:13px">Guarda este enlace. Te permitirá consultar o cancelar esta cita mientras siga vigente.</p>
+                        </div>
+                        """;
+
+                    await _email.EnviarAsync(
+                        emailCliente,
+                        string.IsNullOrWhiteSpace(tenant.NombreComercial) ? tenant.Nombre : tenant.NombreComercial,
+                        $"Tu cita en {(string.IsNullOrWhiteSpace(tenant.NombreComercial) ? tenant.Nombre : tenant.NombreComercial)} - {inicioLocal:dd/MM HH:mm}",
+                        htmlCliente);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "No fue posible enviar confirmación de cita {CitaId} a la clienta.",
+                        cita.Id);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(tenant.Email))
             {
@@ -392,7 +457,8 @@ namespace BarberiaSaaS.Api.Controllers
                 hora = inicioLocal.ToString("HH:mm"),
                 duracionMinutos = cita.DuracionMinutos,
                 precioEstimado = cita.Precio,
-                estado = cita.Estado
+                estado = cita.Estado,
+                gestionUrl
             });
         }
 
@@ -459,6 +525,7 @@ namespace BarberiaSaaS.Api.Controllers
         public string NombreCompleto { get; set; } = string.Empty;
         public string Telefono { get; set; } = string.Empty;
         public string? PaisCodigoTelefono { get; set; }
+        public string? Email { get; set; }
         public int ServicioId { get; set; }
         public int ProfesionalId { get; set; }
         public DateTime Fecha { get; set; }
