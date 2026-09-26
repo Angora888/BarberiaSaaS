@@ -25,6 +25,7 @@ import RestablecerPassword from "./pages/RestablecerPassword";
 import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
 import EliminarCuenta from "./pages/EliminarCuenta";
+import GestionarCitaPublica from "./pages/GestionarCitaPublica";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
@@ -83,6 +84,7 @@ function App() {
       <Route path="/privacidad" element={<Privacidad />} />
       <Route path="/terminos" element={<Terminos />} />
       <Route path="/eliminar-cuenta" element={<EliminarCuenta />} />
+      <Route path="/cita/gestionar" element={<GestionarCitaPublica />} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
         <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
