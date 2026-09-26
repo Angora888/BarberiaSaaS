@@ -16,17 +16,23 @@ namespace BarberiaSaaS.Api.Controllers
         private readonly ITimeZoneService _timeZoneService;
         private readonly IInternacionalizacionService _internacionalizacion;
         private readonly IPushNotificationService _push;
+        private readonly IEmailService _email;
+        private readonly ILogger<ReservasPublicasController> _logger;
 
         public ReservasPublicasController(
             AppDbContext context,
             ITimeZoneService timeZoneService,
             IInternacionalizacionService internacionalizacion,
-            IPushNotificationService push)
+            IPushNotificationService push,
+            IEmailService email,
+            ILogger<ReservasPublicasController> logger)
         {
             _context = context;
             _timeZoneService = timeZoneService;
             _internacionalizacion = internacionalizacion;
             _push = push;
+            _email = email;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -328,6 +334,51 @@ namespace BarberiaSaaS.Api.Controllers
                 "📅 Nueva cita",
                 $"{request.NombreCompleto.Trim()} reservó {servicio.Nombre} para {inicioLocal:dd/MM/yyyy HH:mm}.",
                 new { tipo = "nueva_cita", citaId = cita.Id });
+
+            if (!string.IsNullOrWhiteSpace(tenant.Email))
+            {
+                try
+                {
+                    var clienteSeguro = System.Net.WebUtility.HtmlEncode(request.NombreCompleto.Trim());
+                    var telefonoSeguro = System.Net.WebUtility.HtmlEncode(telefonoE164);
+                    var servicioSeguro = System.Net.WebUtility.HtmlEncode(servicio.Nombre);
+                    var profesionalSeguro = System.Net.WebUtility.HtmlEncode(
+                        $"{profesional.Nombre} {profesional.Apellidos}".Trim());
+                    var negocioSeguro = System.Net.WebUtility.HtmlEncode(
+                        string.IsNullOrWhiteSpace(tenant.NombreComercial) ? tenant.Nombre : tenant.NombreComercial);
+
+                    var html = $"""
+                        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222">
+                          <h2 style="margin-bottom:8px">📅 Nueva cita desde tu página</h2>
+                          <p>Hola <strong>{negocioSeguro}</strong>, una clienta acaba de reservar desde tu landing de Barbería SaaS.</p>
+                          <div style="background:#f7f7f8;border-radius:12px;padding:18px;margin:18px 0">
+                            <p style="margin:6px 0"><strong>Cliente:</strong> {clienteSeguro}</p>
+                            <p style="margin:6px 0"><strong>Teléfono:</strong> {telefonoSeguro}</p>
+                            <p style="margin:6px 0"><strong>Servicio:</strong> {servicioSeguro}</p>
+                            <p style="margin:6px 0"><strong>Profesional:</strong> {profesionalSeguro}</p>
+                            <p style="margin:6px 0"><strong>Fecha:</strong> {inicioLocal:dd/MM/yyyy}</p>
+                            <p style="margin:6px 0"><strong>Hora:</strong> {inicioLocal:HH:mm}</p>
+                            <p style="margin:6px 0"><strong>Duración:</strong> {cita.DuracionMinutos} min</p>
+                          </div>
+                          <p style="color:#666;font-size:13px">Cita #{cita.Id} · Barbería SaaS</p>
+                        </div>
+                        """;
+
+                    await _email.EnviarAsync(
+                        tenant.Email,
+                        string.IsNullOrWhiteSpace(tenant.NombreComercial) ? tenant.Nombre : tenant.NombreComercial,
+                        $"Nueva cita: {request.NombreCompleto.Trim()} - {inicioLocal:dd/MM HH:mm}",
+                        html);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "No fue posible enviar el correo de nueva cita para tenant {TenantId}, cita {CitaId}. La reserva continuará.",
+                        tenantId,
+                        cita.Id);
+                }
+            }
 
             return Ok(new
             {
