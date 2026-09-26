@@ -91,15 +91,15 @@ public sealed class PublicAppointmentLinkService : IPublicAppointmentLinkService
                 out _);
 
             if (!string.Equals(
-                    principal.FindFirstValue("purpose"),
+                    principal.FindFirst("purpose")?.Value,
                     Purpose,
                     StringComparison.Ordinal))
                 return false;
 
-            var sub = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var sub = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            var tenant = principal.FindFirstValue("tenant_id");
+            var tenant = principal.FindFirst("tenant_id")?.Value;
 
             return int.TryParse(sub, out citaId)
                 && int.TryParse(tenant, out tenantId)
