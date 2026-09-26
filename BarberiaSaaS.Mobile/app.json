@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.barberiasaas.mobile"
     },
     "android": {
-      "package": "com.barberiasaas.mobile"
+      "package": "com.barberiasaas.mobile",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-router",
