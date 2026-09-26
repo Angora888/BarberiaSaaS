@@ -157,6 +157,24 @@ function formatearDuracion(minutos) {
   return `${resto} min`;
 }
 
+function escaparIcs(valor) {
+  return String(valor || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+function formatearFechaIcsLocal(fecha) {
+  const pad = (numero) => String(numero).padStart(2, "0");
+  return `${fecha.getFullYear()}${pad(fecha.getMonth() + 1)}${pad(fecha.getDate())}T${pad(fecha.getHours())}${pad(fecha.getMinutes())}00`;
+}
+
+function formatearFechaIcsUtc(fecha) {
+  const pad = (numero) => String(numero).padStart(2, "0");
+  return `${fecha.getUTCFullYear()}${pad(fecha.getUTCMonth() + 1)}${pad(fecha.getUTCDate())}T${pad(fecha.getUTCHours())}${pad(fecha.getUTCMinutes())}${pad(fecha.getUTCSeconds())}Z`;
+}
+
 function ReservaPublicaSidecar() {
   const { slug } = useParams();
 
@@ -324,6 +342,62 @@ function ReservaPublicaSidecar() {
     setReserva(null);
     setError("");
     setExito(null);
+  };
+
+  const agregarAlCalendario = () => {
+    if (!reserva || !exito) {
+      return;
+    }
+
+    const horaNormalizada = normalizarHoraReserva(reserva.hora);
+    const [anio, mes, dia] = String(reserva.fecha).split("-").map(Number);
+    const [horas, minutos] = horaNormalizada.split(":").map(Number);
+
+    if (!anio || !mes || !dia || Number.isNaN(horas) || Number.isNaN(minutos)) {
+      setError("No fue posible preparar el evento del calendario.");
+      return;
+    }
+
+    const inicio = new Date(anio, mes - 1, dia, horas, minutos, 0);
+    const fin = new Date(
+      inicio.getTime() + Number(reserva.duracionMinutos || 0) * 60000
+    );
+
+    const negocio = landing?.negocio?.nombre || "Barbería SaaS";
+    const profesional = `${reserva.profesional.nombre || ""} ${reserva.profesional.apellidos || ""}`.trim();
+    const servicio = reserva.servicio.nombre || "Cita";
+    const citaId = exito?.citaId || Date.now();
+
+    const lineas = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Barberia SaaS//Reserva//ES",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      `UID:cita-${citaId}@barberiasaas.com`,
+      `DTSTAMP:${formatearFechaIcsUtc(new Date())}`,
+      `DTSTART:${formatearFechaIcsLocal(inicio)}`,
+      `DTEND:${formatearFechaIcsLocal(fin)}`,
+      `SUMMARY:${escaparIcs(`Cita - ${servicio} - ${negocio}`)}`,
+      `DESCRIPTION:${escaparIcs(`Reserva solicitada desde Barbería SaaS. Profesional: ${profesional}. El negocio puede confirmar o ajustar detalles de la cita.`)}`,
+      "STATUS:TENTATIVE",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+
+    const blob = new Blob([lineas.join("\r\n")], {
+      type: "text/calendar;charset=utf-8"
+    });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = `cita-${citaId}.ics`;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const guardar = async (evento) => {
@@ -553,6 +627,9 @@ function ReservaPublicaSidecar() {
           color: #fff;
           font-weight: 800;
         }
+        .landing-reserva-success .landing-calendar-add {
+          background: var(--landing-primary, #c62864);
+        }
       `}</style>
 
       <div className="landing-reserva-backdrop">
@@ -586,6 +663,14 @@ function ReservaPublicaSidecar() {
                 <p>
                   La reserva quedó registrada como pendiente. El negocio podrá ajustar detalles como variante, duración o precio antes de confirmarla.
                 </p>
+
+                <button
+                  type="button"
+                  className="landing-calendar-add"
+                  onClick={agregarAlCalendario}
+                >
+                  📅 Agregar al calendario
+                </button>
 
                 <button
                   type="button"
