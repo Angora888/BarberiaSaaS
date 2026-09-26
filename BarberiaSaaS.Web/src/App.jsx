@@ -22,6 +22,9 @@ import Prueba from "./pages/Prueba";
 import ConfirmarRegistro from "./pages/ConfirmarRegistro";
 import OlvidePassword from "./pages/OlvidePassword";
 import RestablecerPassword from "./pages/RestablecerPassword";
+import Privacidad from "./pages/Privacidad";
+import Terminos from "./pages/Terminos";
+import EliminarCuenta from "./pages/EliminarCuenta";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
@@ -77,6 +80,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/olvide-password" element={<OlvidePassword />} />
       <Route path="/restablecer-password/:token" element={<RestablecerPassword />} />
+      <Route path="/privacidad" element={<Privacidad />} />
+      <Route path="/terminos" element={<Terminos />} />
+      <Route path="/eliminar-cuenta" element={<EliminarCuenta />} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
         <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
