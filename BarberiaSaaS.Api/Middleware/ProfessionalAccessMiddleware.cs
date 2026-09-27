@@ -122,6 +122,12 @@ public sealed class ProfessionalAccessMiddleware
             return;
         }
 
+        if (path == "/api/disponibilidad/semana-siguiente" && method == "POST")
+        {
+            await _next(context);
+            return;
+        }
+
         if (path.StartsWith("/api/push-tokens") && method == "POST")
         {
             await _next(context);
