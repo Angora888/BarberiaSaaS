@@ -37,7 +37,7 @@ function Login() {
         JSON.stringify(response.data.usuario)
       );
 
-      navigate("/dashboard");
+      navigate(response.data.usuario?.rol === "Profesional" ? "/agenda" : "/dashboard");
     } catch (error) {
       const mensaje =
         error.response?.data?.mensaje ||
