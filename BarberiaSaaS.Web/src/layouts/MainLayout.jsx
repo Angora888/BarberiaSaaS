@@ -10,6 +10,7 @@ function MainLayout() {
   const { sucursales, sucursalId, cargandoSucursales, errorSucursales, seleccionarSucursal } = useSucursal();
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   const esSuperAdmin = usuario.rol === "SuperAdmin";
+  const esProfesional = usuario.rol === "Profesional";
   const esPaginaSuscripcion = location.pathname === "/mi-suscripcion";
 
   const cerrarSesion = () => { localStorage.removeItem("token"); localStorage.removeItem("usuario"); localStorage.removeItem("barberiaSaaS.sucursalSeleccionada"); navigate("/"); };
@@ -27,19 +28,29 @@ function MainLayout() {
     <aside className="sidebar">
       <div className="sidebar-brand">{logoUrl ? <img src={logoUrl} alt={nombreNegocio} className="sidebar-logo-image" /> : <div className="sidebar-logo">{inicialNegocio}</div>}<div className="sidebar-brand-info"><strong>{nombreNegocio}</strong><div className="sidebar-role">{usuario.rol || ""}</div></div></div>
       <nav className="sidebar-menu">
-        <NavLink to="/dashboard" className="sidebar-link"><FaHome /><span>Dashboard</span></NavLink>
-        <NavLink to="/agenda" className="sidebar-link"><FaCalendarAlt /><span>Agenda</span></NavLink>
-        <NavLink to="/clientes" className="sidebar-link"><FaUsers /><span>Clientes</span></NavLink>
-        <NavLink to="/servicios" className="sidebar-link"><FaCut /><span>Servicios</span></NavLink>
-        <NavLink to="/profesionales" className="sidebar-link"><FaUserTie /><span>Profesionales</span></NavLink>
-        <NavLink to="/productos" className="sidebar-link"><FaBoxes /><span>Productos</span></NavLink>
-        <NavLink to="/ventas" className="sidebar-link"><FaCashRegister /><span>Ventas / Caja</span></NavLink>
-        <NavLink to="/cuentas-por-cobrar" className="sidebar-link"><FaFileInvoiceDollar /><span>Cuentas por cobrar</span></NavLink>
-        <NavLink to="/reportes" className="sidebar-link"><FaChartBar /><span>Reportes</span></NavLink>
-        <NavLink to="/sucursales" className="sidebar-link"><FaStore /><span>Sucursales</span></NavLink>
-        {!esSuperAdmin && <NavLink to="/mi-suscripcion" className="sidebar-link"><FaCreditCard /><span>Mi suscripción</span></NavLink>}
-        {esSuperAdmin && <NavLink to="/admin/suscripciones" className="sidebar-link"><FaCreditCard /><span>Suscripciones</span></NavLink>}
-        <NavLink to="/configuracion" className="sidebar-link"><FaCog /><span>Configuración</span></NavLink>
+        {esProfesional ? (
+          <>
+            <NavLink to="/agenda" className="sidebar-link"><FaCalendarAlt /><span>Agenda</span></NavLink>
+            <NavLink to="/clientes" className="sidebar-link"><FaUsers /><span>Clientes</span></NavLink>
+            <NavLink to="/servicios" className="sidebar-link"><FaCut /><span>Servicios</span></NavLink>
+          </>
+        ) : (
+          <>
+            <NavLink to="/dashboard" className="sidebar-link"><FaHome /><span>Dashboard</span></NavLink>
+            <NavLink to="/agenda" className="sidebar-link"><FaCalendarAlt /><span>Agenda</span></NavLink>
+            <NavLink to="/clientes" className="sidebar-link"><FaUsers /><span>Clientes</span></NavLink>
+            <NavLink to="/servicios" className="sidebar-link"><FaCut /><span>Servicios</span></NavLink>
+            <NavLink to="/profesionales" className="sidebar-link"><FaUserTie /><span>Profesionales</span></NavLink>
+            <NavLink to="/productos" className="sidebar-link"><FaBoxes /><span>Productos</span></NavLink>
+            <NavLink to="/ventas" className="sidebar-link"><FaCashRegister /><span>Ventas / Caja</span></NavLink>
+            <NavLink to="/cuentas-por-cobrar" className="sidebar-link"><FaFileInvoiceDollar /><span>Cuentas por cobrar</span></NavLink>
+            <NavLink to="/reportes" className="sidebar-link"><FaChartBar /><span>Reportes</span></NavLink>
+            <NavLink to="/sucursales" className="sidebar-link"><FaStore /><span>Sucursales</span></NavLink>
+            {!esSuperAdmin && <NavLink to="/mi-suscripcion" className="sidebar-link"><FaCreditCard /><span>Mi suscripción</span></NavLink>}
+            {esSuperAdmin && <NavLink to="/admin/suscripciones" className="sidebar-link"><FaCreditCard /><span>Suscripciones</span></NavLink>}
+            <NavLink to="/configuracion" className="sidebar-link"><FaCog /><span>Configuración</span></NavLink>
+          </>
+        )}
       </nav>
       <div className="sidebar-timezone"><small>Zona horaria</small><strong>{zonaHoraria}</strong></div>
       <button className="sidebar-logout" onClick={cerrarSesion}><FaSignOutAlt /><span>Cerrar sesión</span></button>
