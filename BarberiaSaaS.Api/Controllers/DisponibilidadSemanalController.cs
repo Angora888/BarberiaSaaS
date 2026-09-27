@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
@@ -31,6 +32,21 @@ namespace BarberiaSaaS.Api.Controllers
             ConsultarDisponibilidadSemanaDto request)
         {
             var tenantId = _tenantContext.TenantId;
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var raw = User.FindFirstValue("ProfesionalId");
+                if (!int.TryParse(raw, out var profesionalActual))
+                    return Forbid();
+
+                if (request.ProfesionalId.HasValue &&
+                    request.ProfesionalId.Value != profesionalActual)
+                {
+                    return Forbid();
+                }
+
+                request.ProfesionalId = profesionalActual;
+            }
 
             if (request.ServicioId <= 0)
             {
