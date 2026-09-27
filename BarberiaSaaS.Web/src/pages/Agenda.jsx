@@ -23,6 +23,8 @@ import "./Agenda.css";
 
 function Agenda() {
   const navigate = useNavigate();
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const esProfesional = usuario.rol === "Profesional";
 
   const {
     formatearMoneda,
@@ -2299,14 +2301,16 @@ function Agenda() {
 
           )}
 
-          <button
-            type="button"
-            className="btn btn-outline-primary"
-            onClick={() => navigate("/agenda/importar")}
-          >
-            <FaFileImport className="me-2" />
-            Importar
-          </button>
+          {!esProfesional && (
+            <button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => navigate("/agenda/importar")}
+            >
+              <FaFileImport className="me-2" />
+              Importar
+            </button>
+          )}
 
           <button
             className="btn btn-primary"
