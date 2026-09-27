@@ -42,3 +42,11 @@ jobs:
       - name: Build frontend
         working-directory: BarberiaSaaS.Web
         run: npm run build
+
+      - name: Install mobile dependencies
+        working-directory: BarberiaSaaS.Mobile
+        run: npm ci
+
+      - name: Typecheck mobile
+        working-directory: BarberiaSaaS.Mobile
+        run: npm run typecheck
