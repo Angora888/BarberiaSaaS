@@ -518,6 +518,41 @@ namespace BarberiaSaaS.Migrations
                     b.ToTable("MovimientosInventario");
                 });
 
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.InvitacionUsuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaExpiracion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaUso")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId", "FechaExpiracion");
+
+                    b.ToTable("InvitacionesUsuario");
+                });
+
             modelBuilder.Entity("BarberiaSaaS.Api.Models.PasswordResetToken", b =>
                 {
                     b.Property<int>("Id")
@@ -890,6 +925,9 @@ namespace BarberiaSaaS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ProfesionalId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Rol")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -905,6 +943,9 @@ namespace BarberiaSaaS.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProfesionalId")
+                        .IsUnique();
 
                     b.HasIndex("SucursalId");
 
@@ -1268,6 +1309,17 @@ namespace BarberiaSaaS.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.InvitacionUsuario", b =>
+                {
+                    b.HasOne("BarberiaSaaS.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("BarberiaSaaS.Api.Models.PasswordResetToken", b =>
                 {
                     b.HasOne("BarberiaSaaS.Api.Models.Usuario", "Usuario")
@@ -1377,6 +1429,11 @@ namespace BarberiaSaaS.Migrations
 
             modelBuilder.Entity("BarberiaSaaS.Api.Models.Usuario", b =>
                 {
+                    b.HasOne("BarberiaSaaS.Api.Models.Profesional", "Profesional")
+                        .WithOne("Usuario")
+                        .HasForeignKey("BarberiaSaaS.Api.Models.Usuario", "ProfesionalId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BarberiaSaaS.Api.Models.Sucursal", "Sucursal")
                         .WithMany("Usuarios")
                         .HasForeignKey("SucursalId")
@@ -1387,6 +1444,8 @@ namespace BarberiaSaaS.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Profesional");
 
                     b.Navigation("Sucursal");
 
@@ -1485,6 +1544,8 @@ namespace BarberiaSaaS.Migrations
                     b.Navigation("Horarios");
 
                     b.Navigation("Servicios");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("BarberiaSaaS.Api.Models.Servicio", b =>
