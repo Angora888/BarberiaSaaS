@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
