@@ -59,6 +59,10 @@ function Profesionales() {
     useState(false);
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [darAcceso, setDarAcceso] = useState(false);
+  const [vincularConMiUsuario, setVincularConMiUsuario] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
 
   const [formulario, setFormulario] =
     useState({
@@ -240,7 +244,10 @@ function Profesionales() {
     setFormulario(
       formularioVacio()
     );
+    setDarAcceso(false);
+    setVincularConMiUsuario(false);
     setError("");
+    setMensaje("");
     setMostrarFormulario(true);
   };
 
@@ -282,7 +289,10 @@ function Profesionales() {
         profesional.activo !== false
     });
 
+    setDarAcceso(false);
+    setVincularConMiUsuario(false);
     setError("");
+    setMensaje("");
     setMostrarFormulario(true);
   };
 
@@ -385,6 +395,11 @@ function Profesionales() {
         return;
       }
 
+      if (!profesionalEditando && darAcceso && !vincularConMiUsuario && !formulario.email.trim()) {
+        setError("Ingresa el correo del profesional para enviar la invitación.");
+        return;
+      }
+
       const payload = {
         sucursalId:
           formulario.sucursalId
@@ -440,16 +455,52 @@ function Profesionales() {
                 )
             }
           );
+
+          cerrarFormulario();
+          await cargarDatos();
+          setMensaje("Profesional actualizado correctamente.");
         } else {
-          await api.post(
+          const response = await api.post(
             "/Profesionales",
             payload
           );
+
+          const profesionalId = Number(response.data?.id);
+          let avisoAcceso = "";
+
+          if (Number.isFinite(profesionalId)) {
+            try {
+              if (vincularConMiUsuario) {
+                await api.post("/usuarios-acceso/vincular-actual", { profesionalId });
+
+                const usuarioActualizado = {
+                  ...usuarioActual,
+                  profesionalId
+                };
+                localStorage.setItem("usuario", JSON.stringify(usuarioActualizado));
+                avisoAcceso = " El profesional quedó vinculado a tu usuario actual.";
+              } else if (darAcceso) {
+                await api.post("/usuarios-acceso/invitar-profesional", {
+                  profesionalId,
+                  email: formulario.email.trim()
+                });
+                avisoAcceso = " También enviamos la invitación para crear su contraseña.";
+              }
+            } catch (errorAcceso) {
+              cerrarFormulario();
+              await cargarDatos();
+              setError(
+                "El profesional fue creado, pero no pudimos configurar su acceso: " +
+                (errorAcceso.response?.data?.mensaje || "intenta nuevamente desde Configuración > Usuarios.")
+              );
+              return;
+            }
+          }
+
+          cerrarFormulario();
+          await cargarDatos();
+          setMensaje("Profesional creado correctamente." + avisoAcceso);
         }
-
-        cerrarFormulario();
-
-        await cargarDatos();
       } catch (error) {
         setError(
           error.response?.data?.mensaje ||
@@ -834,6 +885,12 @@ function Profesionales() {
         </div>
       )}
 
+      {mensaje && (
+        <div className="alert alert-success mt-4">
+          {mensaje}
+        </div>
+      )}
+
       <div className="content-card mt-4">
         <div className="client-toolbar">
           <div className="search-box">
@@ -1197,6 +1254,52 @@ function Profesionales() {
                         }
                       />
                     </div>
+
+                    {!profesionalEditando && (
+                      <div className="col-12">
+                        <div className="border rounded-4 p-3" style={{ background: "rgba(198, 40, 100, 0.05)" }}>
+                          <div className="fw-semibold mb-2">🔐 Acceso a Barbería SaaS</div>
+
+                          {!usuarioActual.profesionalId && (
+                            <div className="form-check mb-2">
+                              <input
+                                id="vincularConMiUsuario"
+                                type="checkbox"
+                                className="form-check-input"
+                                checked={vincularConMiUsuario}
+                                onChange={(e) => {
+                                  setVincularConMiUsuario(e.target.checked);
+                                  if (e.target.checked) setDarAcceso(false);
+                                }}
+                              />
+                              <label className="form-check-label" htmlFor="vincularConMiUsuario">
+                                Este profesional soy yo
+                              </label>
+                              <div className="form-text">
+                                Se vincula con tu usuario actual. No se crea otra contraseña ni se cambia tu rol.
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="form-check">
+                            <input
+                              id="darAccesoProfesional"
+                              type="checkbox"
+                              className="form-check-input"
+                              checked={darAcceso}
+                              disabled={vincularConMiUsuario}
+                              onChange={(e) => setDarAcceso(e.target.checked)}
+                            />
+                            <label className="form-check-label" htmlFor="darAccesoProfesional">
+                              Dar acceso a este profesional
+                            </label>
+                            <div className="form-text">
+                              Le enviaremos una invitación al correo indicado para que cree su propia contraseña.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="col-md-6">
                       <label className="form-label">
