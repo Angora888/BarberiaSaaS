@@ -1,4 +1,5 @@
-﻿using BarberiaSaaS.Api.Data;
+﻿using System.Security.Claims;
+using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.DTOs;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
@@ -37,10 +38,20 @@ namespace BarberiaSaaS.Api.Controllers
             var tenantId =
                 _tenantContext.TenantId;
 
+            var query = _context.Profesionales
+                .Where(x => x.TenantId == tenantId);
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var raw = User.FindFirstValue("ProfesionalId");
+                if (!int.TryParse(raw, out var profesionalId))
+                    return Forbid();
+
+                query = query.Where(x => x.Id == profesionalId);
+            }
+
             var profesionales =
-                await _context.Profesionales
-                    .Where(x =>
-                        x.TenantId == tenantId)
+                await query
                     .OrderBy(x =>
                         x.Nombre)
                     .Select(x => new
