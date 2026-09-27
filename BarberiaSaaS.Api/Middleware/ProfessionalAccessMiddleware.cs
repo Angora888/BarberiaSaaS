@@ -116,7 +116,7 @@ public sealed class ProfessionalAccessMiddleware
             return;
         }
 
-        if (path.StartsWith("/api/disponibilidad") && method is "GET" or "POST")
+        if (path == "/api/disponibilidad/consultar" && method == "POST")
         {
             await _next(context);
             return;
