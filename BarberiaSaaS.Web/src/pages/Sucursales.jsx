@@ -10,6 +10,7 @@ import {
   FaToggleOn
 } from "react-icons/fa";
 import api from "../services/api";
+import { useAppDialog } from "../context/AppDialogContext";
 
 const formularioInicial = {
   nombre: "",
@@ -19,6 +20,8 @@ const formularioInicial = {
 };
 
 function Sucursales() {
+  const { confirm: confirmar } = useAppDialog();
+
   const [sucursales, setSucursales] =
     useState([]);
 
@@ -147,7 +150,15 @@ function Sucursales() {
       ? `¿Deseas activar la sucursal ${sucursal.nombre}?`
       : `¿Deseas desactivar la sucursal ${sucursal.nombre}?`;
 
-    if (!window.confirm(texto)) {
+    const confirmado = await confirmar({
+      titulo: nuevoEstado ? "Activar sucursal" : "Desactivar sucursal",
+      mensaje: texto,
+      confirmarTexto: nuevoEstado ? "Activar" : "Desactivar",
+      cancelarTexto: "Cancelar",
+      peligroso: !nuevoEstado
+    });
+
+    if (!confirmado) {
       return;
     }
 
