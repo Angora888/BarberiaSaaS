@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
+import { useAppDialog } from "../context/AppDialogContext";
 
 function formatearDuracion(minutos) {
   const total = Number(minutos) || 0;
@@ -12,6 +13,7 @@ function formatearDuracion(minutos) {
 }
 
 export default function GestionarCitaPublica() {
+  const { confirm: confirmar } = useAppDialog();
   const [params] = useSearchParams();
   const token = params.get("token") || "";
 
@@ -51,7 +53,15 @@ export default function GestionarCitaPublica() {
   }, [cita]);
 
   const cancelar = async () => {
-    if (!window.confirm("¿Seguro que deseas cancelar esta cita?")) return;
+    const confirmado = await confirmar({
+      titulo: "Cancelar cita",
+      mensaje: "¿Seguro que deseas cancelar esta cita?",
+      confirmarTexto: "Cancelar cita",
+      cancelarTexto: "Volver",
+      peligroso: true
+    });
+
+    if (!confirmado) return;
 
     try {
       setCancelando(true);
