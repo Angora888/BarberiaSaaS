@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaCalendarPlus, FaGift, FaSave, FaTrashAlt } from "react-icons/fa";
 import api from "../services/api";
+import { useAppDialog } from "../context/AppDialogContext";
 
 const fechaInput = (valor) => valor ? new Date(valor).toISOString().slice(0, 10) : "";
 const fechaBonita = (valor) => valor ? new Date(valor).toLocaleString("es-CR", { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -23,6 +24,7 @@ const sumarUnMes = (fechaActual) => {
 };
 
 export default function AdminSuscripciones() {
+  const { confirm: confirmar } = useAppDialog();
   const [negocios, setNegocios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
@@ -76,8 +78,15 @@ export default function AdminSuscripciones() {
   };
 
   const eliminarPendiente = async (negocio) => {
-    const confirmar = window.confirm(`¿Eliminar definitivamente el registro pendiente de "${negocio.nombre}" (${negocio.email || "sin correo"})?\n\nEsta acción no se puede deshacer.`);
-    if (!confirmar) return;
+    const confirmado = await confirmar({
+      titulo: "Eliminar registro pendiente",
+      mensaje: `¿Eliminar definitivamente el registro pendiente de "${negocio.nombre}" (${negocio.email || "sin correo"})?\n\nEsta acción no se puede deshacer.`,
+      confirmarTexto: "Eliminar",
+      cancelarTexto: "Cancelar",
+      peligroso: true
+    });
+
+    if (!confirmado) return;
     try {
       setMensaje(""); setError(""); setEliminandoId(negocio.id);
       await api.delete(`/admin/suscripciones/pendientes/${negocio.id}`);
