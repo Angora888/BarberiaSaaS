@@ -21,6 +21,7 @@ import {
 } from "react-icons/fa";
 
 import api from "../services/api";
+import { useAppDialog } from "../context/AppDialogContext";
 
 import "./LandingPublica.css";
 
@@ -40,6 +41,7 @@ const formatearHoraPublica = (hora) => {
 
 function LandingPublica() {
   const { slug } = useParams();
+  const { alert: mostrarAlerta, prompt: mostrarPrompt } = useAppDialog();
 
   const [landing, setLanding] =
     useState(null);
@@ -571,9 +573,19 @@ function LandingPublica() {
 
     try {
       await navigator.clipboard.writeText(url);
-      window.alert("Enlace copiado. ¡Listo para compartir!");
+      await mostrarAlerta({
+        titulo: "Enlace copiado",
+        mensaje: "¡Listo para compartir!",
+        confirmarTexto: "Listo"
+      });
     } catch {
-      window.prompt("Copia este enlace para compartir:", url);
+      await mostrarPrompt({
+        titulo: "Compartir enlace",
+        mensaje: "No pudimos copiarlo automáticamente. Mantén presionado el enlace para copiarlo.",
+        valor: url,
+        confirmarTexto: "Cerrar",
+        soloLectura: true
+      });
     }
   };
 
