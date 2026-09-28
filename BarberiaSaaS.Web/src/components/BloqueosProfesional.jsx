@@ -13,10 +13,13 @@ import {
 import api from "../services/api";
 import ProximasCitasProfesional from "./ProximasCitasProfesional";
 import HistorialCitasProfesional from "./HistorialCitasProfesional";
+import { useAppDialog } from "../context/AppDialogContext";
 
 function BloqueosProfesional({
   profesional
 }) {
+  const { confirm: confirmar } = useAppDialog();
+
   const [bloqueos, setBloqueos] =
     useState([]);
 
@@ -147,12 +150,15 @@ function BloqueosProfesional({
 
   const eliminarBloqueo =
     async (bloqueo) => {
-      const confirmar =
-        window.confirm(
-          "¿Deseas eliminar este bloqueo?"
-        );
+      const confirmado = await confirmar({
+        titulo: "Eliminar bloqueo",
+        mensaje: "¿Deseas eliminar este bloqueo?",
+        confirmarTexto: "Eliminar",
+        cancelarTexto: "Cancelar",
+        peligroso: true
+      });
 
-      if (!confirmar) {
+      if (!confirmado) {
         return;
       }
 
