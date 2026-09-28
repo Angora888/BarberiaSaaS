@@ -33,7 +33,6 @@ import AgendaWhatsAppFormato12 from "./components/AgendaWhatsAppFormato12";
 import EditarCitaSidecar from "./components/EditarCitaSidecar";
 import ReservaPublicaSidecar from "./components/ReservaPublicaSidecar";
 import VentaCobroCompletada from "./components/VentaCobroCompletada";
-import HorariosProfesionalEditor from "./components/HorariosProfesionalEditor";
 import EnviarDisponibilidadClientes from "./components/EnviarDisponibilidadClientes";
 import ClienteContactPicker from "./components/ClienteContactPicker";
 import PaginaPublicaCard from "./components/PaginaPublicaCard";
@@ -42,6 +41,7 @@ import TurnstileRegistro from "./components/TurnstileRegistro";
 import MainLayout from "./layouts/MainLayout";
 import { ConfiguracionProvider } from "./context/ConfiguracionContext";
 import { SucursalProvider } from "./context/SucursalContext";
+import { AppDialogProvider } from "./context/AppDialogContext";
 import api from "./services/api";
 
 function RutaProtegida({ children }) {
@@ -72,7 +72,8 @@ function SoloSuperAdmin({ children }) {
 
 function App() {
   return (
-    <Routes>
+    <AppDialogProvider>
+      <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/manual" element={<ManualPublico />} />
       <Route path="/prueba" element={<><Prueba /><TurnstileRegistro /></>} />
@@ -89,7 +90,7 @@ function App() {
         <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
         <Route path="/servicios" element={<Servicios />} />
-        <Route path="/profesionales" element={<><Profesionales /><HorariosProfesionalEditor /></>} />
+        <Route path="/profesionales" element={<Profesionales />} />
         <Route path="/agenda" element={<><Agenda /><AgendaAvailabilityFeedback /><AgendaQuickTimeSelection /><AgendaCobroCompletada /><AgendaWhatsAppFormato12 /><EditarCitaSidecar /></>} />
         <Route path="/agenda/importar" element={<ImportarCitas />} />
         <Route path="/productos" element={<Productos />} />
@@ -102,7 +103,8 @@ function App() {
         <Route path="/configuracion" element={<><Configuracion /><PaginaPublicaCard modo="configuracion" /></>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </AppDialogProvider>
   );
 }
 export default App;
