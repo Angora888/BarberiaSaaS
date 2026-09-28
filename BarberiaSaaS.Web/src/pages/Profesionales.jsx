@@ -12,6 +12,7 @@ import {
 
 import api from "../services/api";
 import BloqueosProfesional from "../components/BloqueosProfesional";
+import { useAppDialog } from "../context/AppDialogContext";
 
 const DIAS_SEMANA = [
   { valor: 1, nombre: "Lunes" },
@@ -24,6 +25,8 @@ const DIAS_SEMANA = [
 ];
 
 function Profesionales() {
+  const { confirm: confirmar } = useAppDialog();
+
   const [profesionales, setProfesionales] =
     useState([]);
 
@@ -650,9 +653,13 @@ function Profesionales() {
   const eliminarHorario = async (horario) => {
     if (!profesionalHorario) return;
 
-    const confirmado = window.confirm(
-      `¿Eliminar el horario de ${obtenerNombreDia(horario.diaSemana)} ${formatearHora(horario.horaInicio)} - ${formatearHora(horario.horaFin)}?`
-    );
+    const confirmado = await confirmar({
+      titulo: "Eliminar horario",
+      mensaje: `¿Eliminar el horario de ${obtenerNombreDia(horario.diaSemana)} ${formatearHora(horario.horaInicio)} - ${formatearHora(horario.horaFin)}?`,
+      confirmarTexto: "Eliminar",
+      cancelarTexto: "Cancelar",
+      peligroso: true
+    });
 
     if (!confirmado) return;
 
