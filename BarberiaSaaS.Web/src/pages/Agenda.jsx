@@ -18,11 +18,13 @@ import {
 
 import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
+import { useAppDialog } from "../context/AppDialogContext";
 import AgendaSemanaCompacta from "../components/AgendaSemanaCompacta";
 import "./Agenda.css";
 
 function Agenda() {
   const navigate = useNavigate();
+  const { confirm: confirmar } = useAppDialog();
 
   const {
     formatearMoneda,
@@ -1350,13 +1352,18 @@ function Agenda() {
       return false;
     }
 
-    if (
-      nuevoEstado === "Cancelada" &&
-      !window.confirm(
-        "¿Seguro que deseas cancelar esta cita? El horario volverá a quedar disponible."
-      )
-    ) {
-      return false;
+    if (nuevoEstado === "Cancelada") {
+      const confirmado = await confirmar({
+        titulo: "Cancelar cita",
+        mensaje: "¿Seguro que deseas cancelar esta cita? El horario volverá a quedar disponible.",
+        confirmarTexto: "Cancelar cita",
+        cancelarTexto: "Volver",
+        peligroso: true
+      });
+
+      if (!confirmado) {
+        return false;
+      }
     }
 
     try {
