@@ -33,6 +33,7 @@ function MainLayout() {
             <NavLink to="/agenda" className="sidebar-link"><FaCalendarAlt /><span>Agenda</span></NavLink>
             <NavLink to="/clientes" className="sidebar-link"><FaUsers /><span>Clientes</span></NavLink>
             <NavLink to="/servicios" className="sidebar-link"><FaCut /><span>Servicios</span></NavLink>
+            <NavLink to="/profesionales" className="sidebar-link"><FaUserTie /><span>Mi perfil</span></NavLink>
           </>
         ) : (
           <>
