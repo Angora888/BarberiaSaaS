@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
@@ -38,6 +39,23 @@ namespace BarberiaSaaS.Api.Controllers
                 _context.Sucursales
                     .Where(x =>
                         x.TenantId == tenantId);
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var raw = User.FindFirstValue("ProfesionalId");
+                if (!int.TryParse(raw, out var profesionalId))
+                    return Forbid();
+
+                var sucursalProfesional = await _context.Profesionales
+                    .Where(x => x.Id == profesionalId && x.TenantId == tenantId)
+                    .Select(x => x.SucursalId)
+                    .FirstOrDefaultAsync();
+
+                if (sucursalProfesional.HasValue)
+                    query = query.Where(x => x.Id == sucursalProfesional.Value);
+                else
+                    query = query.Where(x => false);
+            }
 
             if (!incluirInactivas)
             {
