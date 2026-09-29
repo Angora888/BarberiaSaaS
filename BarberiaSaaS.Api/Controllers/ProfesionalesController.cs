@@ -264,9 +264,19 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            var esProfesional = User.IsInRole(RolesUsuario.Profesional);
+
+            if (esProfesional)
+            {
+                var raw = User.FindFirstValue("ProfesionalId");
+                if (!int.TryParse(raw, out var profesionalIdActual) || profesionalIdActual != id)
+                    return Forbid();
+            }
+
             if (
-                request.ServicioIds == null ||
-                request.ServicioIds.Count == 0)
+                !esProfesional &&
+                (request.ServicioIds == null ||
+                 request.ServicioIds.Count == 0))
             {
                 return BadRequest(new
                 {
@@ -317,56 +327,63 @@ namespace BarberiaSaaS.Api.Controllers
                 }
             }
 
-            if (request.SucursalId.HasValue)
+            var serviciosValidos = profesional.Servicios
+                .Select(x => x.ServicioId)
+                .ToList();
+
+            if (!esProfesional)
             {
-                var sucursalValida =
-                    await _context.Sucursales
-                        .AnyAsync(x =>
-                            x.Id ==
-                                request.SucursalId.Value &&
+                if (request.SucursalId.HasValue)
+                {
+                    var sucursalValida =
+                        await _context.Sucursales
+                            .AnyAsync(x =>
+                                x.Id ==
+                                    request.SucursalId.Value &&
+                                x.TenantId ==
+                                    tenantId &&
+                                x.Activa);
+
+                    if (!sucursalValida)
+                    {
+                        return BadRequest(new
+                        {
+                            mensaje =
+                                "La sucursal seleccionada no es válida."
+                        });
+                    }
+                }
+
+                var servicioIds =
+                    request.ServicioIds
+                        .Distinct()
+                        .ToList();
+
+                serviciosValidos =
+                    await _context.Servicios
+                        .Where(x =>
                             x.TenantId ==
                                 tenantId &&
-                            x.Activa);
+                            servicioIds.Contains(
+                                x.Id))
+                        .Select(x =>
+                            x.Id)
+                        .ToListAsync();
 
-                if (!sucursalValida)
+                if (
+                    serviciosValidos.Count !=
+                    servicioIds.Count)
                 {
                     return BadRequest(new
                     {
                         mensaje =
-                            "La sucursal seleccionada no es válida."
+                            "Uno o más servicios seleccionados no pertenecen al negocio."
                     });
                 }
+
+                profesional.SucursalId =
+                    request.SucursalId;
             }
-
-            var servicioIds =
-                request.ServicioIds
-                    .Distinct()
-                    .ToList();
-
-            var serviciosValidos =
-                await _context.Servicios
-                    .Where(x =>
-                        x.TenantId ==
-                            tenantId &&
-                        servicioIds.Contains(
-                            x.Id))
-                    .Select(x =>
-                        x.Id)
-                    .ToListAsync();
-
-            if (
-                serviciosValidos.Count !=
-                servicioIds.Count)
-            {
-                return BadRequest(new
-                {
-                    mensaje =
-                        "Uno o más servicios seleccionados no pertenecen al negocio."
-                });
-            }
-
-            profesional.SucursalId =
-                request.SucursalId;
 
             profesional.Nombre =
                 request.Nombre.Trim();
@@ -390,29 +407,32 @@ namespace BarberiaSaaS.Api.Controllers
             profesional.FotoUrl =
                 request.FotoUrl?.Trim();
 
-            profesional.Activo =
-                request.Activo;
-
-            _context.Set<ProfesionalServicio>()
-                .RemoveRange(
-                    profesional.Servicios);
-
-            profesional.Servicios =
-                new List<ProfesionalServicio>();
-
-            foreach (
-                var servicioId in
-                serviciosValidos)
+            if (!esProfesional)
             {
-                profesional.Servicios.Add(
-                    new ProfesionalServicio
-                    {
-                        ProfesionalId =
-                            profesional.Id,
+                profesional.Activo =
+                    request.Activo;
 
-                        ServicioId =
-                            servicioId
-                    });
+                _context.Set<ProfesionalServicio>()
+                    .RemoveRange(
+                        profesional.Servicios);
+
+                profesional.Servicios =
+                    new List<ProfesionalServicio>();
+
+                foreach (
+                    var servicioId in
+                    serviciosValidos)
+                {
+                    profesional.Servicios.Add(
+                        new ProfesionalServicio
+                        {
+                            ProfesionalId =
+                                profesional.Id,
+
+                            ServicioId =
+                                servicioId
+                        });
+                }
             }
 
             await _context.SaveChangesAsync();

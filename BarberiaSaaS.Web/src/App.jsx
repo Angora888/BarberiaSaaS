@@ -133,7 +133,7 @@ function App() {
         <Route path="/dashboard" element={<SinAccesoProfesional><><Dashboard /><PaginaPublicaCard modo="dashboard" /></></SinAccesoProfesional>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
         <Route path="/servicios" element={<Servicios />} />
-        <Route path="/profesionales" element={<SinAccesoProfesional><Profesionales /></SinAccesoProfesional>} />
+        <Route path="/profesionales" element={<Profesionales />} />
         <Route path="/agenda" element={<AgendaConPermisos />} />
         <Route path="/agenda/importar" element={<SinAccesoProfesional><ImportarCitas /></SinAccesoProfesional>} />
         <Route path="/productos" element={<SinAccesoProfesional><Productos /></SinAccesoProfesional>} />

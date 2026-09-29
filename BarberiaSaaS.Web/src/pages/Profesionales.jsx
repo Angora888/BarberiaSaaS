@@ -66,6 +66,7 @@ function Profesionales() {
   const [vincularConMiUsuario, setVincularConMiUsuario] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const usuarioActual = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const esProfesional = usuarioActual.rol === "Profesional";
 
   const [formulario, setFormulario] =
     useState({
@@ -865,25 +866,27 @@ function Profesionales() {
       <div className="page-header">
         <div>
           <h1 className="page-title">
-            Profesionales
+            {esProfesional ? "Mi perfil profesional" : "Profesionales"}
           </h1>
 
           <p className="text-muted mb-0">
-            Administra profesionales,
-            servicios, horarios y
-            ausencias.
+            {esProfesional
+              ? "Actualiza tu información, horarios, almuerzo y bloqueos."
+              : "Administra profesionales, servicios, horarios y ausencias."}
           </p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={
-            abrirNuevoProfesional
-          }
-        >
-          <FaPlus className="me-2" />
-          Nuevo profesional
-        </button>
+        {!esProfesional && (
+          <button
+            className="btn btn-primary"
+            onClick={
+              abrirNuevoProfesional
+            }
+          >
+            <FaPlus className="me-2" />
+            Nuevo profesional
+          </button>
+        )}
       </div>
 
       {error && (
@@ -900,20 +903,22 @@ function Profesionales() {
 
       <div className="content-card mt-4">
         <div className="client-toolbar">
-          <div className="search-box">
-            <FaSearch />
+          {!esProfesional && (
+            <div className="search-box">
+              <FaSearch />
 
-            <input
-              type="text"
-              placeholder="Buscar profesional..."
-              value={busqueda}
-              onChange={(e) =>
-                setBusqueda(
-                  e.target.value
-                )
-              }
-            />
-          </div>
+              <input
+                type="text"
+                placeholder="Buscar profesional..."
+                value={busqueda}
+                onChange={(e) =>
+                  setBusqueda(
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+          )}
 
           <div className="text-muted">
             {
@@ -1148,7 +1153,9 @@ function Profesionales() {
                 <div className="modal-header">
                   <h5 className="modal-title">
                     {profesionalEditando
-                      ? "Editar profesional"
+                      ? esProfesional
+                        ? "Editar mi perfil"
+                        : "Editar profesional"
                       : "Nuevo profesional"}
                   </h5>
 
@@ -1339,6 +1346,7 @@ function Profesionales() {
                         onChange={
                           cambiarCampo
                         }
+                        disabled={esProfesional}
                       >
                         <option value="">
                           Sin sucursal
@@ -1425,6 +1433,7 @@ function Profesionales() {
                                           servicio.id
                                         )
                                     }
+                                    disabled={esProfesional}
                                     onChange={() =>
                                       cambiarServicio(
                                         servicio.id
@@ -1449,7 +1458,7 @@ function Profesionales() {
                       </div>
                     </div>
 
-                    {profesionalEditando && (
+                    {profesionalEditando && !esProfesional && (
                       <div className="col-12">
                         <div className="form-check form-switch">
                           <input
