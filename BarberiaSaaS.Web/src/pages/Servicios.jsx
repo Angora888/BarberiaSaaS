@@ -17,6 +17,9 @@ function Servicios() {
     formatearMoneda
   } = useConfiguracion();
 
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const soloLectura = usuario.rol === "Profesional";
+
   const [servicios, setServicios] =
     useState([]);
 
@@ -647,20 +650,19 @@ function Servicios() {
           </h1>
 
           <p className="text-muted mb-0">
-            Administra los servicios
-            ofrecidos por el negocio.
+            {soloLectura ? "Consulta los servicios ofrecidos por el negocio." : "Administra los servicios ofrecidos por el negocio."}
           </p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={
-            abrirNuevoServicio
-          }
-        >
-          <FaPlus className="me-2" />
-          Nuevo servicio
-        </button>
+        {!soloLectura && (
+          <button
+            className="btn btn-primary"
+            onClick={abrirNuevoServicio}
+          >
+            <FaPlus className="me-2" />
+            Nuevo servicio
+          </button>
+        )}
       </div>
 
       {error && (
@@ -821,32 +823,26 @@ function Servicios() {
                       </div>
                     )}
 
-                    <div className="d-flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() =>
-                          abrirEditarServicio(
-                            servicio
-                          )
-                        }
-                      >
-                        <FaEdit className="me-1" />
-                        Editar
-                      </button>
+                    {!soloLectura && (
+                      <div className="d-flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => abrirEditarServicio(servicio)}
+                        >
+                          <FaEdit className="me-1" />
+                          Editar
+                        </button>
 
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() =>
-                          abrirVariantes(
-                            servicio
-                          )
-                        }
-                      >
-                        Variantes
-                      </button>
-                    </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => abrirVariantes(servicio)}
+                        >
+                          Variantes
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               }
