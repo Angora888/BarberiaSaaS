@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { FaBell, FaPalette, FaSave, FaStore, FaWhatsapp } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaBell, FaPalette, FaSave, FaStore, FaUserShield, FaWhatsapp } from "react-icons/fa";
 import api from "../services/api";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 
@@ -32,6 +33,8 @@ const formularioInicial = {
 
 function Configuracion() {
   const { tenant, configuracion, cargarConfiguracion } = useConfiguracion();
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const puedeGestionarUsuarios = ["SuperAdmin", "Propietario", "Administrador"].includes(usuario.rol);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [guardando, setGuardando] = useState(false);
   const [subiendoLogo, setSubiendoLogo] = useState(false);
@@ -98,7 +101,10 @@ function Configuracion() {
   };
 
   return <div>
-    <div className="page-header"><div><h1 className="page-title">Configuración</h1><p className="text-muted mb-0">Personaliza los datos, apariencia y preferencias del negocio.</p></div></div>
+    <div className="page-header">
+      <div><h1 className="page-title">Configuración</h1><p className="text-muted mb-0">Personaliza los datos, apariencia y preferencias del negocio.</p></div>
+      {puedeGestionarUsuarios && <Link to="/configuracion/usuarios" className="btn btn-outline-primary"><FaUserShield className="me-2" />Usuarios y accesos</Link>}
+    </div>
     {error && <div className="alert alert-danger mt-4">{error}</div>}
     {mensaje && <div className="alert alert-success mt-4">{mensaje}</div>}
 

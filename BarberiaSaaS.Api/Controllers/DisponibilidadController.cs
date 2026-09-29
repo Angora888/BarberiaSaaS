@@ -1,4 +1,5 @@
-﻿using BarberiaSaaS.Api.Data;
+﻿using System.Security.Claims;
+using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.DTOs;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
@@ -40,6 +41,16 @@ namespace BarberiaSaaS.Api.Controllers
         {
             var tenantId =
                 _tenantContext.TenantId;
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var raw = User.FindFirstValue("ProfesionalId");
+                if (!int.TryParse(raw, out var profesionalActual) ||
+                    request.ProfesionalId != profesionalActual)
+                {
+                    return Forbid();
+                }
+            }
 
             // ========================================================
             // VALIDACIONES BÁSICAS

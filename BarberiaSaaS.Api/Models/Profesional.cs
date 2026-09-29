@@ -30,6 +30,8 @@
 
         public Sucursal? Sucursal { get; set; }
 
+        public Usuario? Usuario { get; set; }
+
         public ICollection<ProfesionalServicio> Servicios { get; set; }
             = new List<ProfesionalServicio>();
 

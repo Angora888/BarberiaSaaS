@@ -8,6 +8,7 @@ export type UsuarioSesion = {
   rol: string;
   tenantId: number;
   sucursalId?: number | null;
+  profesionalId?: number | null;
   negocio: string;
   sucursal?: string | null;
 };

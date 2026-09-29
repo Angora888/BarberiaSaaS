@@ -1,4 +1,4 @@
-import { Stack, router } from "expo-router";
+import { Stack, router, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import { AppState } from "react-native";
@@ -7,6 +7,7 @@ import {
   escucharCambiosTokenPush,
   sincronizarPushSiHaySesion,
 } from "@/src/services/push";
+import { obtenerUsuario } from "@/src/services/session";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,6 +19,8 @@ Notifications.setNotificationHandler({
 });
 
 export default function RootLayout() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const abrirDesdeNotificacion = (
       response: Notifications.NotificationResponse
@@ -69,6 +72,36 @@ export default function RootLayout() {
       tokenSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerUsuario().then((usuario) => {
+      if (!activo || usuario?.rol !== "Profesional") return;
+
+      const permitida =
+        pathname === "/" ||
+        pathname === "/login" ||
+        pathname === "/dashboard" ||
+        pathname === "/agenda" ||
+        pathname === "/clientes" ||
+        pathname === "/servicios" ||
+        pathname === "/nueva-cita" ||
+        pathname === "/nuevo-cliente" ||
+        pathname.startsWith("/cliente/") ||
+        pathname.startsWith("/cita/") ||
+        pathname.startsWith("/recuperar-password") ||
+        pathname.startsWith("/restablecer-password");
+
+      if (!permitida) {
+        router.replace("/agenda");
+      }
+    });
+
+    return () => {
+      activo = false;
+    };
+  }, [pathname]);
 
   return (
     <>

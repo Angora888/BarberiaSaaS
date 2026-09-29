@@ -24,6 +24,8 @@ namespace BarberiaSaaS.Api.Data
 
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
+        public DbSet<InvitacionUsuario> InvitacionesUsuario => Set<InvitacionUsuario>();
+
         public DbSet<Profesional> Profesionales => Set<Profesional>();
 
         public DbSet<Servicio> Servicios => Set<Servicio>();
@@ -151,6 +153,9 @@ namespace BarberiaSaaS.Api.Data
                 })
                 .IsUnique();
 
+                entity.HasIndex(x => x.ProfesionalId)
+                    .IsUnique();
+
                 entity.HasOne(x => x.Tenant)
                     .WithMany(x => x.Usuarios)
                     .HasForeignKey(x => x.TenantId)
@@ -159,6 +164,11 @@ namespace BarberiaSaaS.Api.Data
                 entity.HasOne(x => x.Sucursal)
                     .WithMany(x => x.Usuarios)
                     .HasForeignKey(x => x.SucursalId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(x => x.Profesional)
+                    .WithOne(x => x.Usuario)
+                    .HasForeignKey<Usuario>(x => x.ProfesionalId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -174,6 +184,18 @@ namespace BarberiaSaaS.Api.Data
             });
 
             modelBuilder.Entity<PasswordResetToken>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);
+                entity.HasIndex(x => x.TokenHash).IsUnique();
+                entity.HasIndex(x => new { x.UsuarioId, x.FechaExpiracion });
+                entity.HasOne(x => x.Usuario)
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<InvitacionUsuario>(entity =>
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);

@@ -110,6 +110,12 @@ export default function DashboardScreen() {
         return;
       }
       setUsuario(u);
+
+      if (u.rol === "Profesional") {
+        setCargando(false);
+        return;
+      }
+
       cargarDashboard();
     });
   }, [cargarDashboard]);
@@ -133,6 +139,45 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.loading}>
         <ActivityIndicator size="large" />
         <Text style={styles.muted}>Cargando tu negocio...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (usuario?.rol === "Profesional") {
+    return (
+      <SafeAreaView style={styles.page}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={styles.hello}>Hola, {usuario.nombre} 👋</Text>
+              <Text style={styles.business}>{usuario.negocio}</Text>
+            </View>
+            <Pressable onPress={salir} hitSlop={12}>
+              <Text style={styles.logout}>Salir</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.trialCard}>
+            <Text style={styles.trialKicker}>ACCESO PROFESIONAL</Text>
+            <Text style={styles.trialTitle}>Tu espacio de trabajo</Text>
+            <Text style={styles.trialText}>
+              Aquí tienes únicamente las herramientas necesarias para atender tu agenda.
+            </Text>
+          </View>
+
+          <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}>
+            <Text style={styles.agendaButtonText}>📅 Agenda</Text>
+            <Text style={styles.agendaArrow}>›</Text>
+          </Pressable>
+          <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}>
+            <Text style={styles.agendaButtonText}>👥 Clientes</Text>
+            <Text style={styles.agendaArrow}>›</Text>
+          </Pressable>
+          <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}>
+            <Text style={styles.agendaButtonText}>✨ Servicios</Text>
+            <Text style={styles.agendaArrow}>›</Text>
+          </Pressable>
+        </ScrollView>
       </SafeAreaView>
     );
   }

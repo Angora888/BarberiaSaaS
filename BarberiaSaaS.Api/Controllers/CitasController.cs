@@ -1,4 +1,5 @@
-﻿using BarberiaSaaS.Api.Data;
+﻿using System.Security.Claims;
+using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.DTOs;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
@@ -64,6 +65,16 @@ namespace BarberiaSaaS.Api.Controllers
                 _context.Citas
                     .Where(x =>
                         x.TenantId == tenantId);
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var profesionalId = ObtenerProfesionalIdActual();
+                if (!profesionalId.HasValue)
+                    return Forbid();
+
+                query = query.Where(x =>
+                    x.ProfesionalId == profesionalId.Value);
+            }
 
             if (desdeUtc.HasValue)
             {
@@ -223,6 +234,16 @@ namespace BarberiaSaaS.Api.Controllers
         {
             var tenantId =
                 _tenantContext.TenantId;
+
+            if (User.IsInRole(RolesUsuario.Profesional))
+            {
+                var profesionalId = ObtenerProfesionalIdActual();
+                if (!profesionalId.HasValue ||
+                    request.ProfesionalId != profesionalId.Value)
+                {
+                    return Forbid();
+                }
+            }
 
             if (request.DuracionMinutos <= 0)
             {
@@ -807,6 +828,12 @@ namespace BarberiaSaaS.Api.Controllers
                 cita.Id,
                 cita.Estado
             });
+        }
+
+        private int? ObtenerProfesionalIdActual()
+        {
+            var raw = User.FindFirstValue("ProfesionalId");
+            return int.TryParse(raw, out var id) ? id : null;
         }
 
         // ============================================================

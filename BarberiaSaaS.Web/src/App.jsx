@@ -26,6 +26,8 @@ import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
 import EliminarCuenta from "./pages/EliminarCuenta";
 import GestionarCitaPublica from "./pages/GestionarCitaPublica";
+import UsuariosAcceso from "./pages/UsuariosAcceso";
+import AceptarInvitacion from "./pages/AceptarInvitacion";
 import AgendaAvailabilityFeedback from "./components/AgendaAvailabilityFeedback";
 import AgendaQuickTimeSelection from "./components/AgendaQuickTimeSelection";
 import AgendaCobroCompletada from "./components/AgendaCobroCompletada";
@@ -61,13 +63,53 @@ function RutaProtegida({ children }) {
   }, [token, location.pathname]);
   if (!token || estadoAcceso === "sin-token") return <Navigate to="/login" replace />;
   if (estadoAcceso === "cargando") return <div className="app-loading"><div className="spinner-border" role="status" /><div className="mt-3">Validando acceso...</div></div>;
-  if (estadoAcceso === "bloqueado") return <Navigate to="/mi-suscripcion" replace />;
+  if (estadoAcceso === "bloqueado") {
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (usuario.rol === "Profesional") {
+      return (
+        <div className="min-vh-100 d-flex align-items-center justify-content-center p-4 bg-light">
+          <div className="card border-0 shadow-sm p-4 text-center" style={{ maxWidth: 520, borderRadius: 22 }}>
+            <h3 className="fw-bold">Acceso temporalmente inactivo</h3>
+            <p className="text-muted mb-0">La suscripción del negocio necesita atención. Contacta al propietario para reactivar el acceso.</p>
+          </div>
+        </div>
+      );
+    }
+    return <Navigate to="/mi-suscripcion" replace />;
+  }
   return children;
 }
 
 function SoloSuperAdmin({ children }) {
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
   return usuario.rol === "SuperAdmin" ? children : <Navigate to="/dashboard" replace />;
+}
+
+function SinAccesoProfesional({ children }) {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  return usuario.rol === "Profesional" ? <Navigate to="/agenda" replace /> : children;
+}
+
+function SoloGestionUsuarios({ children }) {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const permitido = ["SuperAdmin", "Propietario", "Administrador"].includes(usuario.rol);
+  return permitido ? children : <Navigate to={usuario.rol === "Profesional" ? "/agenda" : "/dashboard"} replace />;
+}
+
+function AgendaConPermisos() {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  const esProfesional = usuario.rol === "Profesional";
+
+  return (
+    <>
+      <Agenda />
+      <AgendaAvailabilityFeedback />
+      <AgendaQuickTimeSelection />
+      {!esProfesional && <AgendaCobroCompletada />}
+      <AgendaWhatsAppFormato12 />
+      <EditarCitaSidecar />
+    </>
+  );
 }
 
 function App() {
@@ -86,21 +128,23 @@ function App() {
       <Route path="/terminos" element={<Terminos />} />
       <Route path="/eliminar-cuenta" element={<EliminarCuenta />} />
       <Route path="/cita/gestionar" element={<GestionarCitaPublica />} />
+      <Route path="/aceptar-invitacion/:token" element={<AceptarInvitacion />} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
-        <Route path="/dashboard" element={<><Dashboard /><PaginaPublicaCard modo="dashboard" /></>} />
+        <Route path="/dashboard" element={<SinAccesoProfesional><><Dashboard /><PaginaPublicaCard modo="dashboard" /></></SinAccesoProfesional>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
         <Route path="/servicios" element={<Servicios />} />
-        <Route path="/profesionales" element={<Profesionales />} />
-        <Route path="/agenda" element={<><Agenda /><AgendaAvailabilityFeedback /><AgendaQuickTimeSelection /><AgendaCobroCompletada /><AgendaWhatsAppFormato12 /><EditarCitaSidecar /></>} />
-        <Route path="/agenda/importar" element={<ImportarCitas />} />
-        <Route path="/productos" element={<Productos />} />
-        <Route path="/ventas" element={<><Ventas /><VentaCobroCompletada /></>} />
-        <Route path="/cuentas-por-cobrar" element={<CuentasPorCobrar />} />
-        <Route path="/reportes" element={<Reportes />} />
-        <Route path="/sucursales" element={<Sucursales />} />
-        <Route path="/mi-suscripcion" element={<MiSuscripcion />} />
+        <Route path="/profesionales" element={<SinAccesoProfesional><Profesionales /></SinAccesoProfesional>} />
+        <Route path="/agenda" element={<AgendaConPermisos />} />
+        <Route path="/agenda/importar" element={<SinAccesoProfesional><ImportarCitas /></SinAccesoProfesional>} />
+        <Route path="/productos" element={<SinAccesoProfesional><Productos /></SinAccesoProfesional>} />
+        <Route path="/ventas" element={<SinAccesoProfesional><><Ventas /><VentaCobroCompletada /></></SinAccesoProfesional>} />
+        <Route path="/cuentas-por-cobrar" element={<SinAccesoProfesional><CuentasPorCobrar /></SinAccesoProfesional>} />
+        <Route path="/reportes" element={<SinAccesoProfesional><Reportes /></SinAccesoProfesional>} />
+        <Route path="/sucursales" element={<SinAccesoProfesional><Sucursales /></SinAccesoProfesional>} />
+        <Route path="/mi-suscripcion" element={<SinAccesoProfesional><MiSuscripcion /></SinAccesoProfesional>} />
         <Route path="/admin/suscripciones" element={<SoloSuperAdmin><AdminSuscripciones /></SoloSuperAdmin>} />
-        <Route path="/configuracion" element={<><Configuracion /><PaginaPublicaCard modo="configuracion" /></>} />
+        <Route path="/configuracion" element={<SinAccesoProfesional><><Configuracion /><PaginaPublicaCard modo="configuracion" /></></SinAccesoProfesional>} />
+        <Route path="/configuracion/usuarios" element={<SoloGestionUsuarios><UsuariosAcceso /></SoloGestionUsuarios>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
