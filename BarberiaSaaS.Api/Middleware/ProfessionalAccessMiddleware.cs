@@ -98,6 +98,56 @@ public sealed class ProfessionalAccessMiddleware
             return;
         }
 
+        if (path.StartsWith("/api/profesionales/"))
+        {
+            var partes = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (partes.Length < 3 ||
+                !int.TryParse(partes[2], out var profesionalRutaId) ||
+                profesionalRutaId != profesionalId.Value)
+            {
+                await Denegar(context, "Solo puedes administrar tu propio perfil profesional.");
+                return;
+            }
+
+            if (partes.Length == 3 && method == "PUT")
+            {
+                await _next(context);
+                return;
+            }
+
+            if (partes.Length >= 4)
+            {
+                var recurso = partes[3];
+
+                var permitido =
+                    recurso == "horarios" &&
+                        ((partes.Length == 4 && method is "GET" or "POST") ||
+                         (partes.Length == 5 && method is "PUT" or "DELETE")) ||
+                    recurso == "bloqueos" &&
+                        ((partes.Length == 4 && method is "GET" or "POST") ||
+                         (partes.Length == 5 && method == "DELETE")) ||
+                    recurso == "almuerzos" &&
+                        ((partes.Length == 4 && method is "GET" or "POST" or "DELETE") ||
+                         (partes.Length == 5 && method == "DELETE"));
+
+                if (permitido)
+                {
+                    await _next(context);
+                    return;
+                }
+            }
+
+            await Denegar(context);
+            return;
+        }
+
+        if (path == "/api/imagenes/subir" && method == "POST")
+        {
+            await _next(context);
+            return;
+        }
+
         if (path.StartsWith("/api/sucursales") && method == "GET")
         {
             await _next(context);
