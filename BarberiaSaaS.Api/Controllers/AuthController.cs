@@ -413,6 +413,7 @@ namespace BarberiaSaaS.Api.Controllers
                     usuario.Rol,
                     usuario.TenantId,
                     usuario.SucursalId,
+                    usuario.ProfesionalId,
                     negocio = usuario.Tenant.Nombre,
                     sucursal = usuario.Sucursal?.Nombre
                 }
@@ -524,6 +525,85 @@ namespace BarberiaSaaS.Api.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { mensaje = "Tu contraseña fue actualizada correctamente." });
+        }
+
+        // =========================================================
+        // ACEPTAR INVITACIÓN DE USUARIO PROFESIONAL
+        // =========================================================
+
+        [HttpPost("aceptar-invitacion")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> AceptarInvitacion(
+            AceptarInvitacionDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Token) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new
+                {
+                    mensaje = "El enlace o la contraseña no son válidos."
+                });
+            }
+
+            if (request.Password.Length < 8)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La contraseña debe tener al menos 8 caracteres."
+                });
+            }
+
+            var ahora = DateTime.UtcNow;
+            var tokenHash = CalcularSha256(request.Token.Trim());
+
+            var invitacion = await _context.InvitacionesUsuario
+                .Include(x => x.Usuario)
+                .ThenInclude(x => x.Tenant)
+                .FirstOrDefaultAsync(x => x.TokenHash == tokenHash);
+
+            if (invitacion == null ||
+                invitacion.FechaUso.HasValue ||
+                invitacion.FechaExpiracion < ahora)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La invitación no es válida o ya expiró."
+                });
+            }
+
+            if (!invitacion.Usuario.ProfesionalId.HasValue ||
+                invitacion.Usuario.Rol != RolesUsuario.Profesional)
+            {
+                return BadRequest(new
+                {
+                    mensaje = "La invitación no corresponde a un usuario Profesional."
+                });
+            }
+
+            invitacion.Usuario.PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            invitacion.Usuario.Activo = true;
+            invitacion.FechaUso = ahora;
+
+            var otrasInvitaciones = await _context.InvitacionesUsuario
+                .Where(x =>
+                    x.UsuarioId == invitacion.UsuarioId &&
+                    x.Id != invitacion.Id &&
+                    x.FechaUso == null)
+                .ToListAsync();
+
+            foreach (var otra in otrasInvitaciones)
+                otra.FechaUso = ahora;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mensaje = "Tu contraseña fue creada. Ya puedes iniciar sesión en Barbería SaaS.",
+                email = invitacion.Usuario.Email,
+                negocio = invitacion.Usuario.Tenant.Nombre
+            });
         }
 
         // =========================================================
@@ -686,6 +766,14 @@ namespace BarberiaSaaS.Api.Controllers
                         usuario.SucursalId.Value.ToString()));
             }
 
+            if (usuario.ProfesionalId.HasValue)
+            {
+                claims.Add(
+                    new Claim(
+                        "ProfesionalId",
+                        usuario.ProfesionalId.Value.ToString()));
+            }
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey));
 
@@ -707,6 +795,12 @@ namespace BarberiaSaaS.Api.Controllers
         public class ConfirmarRegistroDto
         {
             public string Token { get; set; } = string.Empty;
+        }
+
+        public class AceptarInvitacionDto
+        {
+            public string Token { get; set; } = string.Empty;
+            public string Password { get; set; } = string.Empty;
         }
 
         private sealed class TurnstileVerificationResponse
