@@ -131,12 +131,24 @@ builder.Services.AddSwaggerGen(options =>
 // CORS
 // ============================================================
 
+var frontendOrigins = new List<string>
+{
+    "https://barberiasaas.com",
+    "https://barberiasaas.vercel.app"
+};
+
+if (builder.Environment.IsDevelopment())
+{
+    frontendOrigins.Add("http://localhost:5173");
+    frontendOrigins.Add("http://127.0.0.1:5173");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("https://barberiasaas.com", "https://barberiasaas.vercel.app")
+            .WithOrigins(frontendOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
