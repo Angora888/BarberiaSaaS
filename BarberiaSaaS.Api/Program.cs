@@ -164,6 +164,7 @@ app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<SaasAccessMiddleware>();
+app.UseMiddleware<ProfessionalAccessMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
