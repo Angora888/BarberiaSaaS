@@ -8,6 +8,8 @@
 
         public int? SucursalId { get; set; }
 
+        public int? ProfesionalId { get; set; }
+
         public string Nombre { get; set; } = string.Empty;
 
         public string Apellidos { get; set; } = string.Empty;
@@ -28,5 +30,7 @@
         public Tenant Tenant { get; set; } = null!;
 
         public Sucursal? Sucursal { get; set; }
+
+        public Profesional? Profesional { get; set; }
     }
 }
