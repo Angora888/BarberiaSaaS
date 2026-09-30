@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "@/src/services/api";import {telUrl,whatsappUrl} from "@/src/services/phone";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Cita={id:number;fechaInicio?:string;precio?:number;estado?:string;servicio?:{nombre?:string};profesional?:{nombre?:string;apellidos?:string};sucursal?:{nombre?:string}};
 type Historial={cliente?:{id:number;nombre?:string;apellidos?:string;telefono?:string;email?:string;fechaNacimiento?:string;notas?:string;deuda?:number};resumen?:{totalCitas?:number;citasCompletadas?:number;canceladas?:number;noAsistio?:number;totalGastado?:number;deuda?:number};citas?:Cita[]};
