@@ -79,6 +79,20 @@ export default function RootLayout() {
     obtenerUsuario().then((usuario) => {
       if (!activo || usuario?.rol !== "Profesional") return;
 
+      const profesionalId =
+        usuario.profesionalId != null ? String(usuario.profesionalId) : "";
+
+      const rutaProfesionalPropia =
+        Boolean(profesionalId) &&
+        (
+          pathname === `/profesional/${profesionalId}` ||
+          pathname === `/editar-profesional/${profesionalId}` ||
+          pathname === `/horarios-profesional/${profesionalId}` ||
+          pathname === `/bloqueos-profesional/${profesionalId}` ||
+          pathname === `/almuerzo-profesional/${profesionalId}` ||
+          pathname === `/citas-profesional/${profesionalId}`
+        );
+
       const permitida =
         pathname === "/" ||
         pathname === "/login" ||
@@ -91,7 +105,8 @@ export default function RootLayout() {
         pathname.startsWith("/cliente/") ||
         pathname.startsWith("/cita/") ||
         pathname.startsWith("/recuperar-password") ||
-        pathname.startsWith("/restablecer-password");
+        pathname.startsWith("/restablecer-password") ||
+        rutaProfesionalPropia;
 
       if (!permitida) {
         router.replace("/agenda");
