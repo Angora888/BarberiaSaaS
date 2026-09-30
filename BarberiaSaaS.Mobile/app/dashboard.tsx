@@ -177,6 +177,21 @@ export default function DashboardScreen() {
             <Text style={styles.agendaButtonText}>✨ Servicios</Text>
             <Text style={styles.agendaArrow}>›</Text>
           </Pressable>
+          {usuario.profesionalId != null ? (
+            <Pressable
+              style={styles.clientsButton}
+              onPress={() => router.push(`/profesional/${usuario.profesionalId}`)}
+            >
+              <Text style={styles.agendaButtonText}>👤 Mi perfil profesional</Text>
+              <Text style={styles.agendaArrow}>›</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>
+                Tu usuario todavía no está vinculado a un perfil profesional.
+              </Text>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     );
