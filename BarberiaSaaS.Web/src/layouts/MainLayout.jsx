@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FaBoxes, FaCalendarAlt, FaCashRegister, FaChartBar, FaCog, FaCreditCard, FaCut, FaFileInvoiceDollar, FaHome, FaSignOutAlt, FaStore, FaUsers, FaUserTie } from "react-icons/fa";
+import { FaBoxes, FaCalendarAlt, FaCashRegister, FaChartBar, FaCog, FaCreditCard, FaCut, FaFileInvoiceDollar, FaHome, FaMoon, FaSignOutAlt, FaStore, FaSun, FaUsers, FaUserTie } from "react-icons/fa";
 import { useConfiguracion } from "../context/ConfiguracionContext";
 import { useSucursal } from "../context/SucursalContext";
 
@@ -12,6 +13,14 @@ function MainLayout() {
   const esSuperAdmin = usuario.rol === "SuperAdmin";
   const esProfesional = usuario.rol === "Profesional";
   const esPaginaSuscripcion = location.pathname === "/mi-suscripcion";
+  const [tema, setTema] = useState(() => localStorage.getItem("barberiaSaaS.tema") || "light");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", tema);
+    localStorage.setItem("barberiaSaaS.tema", tema);
+  }, [tema]);
+
+  const alternarTema = () => setTema(actual => actual === "dark" ? "light" : "dark");
 
   const cerrarSesion = () => { localStorage.removeItem("token"); localStorage.removeItem("usuario"); localStorage.removeItem("barberiaSaaS.sucursalSeleccionada"); navigate("/"); };
   const inicialNegocio = nombreNegocio?.charAt(0)?.toUpperCase() || "N";
@@ -58,13 +67,24 @@ function MainLayout() {
     </aside>
     <main className="main-content">
       <header className="topbar" style={{ justifyContent: "space-between", gap: 16 }}>
-        <div className="d-flex align-items-center" style={{ minWidth: 0, flex: "1 1 auto" }}><div className="d-flex align-items-center" style={{ width: "100%", maxWidth: 360, minWidth: 0, padding: "7px 12px", border: "1px solid var(--border)", borderRadius: 18, background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}><div className="d-flex align-items-center justify-content-center" style={{ width: 40, height: 40, minWidth: 40, borderRadius: 14, background: "var(--soft-pink)", color: "var(--primary)", marginRight: 10 }}><FaStore size={18} /></div><div style={{ minWidth: 0, flex: 1 }}><div className="text-muted" style={{ fontSize: 11, lineHeight: 1.1, marginBottom: 2 }}>Sucursal</div><select aria-label="Sucursal activa" value={sucursalId} onChange={e => seleccionarSucursal(e.target.value)} style={{ width: "100%", border: "none", outline: "none", backgroundColor: "transparent", fontWeight: 700, fontSize: 14, padding: 0 }}><option value="">Todas las sucursales</option>{sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div></div></div>
-        <div className="topbar-user"><div className="topbar-user-text d-none d-md-flex"><strong>{usuario.nombre || "Usuario"}</strong>{usuario.sucursal && <span>{usuario.sucursal}</span>}</div><div className="topbar-avatar">{(usuario.nombre || "U").charAt(0).toUpperCase()}</div></div>
+        <div className="d-flex align-items-center" style={{ minWidth: 0, flex: "1 1 auto" }}><div className="d-flex align-items-center" style={{ width: "100%", maxWidth: 360, minWidth: 0, padding: "7px 12px", border: "1px solid var(--border)", borderRadius: 18, background: "var(--surface)", boxShadow: "var(--surface-shadow)" }}><div className="d-flex align-items-center justify-content-center" style={{ width: 40, height: 40, minWidth: 40, borderRadius: 14, background: "var(--soft-pink)", color: "var(--primary)", marginRight: 10 }}><FaStore size={18} /></div><div style={{ minWidth: 0, flex: 1 }}><div className="text-muted" style={{ fontSize: 11, lineHeight: 1.1, marginBottom: 2 }}>Sucursal</div><select aria-label="Sucursal activa" value={sucursalId} onChange={e => seleccionarSucursal(e.target.value)} style={{ width: "100%", border: "none", outline: "none", backgroundColor: "transparent", fontWeight: 700, fontSize: 14, padding: 0 }}><option value="">Todas las sucursales</option>{sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div></div></div>
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={alternarTema}
+            aria-label={tema === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
+            title={tema === "dark" ? "Modo claro" : "Modo oscuro"}
+          >
+            {tema === "dark" ? <FaSun /> : <FaMoon />}
+          </button>
+          <div className="topbar-user"><div className="topbar-user-text d-none d-md-flex"><strong>{usuario.nombre || "Usuario"}</strong>{usuario.sucursal && <span>{usuario.sucursal}</span>}</div><div className="topbar-avatar">{(usuario.nombre || "U").charAt(0).toUpperCase()}</div></div>
+        </div>
       </header>
       <div className="page-content">
         {!esPaginaSuscripcion && errorConfiguracion && <div className="alert alert-warning">{errorConfiguracion}</div>}
         {!esPaginaSuscripcion && errorSucursales && <div className="alert alert-warning">{errorSucursales}</div>}
-        {mostrarAvisoPrueba && <div className="mb-4" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "18px 20px", background: "linear-gradient(135deg, var(--soft-pink), #ffffff)", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}><div className="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barberia SaaS</div><div className="fw-bold" style={{ fontSize: 20 }}>Días usando la App: {diasUsandoApp}</div>{diasUsandoApp < 31 && <div className="text-muted mt-1">Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</div>}</div>{diasUsandoApp < 31 && <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={activarSuscripcion} style={{ borderRadius: 14, padding: "10px 16px", fontWeight: 700 }}><FaCreditCard />Activar suscripción</button>}</div></div>}
+        {mostrarAvisoPrueba && <div className="mb-4" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "18px 20px", background: "linear-gradient(135deg, var(--soft-pink), var(--surface))", boxShadow: "var(--surface-shadow)" }}><div className="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barberia SaaS</div><div className="fw-bold" style={{ fontSize: 20 }}>Días usando la App: {diasUsandoApp}</div>{diasUsandoApp < 31 && <div className="text-muted mt-1">Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</div>}</div>{diasUsandoApp < 31 && <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={activarSuscripcion} style={{ borderRadius: 14, padding: "10px 16px", fontWeight: 700 }}><FaCreditCard />Activar suscripción</button>}</div></div>}
         <Outlet />
       </div>
     </main>
