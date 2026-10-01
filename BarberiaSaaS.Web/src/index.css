@@ -1214,3 +1214,320 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   ADMIN THEME (LIGHT / DARK)
+   Scoped through data-theme so public pages keep their own design.
+   ============================================================ */
+
+:root {
+  --app-bg: #f7f5f6;
+  --surface: #ffffff;
+  --surface-soft: #faf8f9;
+  --surface-muted: #f8f6f7;
+  --text-main: #29252a;
+  --text-strong: #302c2f;
+  --surface-shadow: 0 3px 15px rgba(0, 0, 0, 0.03);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --app-bg: #0b1220;
+  --surface: #111827;
+  --surface-soft: #161f2f;
+  --surface-muted: #182233;
+
+  --sidebar: #0f172a;
+  --border: #263247;
+  --text-main: #e8edf5;
+  --text-strong: #f8fafc;
+  --text-muted: #94a3b8;
+
+  /* Tenant primary color remains intact; this is only its soft background. */
+  --soft-pink: rgba(198, 40, 100, 0.16);
+
+  --surface-shadow: 0 8px 28px rgba(0, 0, 0, 0.20);
+}
+
+body,
+.app-shell,
+.main-content,
+.page-content,
+.topbar,
+.sidebar,
+.content-card,
+.dashboard-card,
+.dashboard-info,
+.service-card,
+.professional-card,
+.custom-modal,
+.schedule-row,
+.service-select-card,
+.schedule-form-card,
+.search-box {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.app-shell,
+.main-content,
+.page-content {
+  background: var(--app-bg);
+  color: var(--text-main);
+}
+
+.topbar,
+.content-card,
+.dashboard-card,
+.dashboard-info,
+.service-card,
+.professional-card,
+.custom-modal,
+.schedule-row,
+.service-select-card {
+  background: var(--surface);
+  color: var(--text-main);
+}
+
+.dashboard-card,
+.content-card,
+.dashboard-info,
+.service-card,
+.professional-card {
+  box-shadow: var(--surface-shadow);
+}
+
+.page-title,
+.dashboard-value,
+.sidebar-brand-info strong,
+.professional-info h5,
+.service-card h5,
+.schedule-day,
+.custom-modal-header h4,
+.topbar-user-text strong {
+  color: var(--text-strong);
+}
+
+.search-box,
+.history-stat,
+.professional-contact,
+.schedule-form-card,
+.schedule-empty {
+  background: var(--surface-soft);
+}
+
+.client-table th {
+  background: var(--surface-soft);
+}
+
+.sidebar-link {
+  color: var(--text-main);
+}
+
+.sidebar-logout,
+.sidebar-timezone strong,
+.professional-section-title,
+.schedule-section-title,
+.schedule-time,
+.schedule-empty strong {
+  color: var(--text-muted);
+}
+
+.sidebar-logout:hover {
+  background: var(--surface-soft);
+}
+
+.sidebar-logo-image {
+  background: var(--surface);
+}
+
+.theme-toggle {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  box-shadow: var(--surface-shadow);
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+html[data-theme="dark"] body {
+  background: var(--app-bg);
+  color: var(--text-main);
+}
+
+html[data-theme="dark"] .topbar {
+  background: #0f172a;
+}
+
+html[data-theme="dark"] .sidebar {
+  background: #0f172a;
+}
+
+html[data-theme="dark"] .sidebar-link:hover,
+html[data-theme="dark"] .sidebar-link.active {
+  background: var(--soft-pink);
+}
+
+html[data-theme="dark"] .client-table,
+html[data-theme="dark"] .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-main);
+  --bs-table-border-color: var(--border);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.025);
+  --bs-table-striped-color: var(--text-main);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.04);
+  --bs-table-hover-color: var(--text-main);
+  color: var(--text-main);
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: #0f172a;
+  color: var(--text-main);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-select:focus,
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus {
+  background-color: #0f172a;
+  color: var(--text-main);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(198, 40, 100, 0.14);
+}
+
+html[data-theme="dark"] .form-control::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #718096;
+}
+
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .list-group-item {
+  background-color: var(--surface);
+  color: var(--text-main);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer,
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .card-footer {
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .dropdown-item {
+  color: var(--text-main);
+}
+
+html[data-theme="dark"] .dropdown-item:hover,
+html[data-theme="dark"] .dropdown-item:focus {
+  background: var(--surface-soft);
+  color: var(--text-strong);
+}
+
+html[data-theme="dark"] .btn-outline-secondary,
+html[data-theme="dark"] .btn-outline-dark {
+  color: #d7deea;
+  border-color: #536078;
+}
+
+html[data-theme="dark"] .btn-outline-secondary:hover,
+html[data-theme="dark"] .btn-outline-dark:hover {
+  color: #fff;
+  background: #334155;
+  border-color: #64748b;
+}
+
+html[data-theme="dark"] .text-dark {
+  color: var(--text-strong) !important;
+}
+
+html[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .text-secondary {
+  color: var(--text-muted) !important;
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: var(--surface) !important;
+}
+
+html[data-theme="dark"] .bg-light {
+  background-color: var(--surface-soft) !important;
+}
+
+html[data-theme="dark"] .border,
+html[data-theme="dark"] .border-top,
+html[data-theme="dark"] .border-bottom,
+html[data-theme="dark"] .border-start,
+html[data-theme="dark"] .border-end {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .alert-warning {
+  background: #3b2f13;
+  color: #fde68a;
+  border-color: #6b531d;
+}
+
+html[data-theme="dark"] .alert-danger {
+  background: #3a171b;
+  color: #fecaca;
+  border-color: #6f252c;
+}
+
+html[data-theme="dark"] .alert-success {
+  background: #123524;
+  color: #bbf7d0;
+  border-color: #1d5a3a;
+}
+
+html[data-theme="dark"] .service-status {
+  background: #202b3c;
+  color: #aeb8c7;
+}
+
+html[data-theme="dark"] .service-status.active {
+  background: #123524;
+  color: #86efac;
+}
+
+html[data-theme="dark"] .manual-page,
+html[data-theme="dark"] .bs-home,
+html[data-theme="dark"] .login-page {
+  color-scheme: light;
+}
+
+@media (max-width: 900px) {
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+  }
+}
