@@ -304,7 +304,7 @@ function Home() {
           </button>
 
           <div className={`collapse navbar-collapse ${menuAbierto ? "show" : ""}`}>
-            <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+            <ul className="navbar-nav ms-auto align-items-lg-center gap-3 gap-lg-2">
               <li className="nav-item">
                 <button className="nav-link bs-nav-link border-0 bg-transparent" onClick={() => irASeccion("funciones")}>
                   Funciones
