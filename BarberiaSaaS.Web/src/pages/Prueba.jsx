@@ -7,7 +7,7 @@ import {
   FaEyeSlash,
   FaRocket,
   FaShieldAlt,
-  FaSpa
+  FaCut
 } from "react-icons/fa";
 import api from "../services/api";
 
@@ -95,54 +95,98 @@ function Prueba() {
     <>
       <style>{`
         .trial-page {
+          --bs-navy: #071a46;
+          --bs-navy-2: #102b63;
+          --bs-gold: #f4c64f;
+          --bs-gold-2: #ffdc73;
           min-height: 100vh;
+          color: #111827;
           background:
-            radial-gradient(circle at top left, rgba(198, 40, 100, 0.08), transparent 34%),
-            radial-gradient(circle at bottom right, rgba(17, 24, 39, 0.08), transparent 32%),
-            #f7f8fa;
+            radial-gradient(circle at 88% 8%, rgba(244,198,79,.13), transparent 28%),
+            radial-gradient(circle at 12% 92%, rgba(7,26,70,.07), transparent 30%),
+            #f7f8fc;
         }
         .trial-nav {
-          background: rgba(255, 255, 255, 0.94);
-          backdrop-filter: blur(14px);
-          border-bottom: 1px solid #e8ebef;
+          background: rgba(7, 26, 70, .97);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(255,255,255,.09);
         }
         .trial-brand-icon {
-          width: 42px; height: 42px; display: inline-flex; align-items: center;
-          justify-content: center; border-radius: 13px; color: #fff;
-          background: linear-gradient(135deg, #111827 0%, #374151 100%);
+          width: 46px; height: 46px; display: inline-flex; align-items: center;
+          justify-content: center; border-radius: 12px; color: var(--bs-gold);
+          background: linear-gradient(145deg, #0b2256, #061538);
+          border: 1px solid rgba(244,198,79,.28);
+          box-shadow: 0 8px 24px rgba(0,0,0,.22);
+          font-size: 20px;
+        }
+        .trial-brand-name { color: #fff; font-weight: 800; letter-spacing: -.4px; }
+        .trial-brand-name span { color: var(--bs-gold); }
+        .trial-nav-link {
+          color: rgba(255,255,255,.86) !important;
+          font-weight: 700;
+          border-color: rgba(255,255,255,.35) !important;
+        }
+        .trial-nav-link:hover { color: var(--bs-gold) !important; border-color: var(--bs-gold) !important; }
+        .trial-nav-login {
+          background: var(--bs-gold);
+          border-color: var(--bs-gold);
+          color: #0b1738;
+          font-weight: 800;
+        }
+        .trial-nav-login:hover {
+          background: var(--bs-gold-2);
+          border-color: var(--bs-gold-2);
+          color: #0b1738;
         }
         .trial-shell { max-width: 1120px; margin: 0 auto; padding: 54px 20px 70px; }
+        .trial-kicker {
+          display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px;
+          border-radius: 999px; color: #9a7110; border: 1px solid rgba(244,198,79,.55);
+          background: rgba(244,198,79,.14); font-weight: 800; font-size: .9rem;
+        }
+        .trial-heading { color: var(--bs-navy); letter-spacing: -1.4px; }
         .trial-info-card, .trial-form-card, .trial-success-card {
-          background: #fff; border: 1px solid #e5e7eb; border-radius: 26px;
-          box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+          background: #fff; border: 1px solid #e5e9f0; border-radius: 26px;
+          box-shadow: 0 24px 70px rgba(7, 26, 70, 0.09);
         }
         .trial-info-card {
           height: 100%; padding: 38px; color: #fff;
-          background: linear-gradient(145deg, #111827 0%, #283548 100%); border: none;
+          background:
+            radial-gradient(circle at 85% 12%, rgba(244,198,79,.18), transparent 30%),
+            linear-gradient(145deg, var(--bs-navy) 0%, var(--bs-navy-2) 100%);
+          border: none;
         }
         .trial-info-pill {
           display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px;
-          border-radius: 999px; background: rgba(255,255,255,.10);
-          border: 1px solid rgba(255,255,255,.13); font-size: 13px; font-weight: 700;
+          border-radius: 999px; color: var(--bs-gold-2);
+          background: rgba(244,198,79,.08);
+          border: 1px solid rgba(244,198,79,.30); font-size: 13px; font-weight: 700;
         }
         .trial-feature {
           display: flex; gap: 12px; align-items: flex-start; padding: 14px 0;
           border-top: 1px solid rgba(255,255,255,.10);
         }
         .trial-feature:first-of-type { border-top: 0; }
-        .trial-check { margin-top: 3px; color: #86efac; }
+        .trial-check { margin-top: 3px; color: var(--bs-gold); }
         .trial-form-card { padding: 38px; }
-        .trial-label { color: #374151; font-size: 14px; font-weight: 700; margin-bottom: 7px; }
+        .trial-form-card h3 { color: var(--bs-navy); }
+        .trial-label { color: #344054; font-size: 14px; font-weight: 700; margin-bottom: 7px; }
         .trial-input {
           min-height: 50px; border-radius: 13px; border: 1px solid #d9dee7;
           box-shadow: none !important;
         }
-        .trial-input:focus { border-color: #6b7280; }
+        .trial-input:focus {
+          border-color: #c89b24;
+          box-shadow: 0 0 0 .2rem rgba(244,198,79,.16) !important;
+        }
         .trial-phone-group {
           display: flex; align-items: stretch; min-height: 50px; border: 1px solid #d9dee7;
-          border-radius: 13px; overflow: hidden; background: #fff; transition: border-color .15s ease;
+          border-radius: 13px; overflow: hidden; background: #fff; transition: border-color .15s ease, box-shadow .15s ease;
         }
-        .trial-phone-group:focus-within { border-color: #6b7280; }
+        .trial-phone-group:focus-within {
+          border-color: #c89b24;
+          box-shadow: 0 0 0 .2rem rgba(244,198,79,.16);
+        }
         .trial-phone-prefix {
           display: flex; align-items: center; gap: 8px; padding: 0 12px;
           background: #f8fafc; border-right: 1px solid #e5e7eb; color: #374151;
@@ -153,32 +197,43 @@ function Prueba() {
           flex: 1; min-width: 0; border: 0 !important; border-radius: 0 !important;
           box-shadow: none !important; padding-left: 12px;
         }
-        .trial-phone-help { margin-top: 6px; color: #6b7280; font-size: 12px; }
+        .trial-phone-help { margin-top: 6px; color: #667085; font-size: 12px; }
         .trial-submit {
           min-height: 54px; border: 0; border-radius: 14px;
-          background: linear-gradient(135deg, #c62864 0%, #8f204d 100%); font-weight: 800;
+          background: var(--bs-gold); color: #0b1738; font-weight: 850;
+          box-shadow: 0 10px 24px rgba(244,198,79,.25);
         }
         .trial-submit:hover:not(:disabled) {
-          background: linear-gradient(135deg, #b9235a 0%, #7f1d46 100%);
+          background: var(--bs-gold-2); color: #0b1738; transform: translateY(-1px);
         }
         .trial-password-wrap { position: relative; }
         .trial-password-wrap .trial-input { padding-right: 52px; }
         .trial-eye {
           position: absolute; top: 50%; right: 13px; transform: translateY(-50%);
-          border: 0; background: transparent; color: #6b7280; padding: 7px;
+          border: 0; background: transparent; color: #667085; padding: 7px;
         }
         .trial-success-card {
           max-width: 760px; margin: 24px auto 0; padding: 50px 42px; text-align: center;
         }
+        .trial-success-card h1 { color: var(--bs-navy); }
         .trial-success-icon {
           width: 84px; height: 84px; margin: 0 auto 22px; display: flex;
           align-items: center; justify-content: center; border-radius: 50%;
-          background: #ecfdf3; color: #16803c; font-size: 42px;
+          background: rgba(244,198,79,.18); color: #9a7110; font-size: 42px;
         }
         .trial-credential {
           padding: 16px 18px; border-radius: 14px; background: #f8fafc;
           border: 1px solid #e5e7eb;
         }
+        .trial-dark-btn {
+          background: var(--bs-navy); border-color: var(--bs-navy); color: #fff;
+          font-weight: 800;
+        }
+        .trial-dark-btn:hover { background: var(--bs-navy-2); border-color: var(--bs-navy-2); color: #fff; }
+        .trial-outline-btn {
+          border-color: var(--bs-navy); color: var(--bs-navy); font-weight: 800;
+        }
+        .trial-outline-btn:hover { background: var(--bs-navy); color: #fff; }
         @media (max-width: 767px) {
           .trial-shell { padding-top: 30px; }
           .trial-info-card, .trial-form-card { padding: 27px 22px; border-radius: 21px; }
@@ -189,13 +244,13 @@ function Prueba() {
       <div className="trial-page">
         <nav className="trial-nav sticky-top">
           <div className="container py-3 d-flex align-items-center justify-content-between gap-3">
-            <Link to="/" className="text-decoration-none text-dark d-flex align-items-center gap-2">
-              <span className="trial-brand-icon"><FaSpa /></span>
-              <span className="fw-bold fs-5">Barbería SaaS</span>
+            <Link to="/" className="text-decoration-none d-flex align-items-center gap-2">
+              <span className="trial-brand-icon"><FaCut /></span>
+              <span className="trial-brand-name fs-5">Barbería <span>SaaS</span></span>
             </Link>
             <div className="d-flex gap-2">
-              <Link to="/manual" className="btn btn-outline-secondary d-none d-sm-inline-flex">Ver manual</Link>
-              <Link to="/login" className="btn btn-dark">Iniciar sesión</Link>
+              <Link to="/manual" className="btn btn-outline-light trial-nav-link d-none d-sm-inline-flex">Ver manual</Link>
+              <Link to="/login" className="btn trial-nav-login">Iniciar sesión</Link>
             </div>
           </div>
         </nav>
@@ -204,10 +259,10 @@ function Prueba() {
           {!registro ? (
             <>
               <div className="text-center mx-auto mb-5" style={{ maxWidth: 760 }}>
-                <span className="badge rounded-pill text-bg-light border px-3 py-2 mb-3">
-                  <FaRocket className="me-2" /> Empieza por tu cuenta
+                <span className="trial-kicker mb-3">
+                  <FaRocket /> Empieza por tu cuenta
                 </span>
-                <h1 className="display-5 fw-bold mb-3">¿Te gustaría probar Barbería SaaS?</h1>
+                <h1 className="display-5 fw-bold mb-3 trial-heading">¿Te gustaría probar Barbería SaaS?</h1>
                 <p className="lead text-secondary mb-0">
                   Registra tu negocio y empieza a explorar la aplicación inmediatamente.
                   Solo necesitas completar tus datos y crear tu acceso.
@@ -325,7 +380,7 @@ function Prueba() {
                         </div>
                       </div>
 
-                      <button type="submit" className="btn btn-primary trial-submit w-100 mt-4" disabled={cargando}>
+                      <button type="submit" className="btn trial-submit w-100 mt-4" disabled={cargando}>
                         {cargando ? "Creando tu negocio..." : "Crear mi negocio y empezar a probar"}
                       </button>
 
@@ -358,8 +413,8 @@ function Prueba() {
                 </div>
               </div>
               <div className="d-flex flex-column flex-sm-row justify-content-center gap-3">
-                <Link to="/login" className="btn btn-dark btn-lg px-4">Ir a iniciar sesión</Link>
-                <Link to="/manual" className="btn btn-outline-dark btn-lg px-4">Ver manual de la aplicación</Link>
+                <Link to="/login" className="btn trial-dark-btn btn-lg px-4">Ir a iniciar sesión</Link>
+                <Link to="/manual" className="btn trial-outline-btn btn-lg px-4">Ver manual de la aplicación</Link>
               </div>
               <Link to="/" className="d-inline-flex align-items-center gap-2 mt-4 text-secondary text-decoration-none">
                 <FaArrowLeft /> Volver al inicio
