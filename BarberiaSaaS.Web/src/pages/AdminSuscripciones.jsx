@@ -8,7 +8,7 @@ const fechaBonita = (valor) => valor ? new Date(valor).toLocaleString("es-CR", {
 
 const fechaVencimiento = (negocio) => {
   if (negocio.accesoCortesia) return "Cortesía activa";
-  const fecha = negocio.payPalNextBillingTime || negocio.suscripcionHasta || negocio.trialEndsAt;
+  const fecha = (String(negocio.payPalSubscriptionStatus || "").toUpperCase() === "ACTIVE" && negocio.payPalNextBillingTime) || negocio.suscripcionHasta || negocio.payPalNextBillingTime || negocio.trialEndsAt;
   if (!fecha) return "Sin fecha registrada";
   return new Date(fecha).toLocaleDateString("es-CR", { dateStyle: "long", timeZone: "America/Costa_Rica" });
 };
