@@ -7,10 +7,10 @@ const fechaInput = (valor) => valor ? new Date(valor).toISOString().slice(0, 10)
 const fechaBonita = (valor) => valor ? new Date(valor).toLocaleString("es-CR", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
 const fechaVencimiento = (negocio) => {
-  if (negocio.accesoCortesia) return "Cortesía activa";
+  // Si existe una fecha real de renovación/acceso, mostrarla incluso cuando también haya cortesía.
   const fecha = (String(negocio.payPalSubscriptionStatus || "").toUpperCase() === "ACTIVE" && negocio.payPalNextBillingTime) || negocio.suscripcionHasta || negocio.payPalNextBillingTime || negocio.trialEndsAt;
-  if (!fecha) return "Sin fecha registrada";
-  return new Date(fecha).toLocaleDateString("es-CR", { dateStyle: "long", timeZone: "America/Costa_Rica" });
+  if (fecha) return new Date(fecha).toLocaleDateString("es-CR", { dateStyle: "long", timeZone: "America/Costa_Rica" });
+  return negocio.accesoCortesia ? "Cortesía sin fecha de vencimiento" : "Sin fecha registrada";
 };
 
 const sumarUnMes = (fechaActual) => {
