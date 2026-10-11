@@ -6,6 +6,13 @@ import { useAppDialog } from "../context/AppDialogContext";
 const fechaInput = (valor) => valor ? new Date(valor).toISOString().slice(0, 10) : "";
 const fechaBonita = (valor) => valor ? new Date(valor).toLocaleString("es-CR", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
+const fechaVencimiento = (negocio) => {
+  if (negocio.accesoCortesia) return "Cortesía activa";
+  const fecha = negocio.payPalNextBillingTime || negocio.suscripcionHasta || negocio.trialEndsAt;
+  if (!fecha) return "Sin fecha registrada";
+  return new Date(fecha).toLocaleDateString("es-CR", { dateStyle: "long", timeZone: "America/Costa_Rica" });
+};
+
 const sumarUnMes = (fechaActual) => {
   const hoy = new Date();
   hoy.setHours(12, 0, 0, 0);
@@ -138,7 +145,10 @@ export default function AdminSuscripciones() {
             <div className="card-body p-4">
               <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
                 <div><div className="fw-bold fs-5">{n.nombre}</div><div className="small text-muted">{n.email || "Sin correo"} · Tenant #{n.id}</div></div>
-                <span className={`badge ${n.accesoActivo ? "text-bg-success" : "text-bg-danger"}`}>{n.accesoActivo ? "Acceso activo" : "Bloqueado"}</span>
+                <div className="d-flex flex-column align-items-start align-items-md-end gap-2">
+                  <span className={`badge ${n.accesoActivo ? "text-bg-success" : "text-bg-danger"}`}>{n.accesoActivo ? "Acceso activo" : "Bloqueado"}</span>
+                  <div className="small text-md-end"><span className="text-muted">Vencimiento de mensualidad: </span><strong>{fechaVencimiento(n)}</strong></div>
+                </div>
               </div>
               <div className="row g-3">
                 <div className="col-md-3"><label className="form-label small fw-semibold">PayPal</label><input className="form-control" value={n.payPalSubscriptionStatus || "—"} disabled /></div>
