@@ -262,6 +262,8 @@ namespace BarberiaSaaS.Api.Controllers
 
                 paisesTelefono = _internacionalizacion.ObtenerPaises(),
 
+                profesionalPropietarioId,
+
                 sucursales,
 
                 servicios,
