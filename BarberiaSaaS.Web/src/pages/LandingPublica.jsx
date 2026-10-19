@@ -125,9 +125,32 @@ function LandingPublica() {
           `/Publico/${slug}`
         );
 
-      setLanding(
-        response.data
-      );
+      const profesionalPropietarioId =
+        response.data?.profesionalPropietarioId;
+
+      const profesionalesLanding =
+        response.data?.profesionales || [];
+
+      const profesionalesOrdenados =
+        profesionalPropietarioId == null
+          ? profesionalesLanding
+          : [...profesionalesLanding].sort((a, b) => {
+              const aEsPropietario =
+                Number(a.id) === Number(profesionalPropietarioId);
+              const bEsPropietario =
+                Number(b.id) === Number(profesionalPropietarioId);
+
+              if (aEsPropietario === bEsPropietario) {
+                return 0;
+              }
+
+              return aEsPropietario ? -1 : 1;
+            });
+
+      setLanding({
+        ...response.data,
+        profesionales: profesionalesOrdenados
+      });
 
       const servicios =
         response.data?.servicios || [];
