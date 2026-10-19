@@ -50,10 +50,19 @@ namespace BarberiaSaaS.Api.Controllers
                 query = query.Where(x => x.Id == profesionalId);
             }
 
+            var profesionalPropietarioId = await _context.Usuarios
+                .AsNoTracking()
+                .Where(x =>
+                    x.TenantId == tenantId &&
+                    x.Rol == RolesUsuario.Propietario &&
+                    x.ProfesionalId != null)
+                .Select(x => x.ProfesionalId)
+                .FirstOrDefaultAsync();
+
             var profesionales =
                 await query
-                    .OrderBy(x =>
-                        x.Nombre)
+                    .OrderBy(x => profesionalPropietarioId.HasValue && x.Id == profesionalPropietarioId.Value ? 0 : 1)
+                    .ThenBy(x => x.Nombre)
                     .Select(x => new
                     {
                         x.Id,
