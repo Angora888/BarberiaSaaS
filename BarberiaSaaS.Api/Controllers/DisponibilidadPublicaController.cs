@@ -103,7 +103,8 @@ namespace BarberiaSaaS.Api.Controllers
                 {
                     x.Id,
                     x.Nombre,
-                    x.NombreComercial
+                    x.NombreComercial,
+                    AnticipacionMinimaReservaHoras = x.Configuracion == null ? 0 : x.Configuracion.AnticipacionMinimaReservaHoras
                 })
                 .FirstOrDefaultAsync();
 
@@ -420,7 +421,7 @@ namespace BarberiaSaaS.Api.Controllers
                             // espacios cuyo inicio ya quedó en el pasado.
                             // Esto se evalúa con la zona horaria del negocio.
                             var estaEnElPasado =
-                                candidatoLocal < ahoraLocal;
+                                candidatoLocal < ahoraLocal.AddHours(tenant.AnticipacionMinimaReservaHoras);
 
                             if (estaEnElPasado)
                             {
