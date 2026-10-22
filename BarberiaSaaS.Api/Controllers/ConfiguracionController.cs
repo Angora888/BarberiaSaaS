@@ -34,6 +34,7 @@ namespace BarberiaSaaS.Api.Controllers
                     x.Configuracion.ColorFondo, x.Configuracion.Moneda, x.Configuracion.ZonaHoraria,
                     x.Configuracion.Idioma, x.Configuracion.DuracionSlotMinutos,
                     x.Configuracion.PermitirReservaOnline, x.Configuracion.MostrarPrecios,
+                    x.Configuracion.AnticipacionMinimaReservaHoras,
                     x.Configuracion.RecordatorioEmailActivo, x.Configuracion.RecordatorioWhatsAppActivo, x.Configuracion.RecordatorioEmailHorasAntes,
                     x.Configuracion.RequiereDeposito, x.Configuracion.PorcentajeDeposito,
                     x.Configuracion.Instagram, x.Configuracion.Facebook, x.Configuracion.WhatsApp
@@ -51,6 +52,7 @@ namespace BarberiaSaaS.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.Nombre)) return BadRequest(new { mensaje = "El nombre del negocio es requerido." });
             if (!EsColorHexValido(request.ColorPrimario) || !EsColorHexValido(request.ColorSecundario) || !EsColorHexValido(request.ColorFondo)) return BadRequest(new { mensaje = "Los colores deben tener formato hexadecimal válido, por ejemplo #C62864." });
             if (request.DuracionSlotMinutos <= 0 || request.DuracionSlotMinutos > 120) return BadRequest(new { mensaje = "La duración del slot debe estar entre 1 y 120 minutos." });
+            if (request.AnticipacionMinimaReservaHoras is not (0 or 6 or 12 or 24)) return BadRequest(new { mensaje = "La anticipación mínima debe ser Sin restricción, 6, 12 o 24 horas." });
             if (request.PorcentajeDeposito < 0 || request.PorcentajeDeposito > 100) return BadRequest(new { mensaje = "El porcentaje de depósito debe estar entre 0 y 100." });
             if (request.RecordatorioEmailHorasAntes < 1 || request.RecordatorioEmailHorasAntes > 168) return BadRequest(new { mensaje = "El recordatorio por correo debe programarse entre 1 y 168 horas antes." });
             if (string.IsNullOrWhiteSpace(request.Moneda)) return BadRequest(new { mensaje = "La moneda es requerida." });
@@ -81,7 +83,7 @@ namespace BarberiaSaaS.Api.Controllers
             configuracion.Moneda = request.Moneda.Trim().ToUpperInvariant(); configuracion.ZonaHoraria = request.ZonaHoraria.Trim();
             configuracion.Idioma = string.IsNullOrWhiteSpace(request.Idioma) ? "es" : request.Idioma.Trim().ToLowerInvariant();
             configuracion.DuracionSlotMinutos = request.DuracionSlotMinutos; configuracion.PermitirReservaOnline = request.PermitirReservaOnline;
-            configuracion.MostrarPrecios = request.MostrarPrecios; configuracion.RecordatorioEmailActivo = request.RecordatorioEmailActivo;
+            configuracion.MostrarPrecios = request.MostrarPrecios; configuracion.AnticipacionMinimaReservaHoras = request.AnticipacionMinimaReservaHoras; configuracion.RecordatorioEmailActivo = request.RecordatorioEmailActivo;
             configuracion.RecordatorioWhatsAppActivo = request.RecordatorioWhatsAppActivo;
             configuracion.RecordatorioEmailHorasAntes = request.RecordatorioEmailHorasAntes; configuracion.RequiereDeposito = request.RequiereDeposito;
             configuracion.PorcentajeDeposito = request.RequiereDeposito ? request.PorcentajeDeposito : 0;
