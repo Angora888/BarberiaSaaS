@@ -275,6 +275,10 @@ namespace BarberiaSaaS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("AnticipacionMinimaReservaHoras")
+                        .HasDefaultValue(0)
+                        .HasColumnType("integer");
+
                     b.Property<int>("DuracionSlotMinutos")
                         .HasColumnType("integer");
 
