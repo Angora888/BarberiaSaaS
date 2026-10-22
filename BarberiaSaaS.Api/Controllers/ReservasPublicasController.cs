@@ -213,6 +213,15 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
+            var anticipacionMinimaHoras = tenant.Configuracion?.AnticipacionMinimaReservaHoras ?? 0;
+            if (inicioLocal < ahoraLocal.AddHours(anticipacionMinimaHoras))
+            {
+                return Conflict(new
+                {
+                    mensaje = $"Las reservas deben realizarse con al menos {anticipacionMinimaHoras} horas de anticipación. Selecciona otro horario."
+                });
+            }
+
             var horarioValido = await _context.HorariosProfesionales
                 .AnyAsync(x =>
                     x.TenantId == tenantId &&
