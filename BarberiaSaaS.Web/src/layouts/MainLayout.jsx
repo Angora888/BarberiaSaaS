@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaBoxes, FaCalendarAlt, FaCashRegister, FaChartBar, FaCog, FaCreditCard, FaCut, FaFileInvoiceDollar, FaHome, FaMoon, FaSignOutAlt, FaStore, FaSun, FaUsers, FaUserTie } from "react-icons/fa";
 import { useConfiguracion } from "../context/ConfiguracionContext";
+import api from "../services/api";
 import { useSucursal } from "../context/SucursalContext";
 
 function MainLayout() {
@@ -14,6 +15,8 @@ function MainLayout() {
   const esProfesional = usuario.rol === "Profesional";
   const esPaginaSuscripcion = location.pathname === "/mi-suscripcion";
   const [tema, setTema] = useState(() => localStorage.getItem("barberiaSaaS.tema") || "light");
+  const [progresoInicio, setProgresoInicio] = useState(null);
+  const [cargandoProgresoInicio, setCargandoProgresoInicio] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", tema);
@@ -30,6 +33,56 @@ function MainLayout() {
   const diasRestantesPrueba = diasUsandoApp !== null && diasUsandoApp < 31 ? 31 - diasUsandoApp : 0;
   const mostrarAvisoPrueba = location.pathname === "/dashboard" && diasUsandoApp !== null && !esSuperAdmin;
   const activarSuscripcion = () => navigate("/mi-suscripcion");
+
+  useEffect(() => {
+    if (location.pathname !== "/dashboard" || esSuperAdmin || esProfesional) {
+      setProgresoInicio(null);
+      return;
+    }
+
+    let vigente = true;
+    setCargandoProgresoInicio(true);
+
+    const lista = (data) => {
+      if (Array.isArray(data)) return data;
+      for (const key of ["items", "data", "resultados", "clientes", "servicios", "profesionales", "citas"]) {
+        if (Array.isArray(data?.[key])) return data[key];
+      }
+      return [];
+    };
+
+    Promise.all([
+      api.get("/Servicios"),
+      api.get("/Profesionales"),
+      api.get("/Clientes"),
+      api.get("/Citas")
+    ]).then(([servicios, profesionales, clientes, citas]) => {
+      if (!vigente) return;
+      setProgresoInicio({
+        servicios: lista(servicios.data).length > 0,
+        profesionales: lista(profesionales.data).length > 0,
+        clientes: lista(clientes.data).length > 0,
+        citas: lista(citas.data).length > 0
+      });
+    }).catch((error) => {
+      console.error("No fue posible cargar la guía de inicio:", error);
+      if (vigente) setProgresoInicio(null);
+    }).finally(() => {
+      if (vigente) setCargandoProgresoInicio(false);
+    });
+
+    return () => { vigente = false; };
+  }, [location.pathname, tenant?.id, esSuperAdmin, esProfesional, sucursalId]);
+
+  const pasosInicio = [
+    { key: "servicios", titulo: "Agrega tus servicios", detalle: "Define los servicios y sus precios.", ruta: "/servicios" },
+    { key: "profesionales", titulo: "Registra a tus profesionales", detalle: "Agrega a las personas que atenderán a tus clientes.", ruta: "/profesionales" },
+    { key: "clientes", titulo: "Agrega tu primer cliente", detalle: "Registra los datos de tus clientes.", ruta: "/clientes" },
+    { key: "citas", titulo: "Crea tu primera cita", detalle: "Agenda tu primera atención.", ruta: "/agenda" }
+  ];
+  const pasosCompletados = progresoInicio ? pasosInicio.filter(paso => progresoInicio[paso.key]).length : 0;
+  const siguientePaso = pasosInicio.find(paso => progresoInicio && !progresoInicio[paso.key]);
+
 
   if (cargandoConfiguracion || cargandoSucursales) return <div className="app-loading"><div className="spinner-border" role="status" /><div className="mt-3">Cargando negocio...</div></div>;
 
@@ -85,6 +138,25 @@ function MainLayout() {
         {!esPaginaSuscripcion && errorConfiguracion && <div className="alert alert-warning">{errorConfiguracion}</div>}
         {!esPaginaSuscripcion && errorSucursales && <div className="alert alert-warning">{errorSucursales}</div>}
         {mostrarAvisoPrueba && <div className="mb-4" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "18px 20px", background: "linear-gradient(135deg, var(--soft-pink), var(--surface))", boxShadow: "var(--surface-shadow)" }}><div className="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barberia SaaS</div><div className="fw-bold" style={{ fontSize: 20 }}>Días usando la App: {diasUsandoApp}</div>{diasUsandoApp < 31 && <div className="text-muted mt-1">Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</div>}</div>{diasUsandoApp < 31 && <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={activarSuscripcion} style={{ borderRadius: 14, padding: "10px 16px", fontWeight: 700 }}><FaCreditCard />Activar suscripción</button>}</div></div>}
+        {mostrarAvisoPrueba && !cargandoProgresoInicio && progresoInicio && <section className="mb-4" aria-label="Guía de configuración inicial" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "20px", background: "var(--surface)", boxShadow: "var(--surface-shadow)" }}>
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 11, letterSpacing: 1.1 }}>Tu negocio · primeros pasos</div><h2 className="h5 fw-bold mb-1">{pasosCompletados === 4 ? "¡Felicitaciones! Ya completaste la configuración inicial" : "¡Vamos a preparar tu negocio!"}</h2><p className="text-muted mb-0 small">{pasosCompletados === 4 ? "Ya tienes lo básico para empezar a gestionar tu negocio." : "Completa estos pasos para comenzar a aprovechar Barbería SaaS."}</p></div>
+            <div className="text-end"><div className="fw-bold" style={{ color: "var(--primary)", fontSize: 22 }}>{Math.round(pasosCompletados / 4 * 100)}%</div><div className="text-muted small">{pasosCompletados} de 4 pasos</div></div>
+          </div>
+          <div style={{ height: 7, borderRadius: 20, background: "var(--border)", overflow: "hidden", marginBottom: 20 }}><div style={{ width: `${pasosCompletados / 4 * 100}%`, height: "100%", borderRadius: 20, background: "#16a34a", transition: "width .25s ease" }} /></div>
+          <div className="row g-3">
+            {pasosInicio.map((paso, indice) => {
+              const completado = progresoInicio[paso.key];
+              const esSiguiente = siguientePaso?.key === paso.key;
+              return <div className="col-12 col-md-6 col-xl-3" key={paso.key}><div style={{ height: "100%", border: `1px solid ${completado ? "#86c99a" : esSiguiente ? "var(--primary)" : "var(--border)"}`, borderRadius: 15, padding: 14, background: completado ? "rgba(22,163,74,.07)" : esSiguiente ? "var(--soft-pink)" : "var(--surface)" }}>
+                <div className="d-flex align-items-center gap-2 mb-2"><div style={{ width: 32, height: 32, minWidth: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: completado ? "#16a34a" : "var(--border)", color: completado ? "#fff" : "var(--text)", fontWeight: 800 }}>{completado ? "✓" : indice + 1}</div><span className="small fw-semibold" style={{ color: completado ? "#16a34a" : "var(--text-muted, var(--primary))" }}>{completado ? "Completado" : esSiguiente ? "Siguiente paso" : "Pendiente"}</span></div>
+                <div className="fw-bold mb-1">{paso.titulo}</div><div className="text-muted small mb-3">{completado ? "¡Muy bien! Este paso ya está listo." : paso.detalle}</div>
+                {!completado && <button type="button" className={esSiguiente ? "btn btn-primary btn-sm w-100" : "btn btn-outline-secondary btn-sm w-100"} onClick={() => navigate(paso.ruta)}>{esSiguiente ? "Continuar" : "Ir al paso"} <span aria-hidden="true">→</span></button>}
+              </div></div>;
+            })}
+          </div>
+          {siguientePaso && <div className="mt-3 p-3 rounded-3 d-flex align-items-start gap-2" style={{ background: "var(--soft-pink)" }}><span aria-hidden="true">💡</span><div className="small"><strong>Te recomendamos:</strong> {siguientePaso.key === "servicios" ? "Comienza agregando tus servicios y sus precios." : siguientePaso.key === "profesionales" ? "Ya tienes servicios. Ahora registra a tus profesionales." : siguientePaso.key === "clientes" ? "Ya tienes servicios y profesionales. Ahora agrega tu primer cliente." : "¡Excelente! Ya tienes clientes. Ahora agenda tu primera cita."}</div></div>}
+        </section>}
         <Outlet />
       </div>
     </main>
