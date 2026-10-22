@@ -19,6 +19,7 @@ namespace BarberiaSaaS.Api.DTOs
         public string Idioma { get; set; } = "es";
 
         public int DuracionSlotMinutos { get; set; } = 15;
+        public int AnticipacionMinimaReservaHoras { get; set; } = 0;
         public bool PermitirReservaOnline { get; set; } = true;
         public bool MostrarPrecios { get; set; } = true;
 
