@@ -25,7 +25,7 @@ const formularioInicial = {
   nombre: "", nombreComercial: "", identificacion: "", telefono: "", email: "", logoUrl: "", frasePresentacion: "",
   colorPrimario: "#C62864", colorSecundario: "#F8E7EE", colorFondo: "#FFFFFF",
   moneda: "CRC", zonaHoraria: "America/Costa_Rica", idioma: "es", duracionSlotMinutos: 15,
-  permitirReservaOnline: true, mostrarPrecios: true,
+  permitirReservaOnline: true, mostrarPrecios: true, anticipacionMinimaReservaHoras: 0,
   recordatorioEmailActivo: true, recordatorioWhatsAppActivo: true, recordatorioEmailHorasAntes: 24,
   requiereDeposito: false, porcentajeDeposito: 0,
   instagram: "", facebook: "", whatsApp: ""
@@ -52,6 +52,7 @@ function Configuracion() {
       idioma: configuracion?.idioma || "es", duracionSlotMinutos: configuracion?.duracionSlotMinutos || 15,
       permitirReservaOnline: configuracion?.permitirReservaOnline ?? true,
       mostrarPrecios: configuracion?.mostrarPrecios ?? true,
+      anticipacionMinimaReservaHoras: configuracion?.anticipacionMinimaReservaHoras ?? 0,
       recordatorioEmailActivo: configuracion?.recordatorioEmailActivo ?? true,
       recordatorioWhatsAppActivo: configuracion?.recordatorioWhatsAppActivo ?? true,
       recordatorioEmailHorasAntes: configuracion?.recordatorioEmailHorasAntes ?? 24,
@@ -156,6 +157,7 @@ function Configuracion() {
 
       <div className="content-card p-4 mb-4"><h5 className="mb-4">Reservas y depósitos</h5>
         <SwitchField label="Permitir reservas online" checked={formulario.permitirReservaOnline} onChange={v => actualizarCampo("permitirReservaOnline", v)} />
+        <div className="mt-3 mb-3"><label className="form-label">Anticipación mínima para reservar online</label><select className="form-select" value={formulario.anticipacionMinimaReservaHoras} onChange={e => actualizarCampo("anticipacionMinimaReservaHoras", Number(e.target.value))}><option value={0}>Sin restricción</option><option value={6}>6 horas antes</option><option value={12}>12 horas antes</option><option value={24}>24 horas antes</option></select><small className="text-muted">Solo afecta las reservas realizadas desde la página pública. No cambia la agenda interna ni las citas existentes.</small></div>
         <SwitchField label="Mostrar precios" checked={formulario.mostrarPrecios} onChange={v => actualizarCampo("mostrarPrecios", v)} />
         <SwitchField label="Requerir depósito" checked={formulario.requiereDeposito} onChange={v => actualizarCampo("requiereDeposito", v)} />
         {formulario.requiereDeposito && <div className="mt-3"><label className="form-label">Porcentaje de depósito</label><div className="input-group"><input type="number" min="1" max="100" step="1" className="form-control" value={formulario.porcentajeDeposito} onChange={e => actualizarCampo("porcentajeDeposito", e.target.value)} /><span className="input-group-text">%</span></div></div>}
