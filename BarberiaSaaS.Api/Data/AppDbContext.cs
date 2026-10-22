@@ -96,6 +96,7 @@ namespace BarberiaSaaS.Api.Data
             modelBuilder.Entity<ConfiguracionTenant>(entity =>
             {
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.AnticipacionMinimaReservaHoras).HasDefaultValue(0);
 
                 entity.HasIndex(x => x.TenantId)
                     .IsUnique();
