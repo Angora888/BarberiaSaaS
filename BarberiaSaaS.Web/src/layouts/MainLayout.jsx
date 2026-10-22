@@ -62,7 +62,8 @@ function MainLayout() {
         servicios: lista(servicios.data).length > 0,
         profesionales: lista(profesionales.data).length > 0,
         clientes: lista(clientes.data).length > 0,
-        citas: lista(citas.data).length > 0
+        citas: lista(citas.data).length > 0,
+        totalCitas: lista(citas.data).length
       });
     }).catch((error) => {
       console.error("No fue posible cargar la guía de inicio:", error);
@@ -138,7 +139,7 @@ function MainLayout() {
         {!esPaginaSuscripcion && errorConfiguracion && <div className="alert alert-warning">{errorConfiguracion}</div>}
         {!esPaginaSuscripcion && errorSucursales && <div className="alert alert-warning">{errorSucursales}</div>}
         {mostrarAvisoPrueba && <div className="mb-4" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "18px 20px", background: "linear-gradient(135deg, var(--soft-pink), var(--surface))", boxShadow: "var(--surface-shadow)" }}><div className="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}>Barberia SaaS</div><div className="fw-bold" style={{ fontSize: 20 }}>Días usando la App: {diasUsandoApp}</div>{diasUsandoApp < 31 && <div className="text-muted mt-1">Te quedan <strong>{diasRestantesPrueba} días</strong> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</div>}</div>{diasUsandoApp < 31 && <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={activarSuscripcion} style={{ borderRadius: 14, padding: "10px 16px", fontWeight: 700 }}><FaCreditCard />Activar suscripción</button>}</div></div>}
-        {mostrarAvisoPrueba && !cargandoProgresoInicio && progresoInicio && <section className="mb-4" aria-label="Guía de configuración inicial" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "20px", background: "var(--surface)", boxShadow: "var(--surface-shadow)" }}>
+        {mostrarAvisoPrueba && !cargandoProgresoInicio && progresoInicio && progresoInicio.totalCitas < 10 && pasosCompletados < 4 && <section className="mb-4" aria-label="Guía de configuración inicial" style={{ border: "1px solid var(--border)", borderRadius: 20, padding: "20px", background: "var(--surface)", boxShadow: "var(--surface-shadow)" }}>
           <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div><div className="text-uppercase fw-bold mb-1" style={{ color: "var(--primary)", fontSize: 11, letterSpacing: 1.1 }}>Tu negocio · primeros pasos</div><h2 className="h5 fw-bold mb-1">{pasosCompletados === 4 ? "¡Felicitaciones! Ya completaste la configuración inicial" : "¡Vamos a preparar tu negocio!"}</h2><p className="text-muted mb-0 small">{pasosCompletados === 4 ? "Ya tienes lo básico para empezar a gestionar tu negocio." : "Completa estos pasos para comenzar a aprovechar Barbería SaaS."}</p></div>
             <div className="text-end"><div className="fw-bold" style={{ color: "var(--primary)", fontSize: 22 }}>{Math.round(pasosCompletados / 4 * 100)}%</div><div className="text-muted small">{pasosCompletados} de 4 pasos</div></div>
