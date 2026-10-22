@@ -80,6 +80,7 @@ namespace BarberiaSaaS.Api.Controllers
             slug = slug.Trim().ToLowerInvariant();
 
             var tenant = await _context.Tenants
+                .Include(x => x.Configuracion)
                 .FirstOrDefaultAsync(x =>
                     x.Activo &&
                     x.LandingPublicaActiva &&
