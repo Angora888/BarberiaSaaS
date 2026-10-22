@@ -19,6 +19,8 @@ namespace BarberiaSaaS.Api.Models
 
         // Agenda
         public int DuracionSlotMinutos { get; set; } = 15;
+        // 0 = sin restricción; solo aplica a reservas públicas.
+        public int AnticipacionMinimaReservaHoras { get; set; } = 0;
         public bool PermitirReservaOnline { get; set; } = true;
         public bool MostrarPrecios { get; set; } = true;
 
