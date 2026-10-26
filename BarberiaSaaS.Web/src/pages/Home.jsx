@@ -266,6 +266,28 @@ function Home() {
           object-fit: cover;
           box-shadow: 0 14px 35px rgba(0,0,0,.28);
         }
+
+        .bs-creators { background: linear-gradient(135deg,#080a11,#15110b 60%,#090a10); color:#f8f5ed; padding:36px 0 30px; border-top:2px solid #d9ad4b; }
+        .bs-creators-grid { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:28px; }
+        .bs-creator { display:flex; align-items:center; gap:15px; min-width:0; }
+        .bs-creator:last-child { justify-content:flex-end; }
+        .bs-creator-photo { width:74px; height:74px; flex-shrink:0; border-radius:50%; border:2px solid #d9ad4b; object-fit:cover; background:#30281b; }
+        .bs-creator-fallback { width:74px; height:74px; flex-shrink:0; border-radius:50%; border:2px solid #d9ad4b; display:grid; place-items:center; color:#f4d27a; font-weight:800; font-size:23px; background:#29241b; }
+        .bs-creator-name { font-size:17px; font-weight:800; color:#f2cb6c; }
+        .bs-creator-role { font-size:12px; color:#c6c2bb; }
+        .bs-creator-contact { color:#f8f5ed!important; font-size:13px; text-decoration:none; }
+        .bs-creator-link { color:#eab0c5!important; font-size:12px; text-decoration:none; }
+        .bs-creators-brand { text-align:center; border-left:1px solid #65502d; border-right:1px solid #65502d; padding:0 30px; }
+        .bs-creators-brand img { width:42px; height:42px; border-radius:12px; }
+        .bs-creators-brand strong { display:block; font-size:19px; color:#f2cb6c; margin-top:5px; }
+        .bs-creators-pride { text-align:center; margin:24px 0 0; color:#f2cb6c; font-size:13px; letter-spacing:1.6px; text-transform:uppercase; }
+        @media(max-width:767px) {
+          .bs-creators-grid { grid-template-columns:1fr; gap:22px; }
+          .bs-creator,.bs-creator:last-child { justify-content:center; }
+          .bs-creators-brand { grid-row:1; border:0; border-bottom:1px solid #65502d; padding:0 0 18px; }
+          .bs-creator { max-width:330px; margin:0 auto; width:100%; }
+          .bs-creators-pride { line-height:1.7; }
+        }
         .bs-footer {
           background: #030b1f;
           color: rgba(255,255,255,.65);
@@ -554,6 +576,38 @@ function Home() {
           </div>
         </section>
       </main>
+
+
+      <section className="bs-creators" aria-label="Creadores de Barbería SaaS">
+        <div className="container">
+          <div className="bs-creators-grid">
+            <div className="bs-creator">
+              <span className="bs-creator-fallback" aria-hidden="true">AM</span>
+              <div>
+                <div className="bs-creator-role">Creado por</div>
+                <div className="bs-creator-name">Adriana Marín Murillo</div>
+                <div className="bs-creator-role">Propietaria de Jana Beauty Studio</div>
+                <a className="bs-creator-contact d-block mt-1" href="tel:+50688085755">8808 5755</a>
+                <a className="bs-creator-link d-block" href="https://barberiasaas.com/negocio/jana-beauty-studio">Jana Beauty Studio</a>
+              </div>
+            </div>
+            <div className="bs-creators-brand">
+              <img src={BRAND_LOGO} alt="" />
+              <strong>Barbería SaaS</strong>
+              <small>Tecnología para negocios con citas</small>
+            </div>
+            <div className="bs-creator">
+              <span className="bs-creator-fallback" aria-hidden="true">AA</span>
+              <div>
+                <div className="bs-creator-role">Creado y desarrollado por</div>
+                <div className="bs-creator-name">Antony Alfaro Salas</div>
+                <a className="bs-creator-contact d-block mt-1" href="tel:+50660662375">6066 2375</a>
+              </div>
+            </div>
+          </div>
+          <p className="bs-creators-pride">🇨🇷 Orgullosamente costarricense y de Sarchí</p>
+        </div>
+      </section>
 
       <footer className="bs-footer">
         <div className="container py-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
