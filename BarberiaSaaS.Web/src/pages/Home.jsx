@@ -580,37 +580,14 @@ function Home() {
       </main>
 
 
-      <section className="bs-creators" aria-label="Creadores de Barbería SaaS">
-        <div className="container">
-          <div className="bs-creators-grid">
-            <div className="bs-creator">
-              <img className="bs-creator-photo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABELDA8MChEPDg8TEhEUGSobGRcXGTMkJh4qPDU/Pjs1OjlDS2BRQ0daSDk6U3FUWmNma2xrQFB2fnRofWBpa2f/2wBDARITExkWGTEbGzFnRTpFZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2f/wAARCABAAEADASIAAhEBAxEB/8QAGQAAAwEBAQAAAAAAAAAAAAAAAwQFBgIB/8QAMRAAAgEDAwMBBQcFAAAAAAAAAQIDAAQRBRIhMUFREwYUImGBIzJCcaHB8SQzUpHw/8QAGAEAAwEBAAAAAAAAAAAAAAAAAAIDAQT/xAAdEQADAQEAAgMAAAAAAAAAAAAAAQIRIQMSIjEy/9oADAMBAAIRAxEAPwDptWjjGfWh+hzSk180iOYirKeAyjv4rOAcVqtHt1juYEIBCRbsfMnrXLmFp+TJa6LcMpkMLDwO9OW6Pa7JFVht6g9a1iQh0zik72z6tt47/lTbqKeqI25757i4bIaFfgRTjI+ZrmxzPbI55NCureZJNkAdmJ2lVPUUfRwV9aB1KujdD2oU6TbwaSKiiKiqoogFWUE/YwJGK2ekxF8SjODAuMdT1rHOOMVtfZ5vU06B16gbT9K52U8T6UbWS4MpEiPGg6BmDZ/Sh3vq3G5YgG2NjDEgY+nWqPWLpyaVwqXjknAcDHPemKokywuqCTOyXuR2PSk4rH3C6jk9795aZ9rnwaaubknU5rcfdCgkeDUfUHjtI/TWMK5fcGB8U8fTJWumgLJFIqO6MT+FGyc+KQn1tbOX7W3YJnH8UAaksSKWEmGA5XA60X0bZ7aTULiJyUyoDHOB5xVE3TE/KJXtBYGy1Btv9t/iWqPszd7ITETgq/6H+KWnvI9V0NSW/qLfserLS2h289xdAwg7B99uw+X51HDVyuG3hnS7VkOUeM7WGcf8K4u7dYJElXLMDxzmpIu5UkFxGMTJ8Mqf5DzVmzvorxd8Q5/Ep6isOhNoy1pJKNfuveRgygsp7cdqfg0+G6cySKGfGBu5FNalpSO7SRjDEdfFSILyWzlVZc/CcZrU8YJY+jlzo0M0YUZTHTaele29i1tbyROxljYYAYdKOLtXIfIAP608hWRRjBp02h68U0Yz2X0GLUInuridwiNs2IcE8dzWsgt4o4RFAxjjHAAH3T8xS2maMmlWnpRsSzHc5OOT/vinQ/JB5YDkEc4/enFiPVAXtx6u2YDcfxDj60SKzCkOnwyr3Hejywi5g2lsEcqw6g1PGoNbuUnG2ROD4YeaRyh80rRuJkIIww4NRtUsVmkxjDH9qdS7zh48HjkV5cyLOQyjp1HceaRhKx4yJCjRKUYZI4B8UJLi4tXKpIQvYdRVmeBWTK8N4qddQgxl2BXZyT8q2QuXnD//2Q==" alt="Adriana Marín Murillo" />
-              <div>
-                <div className="bs-creator-role">Creado por</div>
-                <div className="bs-creator-name">Adriana Marín Murillo</div>
-                <div className="bs-creator-role">Propietaria de Jana Beauty Studio</div>
-                <a className="bs-creator-contact d-block mt-1" href="tel:+50688085755">8808 5755</a>
-                <a className="bs-creator-link d-block" href="https://barberiasaas.com/negocio/jana-beauty-studio">Jana Beauty Studio</a>
-              </div>
-            </div>
-            <div className="bs-creators-brand">
-              <img src={BRAND_LOGO} alt="" />
-              <strong>Barbería SaaS</strong>
-              <small>Tecnología para negocios con citas</small>
-            </div>
-            <div className="bs-creator">
-              <img className="bs-creator-photo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABELDA8MChEPDg8TEhEUGSobGRcXGTMkJh4qPDU/Pjs1OjlDS2BRQ0daSDk6U3FUWmNma2xrQFB2fnRofWBpa2f/2wBDARITExkWGTEbGzFnRTpFZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2f/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAwADAQEAAAAAAAAAAAAABQYHAAEEAgP/xAA0EAACAQMBBAcGBgMAAAAAAAABAgMABBEFBhIhMRMiQVFhcaEjMlKRscEHNENTgfBicpL/xAAXAQADAQAAAAAAAAAAAAAAAAAAAQID/8QAGxEBAQADAQEBAAAAAAAAAAAAAAECETEDEiH/2gAMAwEAAhEDEQA/AHet1qsoDdCDNFFqVw8oCsXCgkcSMDFFqE6l0MFy8ki75I3hwyQeX2qMuNPPrxqM8UgaDPWYY5cONdehStLpEG+cugKH+Dihy3EqZDxKQ4yCOS8O2uvQp0eKSNRxBySOR40sb+r9JqClZWVqtGDK08ixozuwVVGSxOABWUC2yujBpAiBwZnCnyHE/agOi52o0uDOJzKR2RqT68qET6xJrVxmxjELwLvAyMPaDIG6aVQcimLY21jnu52kQMEQYyM4OedV8zRTKyvs6anqQWDoBZxfqMGyT4Cvdlrdrot/cWU0b7qMFV144AHdR+azSdOjkBZM4xnn50gaqqrqdyEHVWQhfADhU44rzz2odrqNpeKDBcRvnszg/KuipQJMDIOO6n7ZK8a70KIu5Z0ZkJJyefD0NOzSZRikjbeZjqqRluqkY3R3Z507Zqf7ZPnXZvBVHpROihEZytN2w46t23+o+tJsR6opz2HHsLs/5KPQ1d4mGjPEVMb1y9zMw4lpCfWqVM+7Ezdyk1LLid0PUYqTnODilBXzkypKsCCOwimj8P7p+kurY+5gSDwPL++VKKkktnto/sIxGtsM4BjOfGlTig5qd7ZHd12fPcpH/IqhZpC27Td1hW+KJT/OSKUOgcHGIGnbYf8AIXDd8gHoKSh1I1WnjYxdzRt5hgPKxB+Q+1UkaviRZzY/bb6GpTcHek8hiqnqO4LKck8o2+hqUsSePfQbSHGaYthI97U3f4Vpb5A06bC2xjt5ZiPeGP78qmiP/9k=" alt="Antony Alfaro Salas" />
-              <div>
-                <div className="bs-creator-role">Creado y desarrollado por</div>
-                <div className="bs-creator-name">Antony Alfaro Salas</div>
-                <a className="bs-creator-contact d-block mt-1" href="tel:+50660662375">6066 2375</a>
-              </div>
-            </div>
-          </div>
-          <div className="bs-sarchi-art" aria-hidden="true"><span className="bs-sarchi-landmark">⛪</span><span className="bs-sarchi-landmark">🇨🇷</span><span className="bs-sarchi-landmark">🛞🎨</span></div><p className="bs-creators-pride">Orgullosamente costarricense y de Sarchí</p>
-        </div>
+      <section aria-label="Creadores de Barbería SaaS" style={{ background: "#08090e" }}>
+        <img
+          src="/A0D41A5F-15C8-4591-BDE8-DACC39F3E349.png"
+          alt="Barbería SaaS, creado por Adriana Marín Murillo y Antony Alfaro Salas, orgullosamente costarricense y de Sarchí"
+          loading="lazy"
+          style={{ display: "block", width: "100%", height: "auto", maxWidth: "1920px", margin: "0 auto" }}
+        />
       </section>
-
       <footer className="bs-footer">
         <div className="container py-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-2">
