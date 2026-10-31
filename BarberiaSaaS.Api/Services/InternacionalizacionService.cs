@@ -31,7 +31,8 @@ namespace BarberiaSaaS.Api.Services
             new PaisSoportado("SV", "El Salvador", "🇸🇻", "+503", "USD", "America/El_Salvador", "es"),
             new PaisSoportado("GT", "Guatemala", "🇬🇹", "+502", "GTQ", "America/Guatemala", "es"),
             new PaisSoportado("BZ", "Belice", "🇧🇿", "+501", "BZD", "America/Belize", "en"),
-            new PaisSoportado("US", "Estados Unidos", "🇺🇸", "+1", "USD", "America/New_York", "en")
+            new PaisSoportado("US", "Estados Unidos", "🇺🇸", "+1", "USD", "America/New_York", "en"),
+            new PaisSoportado("MX", "México", "🇲🇽", "+52", "MXN", "America/Mexico_City", "es")
         };
 
         public IReadOnlyList<PaisSoportado> ObtenerPaises() => Paises;
