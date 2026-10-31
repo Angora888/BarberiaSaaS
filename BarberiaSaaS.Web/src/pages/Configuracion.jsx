@@ -49,7 +49,7 @@ function Configuracion() {
       identificacion: tenant.identificacion || "", telefono: tenant.telefono || "", email: tenant.email || "",
       logoUrl: configuracion?.logoUrl || "", frasePresentacion: configuracion?.frasePresentacion || "", colorPrimario: configuracion?.colorPrimario || "#C62864",
       colorSecundario: configuracion?.colorSecundario || "#F8E7EE", colorFondo: configuracion?.colorFondo || "#FFFFFF",
-      moneda: configuracion?.moneda || "CRC", zonaHoraria: configuracion?.zonaHoraria || "America/Costa_Rica",
+      moneda: configuracion?.moneda || (tenant.paisCodigo === "MX" ? "MXN" : "CRC"), zonaHoraria: configuracion?.zonaHoraria || (tenant.paisCodigo === "MX" ? "America/Mexico_City" : "America/Costa_Rica"),
       idioma: configuracion?.idioma || "es", duracionSlotMinutos: configuracion?.duracionSlotMinutos || 15,
       permitirReservaOnline: configuracion?.permitirReservaOnline ?? true,
       mostrarPrecios: configuracion?.mostrarPrecios ?? true,
