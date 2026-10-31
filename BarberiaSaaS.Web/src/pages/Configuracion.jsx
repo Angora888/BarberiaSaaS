@@ -7,6 +7,7 @@ import { useConfiguracion } from "../context/ConfiguracionContext";
 const zonasHorarias = [
   { value: "America/Costa_Rica", label: "🇨🇷 Costa Rica — San José (UTC-6)" },
   { value: "America/Panama", label: "🇵🇦 Panamá (UTC-5)" },
+  { value: "America/Mexico_City", label: "🇲🇽 México — Ciudad de México (UTC-6)" },
   { value: "America/Managua", label: "🇳🇮 Nicaragua — Managua (UTC-6)" },
   { value: "America/Tegucigalpa", label: "🇭🇳 Honduras — Tegucigalpa (UTC-6)" },
   { value: "America/El_Salvador", label: "🇸🇻 El Salvador (UTC-6)" },
