@@ -26,7 +26,7 @@ namespace BarberiaSaaS.Api.Controllers
             var tenantId = _tenantContext.TenantId;
             var tenant = await _context.Tenants.Where(x => x.Id == tenantId && x.Activo).Select(x => new
             {
-                x.Id, x.Nombre, x.NombreComercial, x.Identificacion, x.Telefono, x.Email,
+                x.Id, x.Nombre, x.NombreComercial, x.Identificacion, x.Telefono, x.Email, x.PaisCodigo,
                 x.SlugPublico, x.LandingPublicaActiva, x.FechaCreacion,
                 Configuracion = x.Configuracion == null ? null : new
                 {
