@@ -19,7 +19,8 @@ const PAISES = [
   { codigo: "SV", nombre: "El Salvador", bandera: "🇸🇻", prefijo: "+503", placeholder: "7000 0000" },
   { codigo: "GT", nombre: "Guatemala", bandera: "🇬🇹", prefijo: "+502", placeholder: "5555 5555" },
   { codigo: "BZ", nombre: "Belice", bandera: "🇧🇿", prefijo: "+501", placeholder: "600 0000" },
-  { codigo: "US", nombre: "Estados Unidos", bandera: "🇺🇸", prefijo: "+1", placeholder: "305 555 0123" }
+  { codigo: "US", nombre: "Estados Unidos", bandera: "🇺🇸", prefijo: "+1", placeholder: "305 555 0123" },
+  { codigo: "MX", nombre: "México", bandera: "🇲🇽", prefijo: "+52", placeholder: "55 1234 5678" }
 ];
 
 const estadoInicial = {
