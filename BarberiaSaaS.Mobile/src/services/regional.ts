@@ -27,7 +27,7 @@ export function limpiarRegional(){cache=null}
 
 export function dinero(v:number|undefined,r:Regional){
  const n=Number(v??0);
- const simbolos:Record<string,string>={CRC:"₡",USD:"$",GTQ:"Q",HNL:"L",NIO:"C$",PAB:"B/.",BZD:"BZ$",SVC:"$"};
+ const simbolos:Record<string,string>={CRC:"₡",USD:"$",MXN:"MX$",GTQ:"Q",HNL:"L",NIO:"C$",PAB:"B/.",BZD:"BZ$",SVC:"$"};
  try{
   const numero=new Intl.NumberFormat(r.locale,{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
   return `${simbolos[r.moneda]??r.moneda} ${numero}`;
