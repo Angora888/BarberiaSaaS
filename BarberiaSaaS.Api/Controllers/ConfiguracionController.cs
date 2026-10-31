@@ -56,6 +56,11 @@ namespace BarberiaSaaS.Api.Controllers
             if (request.PorcentajeDeposito < 0 || request.PorcentajeDeposito > 100) return BadRequest(new { mensaje = "El porcentaje de depósito debe estar entre 0 y 100." });
             if (request.RecordatorioEmailHorasAntes < 1 || request.RecordatorioEmailHorasAntes > 168) return BadRequest(new { mensaje = "El recordatorio por correo debe programarse entre 1 y 168 horas antes." });
             if (string.IsNullOrWhiteSpace(request.Moneda)) return BadRequest(new { mensaje = "La moneda es requerida." });
+            var monedasPermitidas = tenant.PaisCodigo?.Equals("MX", StringComparison.OrdinalIgnoreCase) == true
+                ? new[] { "MXN", "USD" }
+                : new[] { "CRC", "USD" };
+            if (!monedasPermitidas.Contains(request.Moneda.Trim().ToUpperInvariant()))
+                return BadRequest(new { mensaje = "La moneda seleccionada no está disponible para el país del negocio." });
             if (string.IsNullOrWhiteSpace(request.ZonaHoraria)) return BadRequest(new { mensaje = "La zona horaria es requerida." });
             try
             {
