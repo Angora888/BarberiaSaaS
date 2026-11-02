@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView as SafeAreaContextView } from "react-native-safe-area-context";
 import api from "@/src/services/api";import {dinero,duracionCorta,fechaCorta,hoyRegional,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion } from "@/src/services/session";
 
@@ -9,7 +9,7 @@ type Cita={id:number;fechaInicio?:string;fechaFin?:string;fechaInicioLocal?:stri
 type Modo="dia"|"semana";
 
 export default function AgendaScreen(){
- const insets=useSafeAreaInsets();
+
  const [regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT),[fecha,setFecha]=useState(""),[modo,setModo]=useState<Modo>("dia");
  const [citas,setCitas]=useState<Cita[]>([]),[cargando,setCargando]=useState(true),[refrescando,setRefrescando]=useState(false),[error,setError]=useState("");
 
@@ -34,8 +34,8 @@ export default function AgendaScreen(){
  const moverVista=(d:number)=>setFecha(mover(fecha,modo==="semana"?d*7:d));
  const volverHoy=()=>setFecha(hoyRegional(regional));
 
- return <SafeAreaView style={s.page}>
-   <View style={[s.top,{paddingTop:Math.max(insets.top+8,22)}]}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Dashboard</Text></Pressable><Text style={s.title}>Agenda</Text><Pressable onPress={()=>router.push("/nueva-cita")}><Text style={s.add}>＋ Nueva</Text></Pressable></View>
+ return <SafeAreaContextView edges={["top","bottom"]} style={s.page}>
+   <View style={[s.top,{paddingTop:12}]}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Dashboard</Text></Pressable><Text style={s.title}>Agenda</Text><Pressable onPress={()=>router.push("/nueva-cita")}><Text style={s.add}>＋ Nueva</Text></Pressable></View>
    <View style={s.switcher}><Pressable onPress={()=>setModo("dia")} style={[s.switchBtn,modo==="dia"&&s.switchOn]}><Text style={[s.switchText,modo==="dia"&&s.switchTextOn]}>Día</Text></Pressable><Pressable onPress={()=>setModo("semana")} style={[s.switchBtn,modo==="semana"&&s.switchOn]}><Text style={[s.switchText,modo==="semana"&&s.switchTextOn]}>Semana</Text></Pressable></View>
    <View style={s.dateNav}><Pressable style={s.navBtn} onPress={()=>moverVista(-1)}><Text style={s.navText}>‹</Text></Pressable>
      <Pressable onPress={volverHoy}><Text style={s.date}>{modo==="semana"?etiquetaSemana(rango.inicio,rango.fin,regional):fechaCorta(fecha,regional)}</Text><Text style={s.today}>{fecha===hoyRegional(regional)?"Hoy":"Tocar para volver a hoy"}</Text></Pressable>
@@ -46,7 +46,7 @@ export default function AgendaScreen(){
      {modo==="dia"?<VistaDia citas={activas} regional={regional}/>:<VistaSemana dias={dias} porDia={porDia} regional={regional} hoy={hoyRegional(regional)} onDia={d=>{setFecha(d);setModo("dia")}}/>}
      <Text style={s.hint}>Desliza hacia abajo para actualizar</Text>
    </ScrollView>}
- </SafeAreaView>;
+ </SafeAreaContextView>;
 }
 
 function VistaDia({citas,regional}:{citas:Cita[];regional:Regional}){return <><View style={s.summary}><View><Text style={s.summaryNumber}>{citas.length}</Text><Text style={s.summaryMuted}>citas activas</Text></View><View><Text style={s.summaryNumber}>{citas.filter(c=>c.estado==="Completada").length}</Text><Text style={s.summaryMuted}>completadas</Text></View></View>{citas.length===0?<Vacio texto="No hay citas activas para esta fecha."/>:citas.map(c=><CitaCard key={c.id} c={c} regional={regional}/>)}</>}
