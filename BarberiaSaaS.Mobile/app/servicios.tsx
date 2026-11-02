@@ -4,12 +4,12 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "@/src/services/api";
 import { dinero, obtenerRegional, REGIONAL_DEFAULT, Regional } from "@/src/services/regional";
 import { obtenerUsuario } from "@/src/services/session";
@@ -65,14 +65,14 @@ export default function Servicios() {
 
   if (loading) {
     return (
-      <SafeAreaView style={s.center}>
+      <SafeAreaView edges={["top","bottom"]} style={s.center}>
         <ActivityIndicator size="large" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={s.page}>
+    <SafeAreaView edges={["top","bottom"]} style={s.page}>
       <ScrollView
         contentContainerStyle={s.content}
         refreshControl={<RefreshControl refreshing={refresh} onRefresh={() => load(true)} />}
