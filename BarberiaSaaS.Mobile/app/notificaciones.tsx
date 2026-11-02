@@ -4,12 +4,12 @@ import {
   ActivityIndicator,
   Linking,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   obtenerDiagnosticoPush,
   probarPushActual,
@@ -53,14 +53,14 @@ export default function NotificacionesScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={s.center}>
+      <SafeAreaView edges={["top","bottom"]} style={s.center}>
         <ActivityIndicator size="large" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={s.page}>
+    <SafeAreaView edges={["top","bottom"]} style={s.page}>
       <ScrollView contentContainerStyle={s.content}>
         <Pressable onPress={() => router.back()}>
           <Text style={s.back}>‹ Configuración</Text>
