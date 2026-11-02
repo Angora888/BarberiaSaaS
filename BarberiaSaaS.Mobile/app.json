@@ -3,15 +3,17 @@
     "name": "Barbería SaaS",
     "slug": "barberiasaas-mobile",
     "scheme": "barberiasaas",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "2",
       "bundleIdentifier": "com.barberiasaas.mobile"
     },
     "android": {
       "package": "com.barberiasaas.mobile",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
