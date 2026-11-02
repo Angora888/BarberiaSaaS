@@ -25,7 +25,16 @@
           "contactsPermission": "Permite que Barbería SaaS acceda al contacto que selecciones para registrarlo como cliente."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
