@@ -435,6 +435,8 @@ namespace BarberiaSaaS.Api.Controllers
                                     candidatoLocal
                                         .AddMinutes(
                                             duracionSlot);
+                                candidatoLocal = HorariosAlmuerzo.AjustarInicio(
+                                    candidatoLocal, almuerzoDelDia?.HoraInicio, almuerzoDelDia?.HoraFin);
 
                                 continue;
                             }
