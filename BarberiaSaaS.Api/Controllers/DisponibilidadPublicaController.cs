@@ -396,10 +396,16 @@ namespace BarberiaSaaS.Api.Controllers
                         var horario
                         in horariosDia)
                     {
+                        var almuerzoDelDia = almuerzos.FirstOrDefault(x =>
+                            x.ProfesionalId == profesional.Id &&
+                            x.DiaSemana == fechaLocal.DayOfWeek);
+
                         var candidatoLocal =
                             fechaLocal.Date
                                 .Add(
                                     horario.HoraInicio);
+                        candidatoLocal = HorariosAlmuerzo.AjustarInicio(
+                            candidatoLocal, almuerzoDelDia?.HoraInicio, almuerzoDelDia?.HoraFin);
 
                         var finHorarioLocal =
                             fechaLocal.Date
@@ -484,6 +490,8 @@ namespace BarberiaSaaS.Api.Controllers
                                 candidatoLocal
                                     .AddMinutes(
                                         duracionSlot);
+                        candidatoLocal = HorariosAlmuerzo.AjustarInicio(
+                            candidatoLocal, almuerzoDelDia?.HoraInicio, almuerzoDelDia?.HoraFin);
                         }
                     }
 
