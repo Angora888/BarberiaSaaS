@@ -28,3 +28,22 @@
 .macr-public .manual-brand .macr-wordmark strong{color:#F6DCE8}
 .macr-public .manual-brand .macr-wordmark-mark{height:42px;width:42px}
 @media(max-width:600px){.macr-public .auth-card{padding:26px 20px}}
+
+/* Registration and legal layout use their own inline CSS: override only for Mi Agenda CR. */
+.macr-public .trial-page{--bs-navy:#713650;--bs-navy-2:#A34D78;--bs-gold:#F6DCE8;--bs-gold-2:#FFF7FA;color:#5B4B52}
+.macr-public .trial-nav,.macr-public .legal-nav{background:#713650!important}
+.macr-public .trial-form-card,.macr-public .trial-info-card,.macr-public .trial-success-card{border-color:#EBC9D8!important;box-shadow:0 18px 45px rgba(163,77,120,.11)!important}
+.macr-public .trial-submit,.macr-public .trial-nav-login{background:#A34D78!important;color:#fff!important;border-color:#A34D78!important}
+.macr-public .trial-submit:hover,.macr-public .trial-nav-login:hover{background:#873A60!important}
+.macr-public .trial-check,.macr-public .trial-kicker{color:#A34D78!important}
+.macr-public .trial-brand-name{color:#fff!important}
+.macr-public .trial-brand-name span{color:#F6DCE8!important}
+.macr-public .legal-brand-title{color:#fff}
+.macr-public .legal-nav .macr-wordmark{color:#fff}
+.macr-public .legal-card :is(h1,h2){color:#713650!important}
+.macr-public .legal-card a{color:#A34D78!important}
+.macr-public .legal-footer{background:#713650!important}
+.macr-public .legal-link:hover{color:#F6DCE8!important}
+.macr-public .legal-card .btn-danger{background:#b91c1c;border-color:#b91c1c}
+.macr-public .auth-footer,.macr-public .login-footer{color:#75616C!important}
+.macr-public .macr-wordmark-mark{flex-shrink:0}
