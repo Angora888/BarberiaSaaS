@@ -59,11 +59,17 @@ namespace BarberiaSaaS.Api.Services
             request.Headers.Authorization =
                 new AuthenticationHeaderValue("Bearer", apiKey);
 
+            // Both sending domains have been verified in Resend. Keep the legacy sender
+            // unchanged for every existing email; change only Mi Agenda CR emails.
+            var correoRemitente = remitenteSeguro == "Mi Agenda CR"
+                ? (_configuration["MIAGENDA_FROM_EMAIL"] ?? "soporte@miagendacr.app")
+                : fromEmail;
+
             request.Content = JsonContent.Create(new
             {
                 from = remitenteSeguro == "Mi Agenda CR"
-                    ? $"Mi Agenda CR <{fromEmail}>"
-                    : $"{remitenteSeguro} | Barbería SaaS <{fromEmail}>",
+                    ? $"Mi Agenda CR <{correoRemitente}>"
+                    : $"{remitenteSeguro} | Barbería SaaS <{correoRemitente}>",
                 to = new[] { destino.Trim() },
                 subject = asunto,
                 html
