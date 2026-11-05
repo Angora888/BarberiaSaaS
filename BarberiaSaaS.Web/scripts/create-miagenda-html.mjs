@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 const dist = join(process.cwd(), "dist");
 const original = await readFile(join(dist, "index.html"), "utf8");
+const socialImage = await readFile(join(process.cwd(), "assets/share-miagendacr.png.base64"), "utf8");
+await writeFile(join(dist, "share-miagendacr.png"), Buffer.from(socialImage.trim(), "base64"));
 let branded = original;
 
 // This is a separate HTML entry served from Vercel based on the Host header.
