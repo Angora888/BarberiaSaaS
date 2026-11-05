@@ -460,16 +460,15 @@ namespace BarberiaSaaS.Api.Controllers
             });
             await _context.SaveChangesAsync();
 
-            var frontendUrl = _configuration["App:FrontendUrl"]
-                ?? "https://barberiasaas.vercel.app";
-            var enlace = $"{frontendUrl.TrimEnd('/')}/restablecer-password/{Uri.EscapeDataString(tokenPlano)}";
+            var marca = PublicEmailBrand.Resolve(Request, _configuration);
+            var enlace = $"{marca.FrontendUrl}/restablecer-password/{Uri.EscapeDataString(tokenPlano)}";
             var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
             var html = $"""
                 <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
-                  <h1 style="color:#111827">Restablece tu contraseña</h1>
-                  <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para cambiar tu contraseña de Barbería SaaS.</p>
+                  <h1 style="color:{marca.Acento}">Restablece tu contraseña</h1>
+                  <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para cambiar tu contraseña de {marca.Nombre}.</p>
                   <p style="margin:32px 0">
-                    <a href="{enlace}" style="background:#111827;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Crear nueva contraseña</a>
+                    <a href="{enlace}" style="background:{marca.Acento};color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Crear nueva contraseña</a>
                   </p>
                   <p>Este enlace vence en <strong>30 minutos</strong> y solo puede utilizarse una vez.</p>
                   <p style="color:#6b7280;font-size:13px">Si no solicitaste este cambio, ignora este correo. Tu contraseña actual seguirá funcionando.</p>
@@ -481,8 +480,8 @@ namespace BarberiaSaaS.Api.Controllers
                 var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
                 await emailService.EnviarAsync(
                     usuario.Email,
-                    "Barbería SaaS",
-                    "Restablece tu contraseña de Barbería SaaS",
+                    marca.Nombre,
+                    $"Restablece tu contraseña de {marca.Nombre}",
                     html);
             }
             catch
@@ -659,23 +658,20 @@ namespace BarberiaSaaS.Api.Controllers
             Usuario usuario,
             string tokenPlano)
         {
-            var frontendUrl =
-                _configuration["App:FrontendUrl"]
-                ?? "https://barberiasaas.vercel.app";
-
+            var marca = PublicEmailBrand.Resolve(Request, _configuration);
             var enlace =
-                $"{frontendUrl.TrimEnd('/')}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
+                $"{marca.FrontendUrl}/confirmarcreacion/{Uri.EscapeDataString(tokenPlano)}";
 
             var nombre = System.Net.WebUtility.HtmlEncode(usuario.Nombre);
             var negocio = System.Net.WebUtility.HtmlEncode(tenant.Nombre);
 
             var html = $"""
                 <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
-                  <h1 style="color:#111827">¡Bienvenido a Barbería SaaS!</h1>
+                  <h1 style="color:{marca.Acento}">¡Bienvenido a {marca.Nombre}!</h1>
                   <p>Hola <strong>{nombre}</strong>, recibimos una solicitud para crear <strong>{negocio}</strong>.</p>
                   <p>Confirma tu correo para activar el negocio y comenzar tu período de prueba.</p>
                   <p style="margin:32px 0">
-                    <a href="{enlace}" style="background:#c62864;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Confirmar mi negocio</a>
+                    <a href="{enlace}" style="background:{marca.Acento};color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Confirmar mi negocio</a>
                   </p>
                   <p>Este enlace vence en <strong>30 minutos</strong> y solo puede utilizarse una vez.</p>
                   <p style="color:#6b7280;font-size:13px">Si no realizaste este registro, puedes ignorar este correo.</p>
@@ -687,8 +683,8 @@ namespace BarberiaSaaS.Api.Controllers
                 var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
                 await emailService.EnviarAsync(
                     usuario.Email,
-                    "Barbería SaaS",
-                    "Confirma tu negocio en Barbería SaaS",
+                    marca.Nombre,
+                    $"Confirma tu negocio en {marca.Nombre}",
                     html);
 
                 return true;
