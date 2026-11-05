@@ -134,7 +134,9 @@ builder.Services.AddSwaggerGen(options =>
 var frontendOrigins = new List<string>
 {
     "https://barberiasaas.com",
-    "https://barberiasaas.vercel.app"
+    "https://barberiasaas.vercel.app",
+    "https://miagendacr.app",
+    "https://www.miagendacr.app"
 };
 
 if (builder.Environment.IsDevelopment())
