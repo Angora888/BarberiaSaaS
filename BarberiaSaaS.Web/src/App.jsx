@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
+import MiAgendaHome from "./pages/MiAgendaHome";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
@@ -116,7 +117,7 @@ function App() {
   return (
     <AppDialogProvider>
       <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={["miagendacr.app", "www.miagendacr.app"].includes(window.location.hostname.toLowerCase()) ? <MiAgendaHome /> : <Home />} />
       <Route path="/manual" element={<ManualPublico />} />
       <Route path="/prueba" element={<><Prueba /><TurnstileRegistro /></>} />
       <Route path="/confirmarcreacion/:token" element={<ConfirmarRegistro />} />
