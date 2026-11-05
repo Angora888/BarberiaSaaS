@@ -1,19 +1,21 @@
 import LegalLayout from "../components/LegalLayout";
+import { isMiAgendaDomain, publicBrandName } from "../components/PublicBrandMark";
 
 export default function Terminos() {
+  const correoSoporte = isMiAgendaDomain ? "soporte@miagendacr.app" : "soporte@barberiasaas.com";
   return (
     <LegalLayout
       title="Términos y Condiciones"
       subtitle="Última actualización: 26 de septiembre de 2026"
     >
       <p>
-        Estos Términos y Condiciones regulan el uso de Barbería SaaS. Al crear una
+        Estos Términos y Condiciones regulan el uso de {publicBrandName}. Al crear una
         cuenta o utilizar la plataforma, el usuario acepta estos términos.
       </p>
 
       <h2 className="h4 fw-bold mt-4">1. Servicio</h2>
       <p>
-        Barbería SaaS es una plataforma de software para gestión de negocios de
+        {publicBrandName} es una plataforma de software para gestión de negocios de
         barbería, salón, belleza y actividades relacionadas. Puede incluir agenda,
         clientes, profesionales, servicios, inventario, ventas, reportes,
         notificaciones y otras herramientas operativas.
@@ -30,7 +32,7 @@ export default function Terminos() {
       <p>
         Cada negocio es responsable de contar con las autorizaciones necesarias
         para registrar y tratar información de sus clientes, empleados y
-        profesionales. Barbería SaaS actúa como herramienta tecnológica para
+        profesionales. {publicBrandName} actúa como herramienta tecnológica para
         gestionar esa información.
       </p>
 
@@ -51,7 +53,7 @@ export default function Terminos() {
       </p>
 
       <h2 className="h4 fw-bold mt-4">6. Uso aceptable</h2>
-      <p>El usuario no debe utilizar Barbería SaaS para:</p>
+      <p>El usuario no debe utilizar {publicBrandName} para:</p>
       <ul>
         <li>Actividades ilegales, fraudulentas o abusivas.</li>
         <li>Acceder a cuentas, datos o sistemas sin autorización.</li>
@@ -77,14 +79,14 @@ export default function Terminos() {
 
       <h2 className="h4 fw-bold mt-4">9. Propiedad intelectual</h2>
       <p>
-        Barbería SaaS, su software, diseño, marca y materiales propios están
+        {publicBrandName}, su software, diseño, marca y materiales propios están
         protegidos por las leyes aplicables. El usuario conserva los derechos que
         correspondan sobre la información y contenido que incorpora al servicio.
       </p>
 
       <h2 className="h4 fw-bold mt-4">10. Limitación de responsabilidad</h2>
       <p>
-        En la medida permitida por la ley, Barbería SaaS no será responsable por
+        En la medida permitida por la ley, {publicBrandName} no será responsable por
         pérdidas indirectas derivadas de fallos de terceros, conectividad,
         configuraciones incorrectas, uso no autorizado de credenciales o decisiones
         comerciales tomadas exclusivamente con base en la plataforma.
@@ -112,7 +114,7 @@ export default function Terminos() {
       <h2 className="h4 fw-bold mt-4">14. Contacto</h2>
       <p>
         Para consultas relacionadas con estos términos:
-        <a href="mailto:soporte@barberiasaas.com" className="ms-1">soporte@barberiasaas.com</a>.
+        <a href={`mailto:${correoSoporte}`} className="ms-1">{correoSoporte}</a>.
       </p>
     </LegalLayout>
   );

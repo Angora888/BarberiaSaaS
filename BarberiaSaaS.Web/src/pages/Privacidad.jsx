@@ -1,13 +1,15 @@
 import LegalLayout from "../components/LegalLayout";
+import { isMiAgendaDomain, publicBrandName } from "../components/PublicBrandMark";
 
 export default function Privacidad() {
+  const correoSoporte = isMiAgendaDomain ? "soporte@miagendacr.app" : "soporte@barberiasaas.com";
   return (
     <LegalLayout
       title="Política de Privacidad"
       subtitle="Última actualización: 26 de septiembre de 2026"
     >
       <p>
-        Esta Política de Privacidad explica cómo Barbería SaaS recopila, utiliza,
+        Esta Política de Privacidad explica cómo {publicBrandName} recopila, utiliza,
         almacena y protege información cuando una persona utiliza nuestra
         plataforma web o aplicación móvil.
       </p>
@@ -28,7 +30,7 @@ export default function Privacidad() {
 
       <h2 className="h4 fw-bold mt-4">2. Cómo usamos la información</h2>
       <ul>
-        <li>Prestar y operar Barbería SaaS.</li>
+        <li>Prestar y operar {publicBrandName}.</li>
         <li>Autenticar usuarios y proteger cuentas.</li>
         <li>Gestionar citas, clientes, profesionales, inventario, ventas y reportes.</li>
         <li>Enviar notificaciones relacionadas con citas y actividad del negocio.</li>
@@ -39,7 +41,7 @@ export default function Privacidad() {
 
       <h2 className="h4 fw-bold mt-4">3. Acceso a contactos</h2>
       <p>
-        Barbería SaaS puede solicitar permiso para acceder a los contactos del
+        {publicBrandName} puede solicitar permiso para acceder a los contactos del
         dispositivo. El acceso se utiliza para permitir que el usuario seleccione
         un contacto y lo registre como cliente. No vendemos listas de contactos ni
         utilizamos esta información para publicidad.
@@ -65,7 +67,7 @@ export default function Privacidad() {
 
       <h2 className="h4 fw-bold mt-4">6. Compartición y venta de datos</h2>
       <p>
-        Barbería SaaS no vende datos personales. Podemos compartir información con
+        {publicBrandName} no vende datos personales. Podemos compartir información con
         proveedores necesarios para prestar el servicio, cuando exista obligación
         legal o cuando sea necesario para proteger derechos, seguridad o integridad
         de la plataforma.
@@ -84,7 +86,7 @@ export default function Privacidad() {
       <h2 className="h4 fw-bold mt-4">8. Eliminación de cuenta y datos</h2>
       <p>
         Los usuarios pueden iniciar una solicitud desde la aplicación o desde
-        <a href="/eliminar-cuenta" className="ms-1">barberiasaas.com/eliminar-cuenta</a>.
+        <a href="/eliminar-cuenta" className="ms-1">{isMiAgendaDomain ? "www.miagendacr.app/eliminar-cuenta" : "barberiasaas.com/eliminar-cuenta"}</a>.
         La solicitud puede requerir verificación de identidad antes de completarse.
         Si la cuenta pertenece a un empleado de un negocio, algunos registros
         operativos del negocio podrán conservarse anonimizados cuando sean
@@ -101,7 +103,7 @@ export default function Privacidad() {
 
       <h2 className="h4 fw-bold mt-4">10. Menores de edad</h2>
       <p>
-        Barbería SaaS está dirigida a negocios y personas con capacidad para
+        {publicBrandName} está dirigida a negocios y personas con capacidad para
         contratar servicios. No está diseñada para que menores creen cuentas de
         negocio por cuenta propia.
       </p>
@@ -116,7 +118,7 @@ export default function Privacidad() {
       <h2 className="h4 fw-bold mt-4">12. Contacto</h2>
       <p>
         Para consultas sobre privacidad o derechos relacionados con datos personales,
-        puedes escribir a <a href="mailto:soporte@barberiasaas.com">soporte@barberiasaas.com</a>.
+        puedes escribir a <a href={`mailto:${correoSoporte}`}>{correoSoporte}</a>.
       </p>
     </LegalLayout>
   );
