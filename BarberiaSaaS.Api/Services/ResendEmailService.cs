@@ -61,7 +61,7 @@ namespace BarberiaSaaS.Api.Services
 
             request.Content = JsonContent.Create(new
             {
-                from = $"{remitenteSeguro} | Barbería SaaS <{fromEmail}>",
+                from = $"{remitenteSeguro} <{fromEmail}>",
                 to = new[] { destino.Trim() },
                 subject = asunto,
                 html
