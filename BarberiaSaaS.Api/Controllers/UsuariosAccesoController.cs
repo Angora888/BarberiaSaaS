@@ -322,8 +322,8 @@ public sealed class UsuariosAccesoController : ControllerBase
         _db.InvitacionesUsuario.Add(invitacion);
         await _db.SaveChangesAsync(ct);
 
-        var frontendUrl = _configuration["App:FrontendUrl"] ?? "https://barberiasaas.com";
-        var enlace = $"{frontendUrl.TrimEnd('/')}/aceptar-invitacion/{Uri.EscapeDataString(tokenPlano)}";
+        var marca = PublicEmailBrand.Resolve(Request, _configuration);
+        var enlace = $"{marca.FrontendUrl}/aceptar-invitacion/{Uri.EscapeDataString(tokenPlano)}";
         var nombre = WebUtility.HtmlEncode(profesional.Nombre);
         var negocio = await _db.Tenants
             .Where(x => x.Id == usuario.TenantId)
@@ -332,11 +332,11 @@ public sealed class UsuariosAccesoController : ControllerBase
 
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#1f2937;line-height:1.6">
-              <h1 style="color:#111827">Te invitaron a Barbería SaaS</h1>
+              <h1 style="color:{marca.Acento}">Te invitaron a {marca.Nombre}</h1>
               <p>Hola <strong>{nombre}</strong>, recibiste acceso como profesional de <strong>{WebUtility.HtmlEncode(negocio)}</strong>.</p>
               <p>Crea tu contraseña para entrar a tu agenda, clientes y servicios.</p>
               <p style="margin:32px 0">
-                <a href="{enlace}" style="background:#c62864;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Crear mi contraseña</a>
+                <a href="{enlace}" style="background:{marca.Acento};color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:bold">Crear mi contraseña</a>
               </p>
               <p>Este enlace vence en <strong>48 horas</strong> y solo puede utilizarse una vez.</p>
               <p style="color:#6b7280;font-size:13px">Si no esperabas esta invitación, puedes ignorar este correo.</p>
@@ -347,8 +347,8 @@ public sealed class UsuariosAccesoController : ControllerBase
         {
             await _email.EnviarAsync(
                 usuario.Email,
-                "Barbería SaaS",
-                $"Invitación a {negocio} en Barbería SaaS",
+                marca.Nombre,
+                $"Invitación a {negocio} en {marca.Nombre}",
                 html,
                 ct);
 
