@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
+import { isMiAgendaDomain } from "./components/PublicBrandMark";
 import MiAgendaHome from "./pages/MiAgendaHome";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -111,6 +112,10 @@ function AgendaConPermisos() {
       <EditarCitaSidecar />
     </>
   );
+}
+
+function PublicBrandScope({ children }) {
+  return <div className={isMiAgendaDomain ? "macr-public" : undefined}>{children}</div>;
 }
 
 function App() {
