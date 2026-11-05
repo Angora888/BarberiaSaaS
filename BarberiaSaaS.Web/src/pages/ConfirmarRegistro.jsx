@@ -7,6 +7,7 @@ import {
   FaSpa
 } from "react-icons/fa";
 import api from "../services/api";
+import { publicBrandName } from "../components/PublicBrandMark";
 
 function ConfirmarRegistro() {
   const { token } = useParams();
@@ -86,7 +87,7 @@ function ConfirmarRegistro() {
         </div>
 
         <div className="text-secondary fw-semibold mb-2">
-          Barbería SaaS
+          {publicBrandName}
         </div>
 
         {estado === "cargando" && (
