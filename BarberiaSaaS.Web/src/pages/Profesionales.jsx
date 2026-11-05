@@ -1272,7 +1272,7 @@ function Profesionales() {
                     {!profesionalEditando && (
                       <div className="col-12">
                         <div className="border rounded-4 p-3" style={{ background: "rgba(198, 40, 100, 0.05)" }}>
-                          <div className="fw-semibold mb-2">🔐 Acceso a Barbería SaaS</div>
+                          <div className="fw-semibold mb-2">🔐 Acceso al sistema</div>
 
                           {!usuarioActual.profesionalId && (
                             <div className="form-check mb-2">
