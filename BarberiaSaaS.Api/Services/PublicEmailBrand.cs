@@ -11,7 +11,7 @@ public sealed record PublicEmailBrand(string Nombre, string FrontendUrl, string 
     public static PublicEmailBrand Resolve(HttpRequest request, IConfiguration configuration)
     {
         const string miAgenda = "https://www.miagendacr.app";
-        var origin = request.Headers.Origin.ToString().TrimEnd('/');
+        var origin = request.Headers["Origin"].ToString().TrimEnd('/');
 
         // The browser sends Origin on cross-origin POST calls. Origin is a brand hint,
         // not authorization: the frontend origin is validated against exact known hosts.
