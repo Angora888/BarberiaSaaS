@@ -264,11 +264,13 @@ function Login() {
             <PublicBrandMark fallbackLogo={<img src={BRAND_LOGO} alt="Barbería SaaS" className="login-logo" />} />
 
             <h2>
-              Barbería <span>SaaS</span>
+              {isMiAgendaDomain ? "Bienvenido a Mi Agenda CR" : <>Barbería <span>SaaS</span></>}
             </h2>
 
             <p>
-              Gestión para barberías, salones y centros de belleza
+              {isMiAgendaDomain
+                ? "Organizá tus citas, clientes y servicios en un solo lugar."
+                : "Gestión para barberías, salones y centros de belleza"}
             </p>
           </div>
 
