@@ -1,0 +1,30 @@
+/* Mi Agenda CR public website theme. Scoped to marketing/account pages only.
+   Never wrap /negocio/:slug or authenticated routes: tenant appearance is user-owned. */
+.macr-public{--primary:#A34D78;--primary-dark:#873A60;--soft-pink:#F6DCE8;--border:#EBC9D8;--text-muted:#75616C;color:#5B4B52;background:#FFF7FA;min-height:100vh}
+.macr-public :is(.login-page,.auth-page,.trial-page,.trial-wrapper,.trial-screen,.legal-page){background:radial-gradient(circle at 90% 12%,rgba(223,163,195,.30),transparent 37%),linear-gradient(145deg,#FFF7FA,#FCEBF2)!important}
+.macr-public :is(.login-card,.auth-card,.trial-card,.legal-card){border-color:#EBC9D8!important;box-shadow:0 22px 65px rgba(163,77,120,.12)!important}
+.macr-public :is(.login-button,.auth-button,.trial-dark-btn,.trial-primary-btn,.btn-dark,.btn-primary):not(.btn-danger){background:#A34D78!important;border-color:#A34D78!important;color:white!important}
+.macr-public :is(.login-button,.auth-button,.trial-dark-btn,.trial-primary-btn,.btn-dark,.btn-primary):not(.btn-danger):hover{background:#873A60!important;border-color:#873A60!important}
+.macr-public :is(.login-forgot,.auth-back a,.trial-back,.login-footer a,.trial-footer a){color:#A34D78!important}
+.macr-public :is(.login-input,.auth-input,.trial-input,.form-control):focus{border-color:#DFA3C3!important;box-shadow:0 0 0 4px rgba(223,163,195,.22)!important}
+.macr-public :is(.auth-logo,.login-logo):not(img){background:#A34D78!important;color:white!important}
+.macr-public :is(.auth-brand h2,.trial-title,.login-title){color:#5B4B52!important}
+.macr-public .manual-page{--manual-navy:#713650;--manual-navy-2:#A34D78;--manual-gold:#F6DCE8;--manual-gold-2:#FFF7FA;--manual-text:#5B4B52;--manual-muted:#75616C;background:#FFF7FA}
+.macr-public .manual-header{background:#713650!important}
+.macr-public .manual-hero{background:linear-gradient(135deg,#713650,#A34D78)!important}
+.macr-public .manual-hero::after{background:rgba(246,220,232,.2)}
+.macr-public .manual-primary-btn{background:#F6DCE8!important;color:#713650!important;border-color:#F6DCE8!important}
+.macr-public .manual-section-icon{background:#A34D78!important;color:white!important}
+.macr-public .manual-final{background:linear-gradient(135deg,#713650,#A34D78)!important}
+.macr-public .manual-footer{background:#713650!important}
+.macr-public .manual-kicker{color:#FFF7FA!important}
+.macr-public .manual-index-card a:hover{background:#FFF0F6;color:#A34D78}
+.macr-public .manual-alert{background:#FFF0F6;border-color:#EBC9D8;color:#713650}
+.macr-public .manual-alert :is(strong,p,svg){color:#713650}
+.macr-public .macr-wordmark{font-size:22px;font-weight:850;color:#A34D78;letter-spacing:-.6px;display:inline-flex;align-items:center;gap:8px}
+.macr-public .macr-wordmark-mark{display:inline-grid;place-items:center;background:#F6DCE8;color:#A34D78;width:46px;height:46px;border-radius:15px;font-size:23px}
+.macr-public .macr-wordmark strong{color:#713650}
+.macr-public .manual-brand .macr-wordmark{color:#fff}
+.macr-public .manual-brand .macr-wordmark strong{color:#F6DCE8}
+.macr-public .manual-brand .macr-wordmark-mark{height:42px;width:42px}
+@media(max-width:600px){.macr-public .auth-card{padding:26px 20px}}
