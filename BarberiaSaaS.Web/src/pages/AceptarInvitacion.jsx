@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
+import { publicBrandName } from "../components/PublicBrandMark";
 
 function AceptarInvitacion() {
   const { token } = useParams();
@@ -44,7 +45,7 @@ function AceptarInvitacion() {
       <div className="card border-0 shadow-sm" style={{ width: "100%", maxWidth: 480, borderRadius: 24 }}>
         <div className="card-body p-4 p-md-5">
           <div className="text-center mb-4">
-            <div className="fw-bold text-uppercase small" style={{ color: "#c62864", letterSpacing: 1.2 }}>Barbería SaaS</div>
+            <div className="fw-bold text-uppercase small" style={{ color: "#c62864", letterSpacing: 1.2 }}>{publicBrandName}</div>
             <h2 className="fw-bold mt-2">Crea tu contraseña</h2>
             <p className="text-muted mb-0">Activa tu acceso como profesional.</p>
           </div>
