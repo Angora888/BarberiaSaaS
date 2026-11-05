@@ -20,6 +20,24 @@
     <meta name="twitter:title" content="Barbería SaaS | Agenda inteligente" />
     <meta name="twitter:description" content="Reservas 24/7, clientes, servicios y profesionales en una sola app." />
     <meta name="twitter:image" content="https://barberiasaas.com/share-card.svg" />
+    <script>
+      // Brand browser chrome before React initializes. Booking pages keep their own tenant branding.
+      (function () {
+        var host = window.location.hostname.toLowerCase();
+        if (host !== "miagendacr.app" && host !== "www.miagendacr.app") return;
+
+        document.title = "Mi Agenda CR | Tu negocio, tus citas, todo en orden";
+        var icon = document.querySelector('link[rel="icon"]');
+        if (icon) icon.setAttribute("href", "/favicon-miagendacr.svg");
+        var theme = document.querySelector('meta[name="theme-color"]');
+        if (theme) theme.setAttribute("content", "#A34D78");
+        var description = document.querySelector('meta[name="description"]');
+        if (description) description.setAttribute("content",
+          "Mi Agenda CR: organizá citas, clientes, profesionales y servicios en un solo lugar.");
+        var canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) canonical.setAttribute("href", "https://www.miagendacr.app/");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
