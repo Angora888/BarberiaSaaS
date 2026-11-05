@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaCheckCircle, FaCreditCard, FaExclamationTriangle, FaGift, FaLock, FaPaypal, FaWhatsapp } from "react-icons/fa";
 import api from "../services/api";
+import { publicBrandName } from "../components/PublicBrandMark";
 
 const ADMIN_WHATSAPP = "50660662375";
-const ADMIN_WHATSAPP_MESSAGE = "Hola, me gustaría seguir usando Barbería SaaS. ¿Me puedes ayudar a reactivar mi suscripción?";
+const ADMIN_WHATSAPP_MESSAGE = `Hola, me gustaría seguir usando ${publicBrandName}. ¿Me puedes ayudar a reactivar mi suscripción?`;
 
 function cargarPayPalSdk(clientId, mode) {
   return new Promise((resolve, reject) => {
@@ -165,11 +166,11 @@ export default function MiSuscripcion() {
           className="text-uppercase fw-bold"
           style={{ color: "var(--primary)", fontSize: 12, letterSpacing: 1.2 }}
         >
-          Barbería SaaS
+          {publicBrandName}
         </div>
         <h2 className="fw-bold mb-1">Mi suscripción</h2>
         <p className="text-muted mb-0">
-          Administra el plan de tu negocio y mantén activo el acceso a Barbería SaaS.
+          Administra el plan de tu negocio y mantén activo el acceso a {publicBrandName}.
         </p>
       </div>
 
@@ -182,7 +183,7 @@ export default function MiSuscripcion() {
               <div className="d-flex align-items-center justify-content-between gap-3 mb-4">
                 <div>
                   <span className="badge rounded-pill text-bg-light mb-2">PLAN MENSUAL</span>
-                  <h3 className="fw-bold mb-0">Barbería SaaS</h3>
+                  <h3 className="fw-bold mb-0">{publicBrandName}</h3>
                 </div>
                 <div className="text-end">
                   <span className="fw-bold" style={{ fontSize: 34 }}>$10</span>
@@ -202,7 +203,7 @@ export default function MiSuscripcion() {
               {!cargando && accesoCortesiaActivo && (
                 <div className="alert alert-success mb-3" style={{ borderRadius: 16 }}>
                   <div className="fw-bold mb-1"><FaGift className="me-2" />¡Acceso activo por cortesía!</div>
-                  <div>Puedes seguir utilizando Barbería SaaS sin pago mientras la cortesía esté activa.</div>
+                  <div>Puedes seguir utilizando {publicBrandName} sin pago mientras la cortesía esté activa.</div>
                   {suscripcion?.notaSuscripcion && <div className="small mt-2">Nota: {suscripcion.notaSuscripcion}</div>}
                 </div>
               )}
@@ -238,7 +239,7 @@ export default function MiSuscripcion() {
                     <div>Estado PayPal: <strong>{estado}</strong></div>
                     <div className="small mt-1">ID: {suscripcion.subscriptionId}</div>
                     <div className="small mt-2">
-                      Tu plan ya no tiene renovación automática por PayPal.{(accesoManualActivo || accesoCortesiaActivo) ? " Tu acceso a Barbería SaaS continúa activo por el método indicado arriba." : " Puedes volver a suscribirte cuando quieras."}
+                      Tu plan ya no tiene renovación automática por PayPal.{(accesoManualActivo || accesoCortesiaActivo) ? ` Tu acceso a ${publicBrandName} continúa activo por el método indicado arriba.` : " Puedes volver a suscribirte cuando quieras."}
                     </div>
                   </div>
 
@@ -295,7 +296,7 @@ export default function MiSuscripcion() {
                 </div>
               </div>
               <p className="text-muted mb-0">
-                PayPal procesa el pago. Barbería SaaS no almacena los datos de tu tarjeta ni tu contraseña de PayPal.
+                PayPal procesa el pago. {publicBrandName} no almacena los datos de tu tarjeta ni tu contraseña de PayPal.
               </p>
             </div>
           </div>
