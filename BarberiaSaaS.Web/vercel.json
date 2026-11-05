@@ -1,6 +1,30 @@
 {
   "rewrites": [
     {
+      "source": "/negocio/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "miagendacr.app"
+        }
+      ],
+      "destination": "/miagendacr-index.html"
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.miagendacr.app"
+        }
+      ],
+      "destination": "/miagendacr-index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
