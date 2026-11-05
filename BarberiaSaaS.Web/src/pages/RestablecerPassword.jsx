@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
+import { publicBrandName, PublicBrandMark } from "../components/PublicBrandMark";
 
 const authStyles = `
 .auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top left,rgba(59,130,246,.10),transparent 35%),radial-gradient(circle at bottom right,rgba(15,23,42,.08),transparent 35%),#f6f7f9}
@@ -29,7 +30,7 @@ export default function RestablecerPassword() {
   return <>
     <style>{authStyles}</style>
     <div className="auth-page"><div className="auth-card">
-      <div className="auth-brand"><div className="auth-logo">BS</div><h2>Nueva contraseña</h2><p>Crea una nueva contraseña para tu cuenta.</p></div>
+      <div className="auth-brand"><PublicBrandMark iconOnly fallbackLogo={<div className="auth-logo">BS</div>} /><h2>Nueva contraseña</h2><p>Crea una nueva contraseña para tu cuenta.</p></div>
       {mensaje && <div className={`alert auth-message ${exito?"auth-success":"auth-error"} mb-4`}>{mensaje}</div>}
       {!exito && <form onSubmit={guardar}>
         <div className="mb-3"><label className="form-label auth-label">Nueva contraseña</label><input type="password" className="form-control auth-input" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" required minLength={8} autoComplete="new-password"/></div>
@@ -37,7 +38,7 @@ export default function RestablecerPassword() {
         <button className="btn auth-button w-100" disabled={cargando}>{cargando?"Guardando...":"Cambiar contraseña"}</button>
       </form>}
       <div className="auth-back"><Link to="/login">{exito?"Ir a iniciar sesión":"Volver a iniciar sesión"}</Link></div>
-      <div className="auth-divider"/><p className="auth-footer">Barberia SaaS · Plataforma de administración</p>
+      <div className="auth-divider"/><p className="auth-footer">{publicBrandName} · Plataforma de administración</p>
     </div></div>
   </>;
 }
