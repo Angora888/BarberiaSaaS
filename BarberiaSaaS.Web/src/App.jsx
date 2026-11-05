@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
+import { isMiAgendaDomain } from "./components/PublicBrandMark";
 import MiAgendaHome from "./pages/MiAgendaHome";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -113,23 +114,27 @@ function AgendaConPermisos() {
   );
 }
 
+function PublicBrandScope({ children }) {
+  return <div className={isMiAgendaDomain ? "macr-public" : undefined}>{children}</div>;
+}
+
 function App() {
   return (
     <AppDialogProvider>
       <Routes>
       <Route path="/" element={["miagendacr.app", "www.miagendacr.app"].includes(window.location.hostname.toLowerCase()) ? <MiAgendaHome /> : <Home />} />
-      <Route path="/manual" element={<ManualPublico />} />
-      <Route path="/prueba" element={<><Prueba /><TurnstileRegistro /></>} />
-      <Route path="/confirmarcreacion/:token" element={<ConfirmarRegistro />} />
+      <Route path="/manual" element={<PublicBrandScope><ManualPublico /></PublicBrandScope>} />
+      <Route path="/prueba" element={<PublicBrandScope><><Prueba /><TurnstileRegistro /></></PublicBrandScope>} />
+      <Route path="/confirmarcreacion/:token" element={<PublicBrandScope><ConfirmarRegistro /></PublicBrandScope>} />
       <Route path="/negocio/:slug" element={<><LandingPublica /><ReservaPublicaSidecar /></>} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/olvide-password" element={<OlvidePassword />} />
-      <Route path="/restablecer-password/:token" element={<RestablecerPassword />} />
-      <Route path="/privacidad" element={<Privacidad />} />
-      <Route path="/terminos" element={<Terminos />} />
-      <Route path="/eliminar-cuenta" element={<EliminarCuenta />} />
+      <Route path="/login" element={<PublicBrandScope><Login /></PublicBrandScope>} />
+      <Route path="/olvide-password" element={<PublicBrandScope><OlvidePassword /></PublicBrandScope>} />
+      <Route path="/restablecer-password/:token" element={<PublicBrandScope><RestablecerPassword /></PublicBrandScope>} />
+      <Route path="/privacidad" element={<PublicBrandScope><Privacidad /></PublicBrandScope>} />
+      <Route path="/terminos" element={<PublicBrandScope><Terminos /></PublicBrandScope>} />
+      <Route path="/eliminar-cuenta" element={<PublicBrandScope><EliminarCuenta /></PublicBrandScope>} />
       <Route path="/cita/gestionar" element={<GestionarCitaPublica />} />
-      <Route path="/aceptar-invitacion/:token" element={<AceptarInvitacion />} />
+      <Route path="/aceptar-invitacion/:token" element={<PublicBrandScope><AceptarInvitacion /></PublicBrandScope>} />
       <Route element={<RutaProtegida><ConfiguracionProvider><SucursalProvider><FormatoHora12 /><MainLayout /></SucursalProvider></ConfiguracionProvider></RutaProtegida>}>
         <Route path="/dashboard" element={<SinAccesoProfesional><><Dashboard /><PaginaPublicaCard modo="dashboard" /></></SinAccesoProfesional>} />
         <Route path="/clientes" element={<><Clientes /><ClienteContactPicker /><EnviarDisponibilidadClientes /></>} />
