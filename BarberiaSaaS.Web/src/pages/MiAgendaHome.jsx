@@ -77,6 +77,17 @@ export default function MiAgendaHome() {
           <div><span className="ma-kicker">UNA AGENDA, MUCHAS POSIBILIDADES</span><h2>Tu pasión es única.<br/><em>Tu agenda también.</em></h2><p>Ideal para salones, uñas, spas, barberías y otros negocios que trabajan con citas.</p><Link className="ma-button ma-button-primary" to="/prueba">Quiero probar Mi Agenda CR <FaArrowRight /></Link></div>
           <div className="ma-business-tags"><span><FaSpa /> Spa y bienestar</span><span><FaHeart /> Uñas y belleza</span><span><FaCut /> Salones y barberías</span><span><FaCalendarCheck /> Servicios con cita</span></div>
         </section>
+
+        <section className="ma-founders-banner" aria-label="Creadores de Mi Agenda CR, orgullosamente costarricense y sarchiseña">
+          <img
+            src="/mi-agenda-cr-orgullo.webp"
+            alt="Mi Agenda CR, creado por Adriana Marín Murillo y Antony Alfaro Salas. Orgullosamente costarricense y sarchiseña, con la iglesia y las carretas típicas de Sarchí."
+            loading="lazy"
+            decoding="async"
+            width="1916"
+            height="821"
+          />
+        </section>
       </main>
 
       <footer className="ma-footer"><strong>Mi Agenda CR</strong><span>Hecho con cariño en Costa Rica ♡</span><div><Link to="/privacidad">Privacidad</Link><Link to="/terminos">Términos</Link><Link to="/login">Ingresar</Link></div></footer>
