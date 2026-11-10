@@ -501,6 +501,15 @@ function ReservaPublicaSidecar() {
           border-radius: 24px;
           box-shadow: 0 28px 80px rgba(15, 23, 42, .25);
         }
+        .landing-reserva-progress { padding: 16px 24px; border-bottom: 1px solid #eef0f3; background: #fff; }
+        .landing-reserva-progress-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+        .landing-reserva-progress-step { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #74717b; text-align: center; font-size: 11px; font-weight: 700; }
+        .landing-reserva-progress-step.done { color: var(--landing-primary, #c62864); }
+        .landing-reserva-progress-circle { width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid #dedbe2; border-radius: 50%; font-weight: 800; }
+        .landing-reserva-progress-step.done .landing-reserva-progress-circle { background: var(--landing-primary, #c62864); color: #fff; border-color: var(--landing-primary, #c62864); }
+        .landing-reserva-progress-track { margin-top: 12px; background: #eeebef; border-radius: 999px; height: 5px; overflow: hidden; }
+        .landing-reserva-progress-fill { height: 100%; background: var(--landing-primary, #c62864); border-radius: 999px; transition: width .25s ease; }
+        @media (max-width: 430px) { .landing-reserva-progress { padding: 14px 16px; } .landing-reserva-progress-step { font-size: 10px; } }
         .landing-reserva-header {
           display: flex;
           justify-content: space-between;
@@ -658,6 +667,22 @@ function ReservaPublicaSidecar() {
             </button>
           </div>
 
+          <div className="landing-reserva-progress" aria-label="Progreso de tu reserva">
+            <div className="landing-reserva-progress-list">
+              {["Servicio", "Fecha", "Horario", "Solicitud"].map((titulo, indice) => {
+                const completo = indice < 3 || Boolean(exito);
+                return (
+                  <div key={titulo} className={`landing-reserva-progress-step ${completo ? "done" : ""}`} aria-label={`Paso ${indice + 1}: ${titulo}, ${completo ? "completado" : "pendiente"}`}>
+                    <span className="landing-reserva-progress-circle">{completo ? "✓" : indice + 1}</span>
+                    <span>{titulo}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="landing-reserva-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={4} aria-valuenow={exito ? 4 : 3} aria-label="Pasos completados">
+              <div className="landing-reserva-progress-fill" style={{ width: exito ? "100%" : "75%" }} />
+            </div>
+          </div>
           <div className="landing-reserva-body">
             {exito ? (
               <div className="landing-reserva-success">
