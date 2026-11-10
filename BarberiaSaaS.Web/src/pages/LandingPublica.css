@@ -1229,3 +1229,47 @@
 .landing-progress-step.done .landing-progress-number { border-color:var(--landing-primary,#b02072); background:var(--landing-primary,#b02072); color:white; }
 #landing-servicios, #disponibilidad { scroll-margin-top:20px; }
 @media(max-width:720px) { .landing-services-grid { grid-template-columns:none; } .landing-services-grid .landing-service-card { flex-basis: min(73vw,260px); } .landing-booking-progress { padding-top:8px; } .landing-progress-step { font-size:10px; } }
+
+/* Skeleton loading: same page silhouette for Barbería SaaS and Mi Agenda CR. */
+.landing-skeleton-page { --landing-skeleton-base:#f1e9ed; --landing-skeleton-shine:rgba(255,255,255,.82); background:#fffafc; min-height:100vh; }
+.landing-skeleton-block { display:block; flex:none; background:var(--landing-skeleton-base); border-radius:12px; position:relative; overflow:hidden; }
+.landing-skeleton-block::after { content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,var(--landing-skeleton-shine),transparent); animation:landing-skeleton-shimmer 1.6s ease-in-out infinite; }
+@keyframes landing-skeleton-shimmer { to { transform:translateX(100%); } }
+.landing-skeleton-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+.landing-skeleton-hero { min-height:410px; display:flex; align-items:center; background:linear-gradient(135deg,#f8eaf1,#f6f2f5); }
+.landing-skeleton-hero-content { padding-top:50px; padding-bottom:50px; }
+.landing-skeleton-logo { width:78px; height:78px; border-radius:22px; margin-bottom:22px; }
+.landing-skeleton-line { height:16px; margin-bottom:12px; }
+.landing-skeleton-eyebrow { width:150px; }
+.landing-skeleton-title { width:min(420px,85%); height:47px; margin-bottom:22px; }
+.landing-skeleton-intro { width:min(480px,95%); }
+.landing-skeleton-intro-short { width:min(300px,70%); }
+.landing-skeleton-actions { display:flex; gap:12px; margin-top:25px; flex-wrap:wrap; }
+.landing-skeleton-button { width:175px; height:47px; border-radius:50px; }
+.landing-skeleton-main { padding-top:40px; padding-bottom:60px; }
+.landing-skeleton-section { margin-bottom:45px; }
+.landing-skeleton-heading { height:28px; width:225px; margin:0 auto 14px; }
+.landing-skeleton-subheading { width:min(350px,75%); margin:0 auto 24px; }
+.landing-skeleton-services { display:flex; gap:14px; overflow:hidden; padding:5px 0 15px; }
+.landing-skeleton-service { flex:0 0 245px; border:1px solid #eee4e9; background:white; padding:19px; border-radius:20px; }
+.landing-skeleton-service-icon { width:42px; height:42px; margin-bottom:20px; }
+.landing-skeleton-service-name { width:85%; height:19px; }
+.landing-skeleton-service-description { width:95%; height:13px; }
+.landing-skeleton-price { width:36%; margin-top:25px; }
+.landing-skeleton-availability { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:22px; }
+.landing-skeleton-panel { min-width:0; background:white; border:1px solid #eee4e9; border-radius:22px; padding:22px; }
+.landing-skeleton-filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:23px; }
+.landing-skeleton-input { height:47px; }
+.landing-skeleton-month { width:175px; margin:0 auto 23px; height:24px; }
+.landing-skeleton-weekdays { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin-bottom:12px; }
+.landing-skeleton-weekday { height:12px; width:60%; justify-self:center; }
+.landing-skeleton-calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+.landing-skeleton-day { min-width:0; min-height:65px; border-radius:12px; border:1px solid #f3ebef; padding:10px 6px; }
+.landing-skeleton-day-number { width:18px; height:17px; border-radius:5px; margin:0 auto 9px; }
+.landing-skeleton-day-label { width:65%; height:9px; margin:auto; }
+.landing-skeleton-times .landing-skeleton-service-name { margin-bottom:16px; }
+.landing-skeleton-times .landing-skeleton-subheading { margin:0 0 30px; }
+.landing-skeleton-time-list { display:flex; flex-wrap:wrap; gap:12px; }
+.landing-skeleton-time-chip { width:85px; height:35px; border-radius:20px; }
+@media(max-width:720px) { .landing-skeleton-hero { min-height:380px; } .landing-skeleton-hero-content { padding-top:45px; padding-bottom:45px; } .landing-skeleton-title { height:39px; } .landing-skeleton-availability { grid-template-columns:1fr; } .landing-skeleton-filters { grid-template-columns:1fr; } .landing-skeleton-panel { padding:15px 10px; } .landing-skeleton-service { flex-basis:220px; } .landing-skeleton-day { min-height:54px; padding:7px 2px; } .landing-skeleton-day-label { width:75%; } }
+@media(prefers-reduced-motion:reduce) { .landing-skeleton-block::after { animation:none; } }
