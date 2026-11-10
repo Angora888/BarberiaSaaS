@@ -39,6 +39,83 @@ const formatearHoraPublica = (hora) => {
   return `${horas12}:${minutos} ${periodo}`;
 };
 
+
+function LandingSkeletonBlock({ className = "" }) {
+  return <span aria-hidden="true" className={`landing-skeleton-block ${className}`} />;
+}
+
+function LandingCalendarSkeleton() {
+  return (
+    <div className="landing-calendar-grid landing-skeleton-calendar" aria-hidden="true">
+      {Array.from({ length: 35 }, (_, index) => (
+        <div className="landing-skeleton-day" key={index}>
+          <LandingSkeletonBlock className="landing-skeleton-day-number" />
+          <LandingSkeletonBlock className="landing-skeleton-day-label" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LandingPublicaSkeleton() {
+  return (
+    <div className="landing-publica landing-skeleton-page" role="status" aria-label="Cargando página de reservas">
+      <span className="landing-skeleton-sr-only">Cargando servicios y disponibilidad...</span>
+      <header className="landing-skeleton-hero">
+        <div className="landing-container landing-skeleton-hero-content">
+          <LandingSkeletonBlock className="landing-skeleton-logo" />
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-eyebrow" />
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-title" />
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-intro" />
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-intro-short" />
+          <div className="landing-skeleton-actions">
+            <LandingSkeletonBlock className="landing-skeleton-button" />
+            <LandingSkeletonBlock className="landing-skeleton-button" />
+          </div>
+        </div>
+      </header>
+      <main className="landing-container landing-skeleton-main">
+        <section className="landing-skeleton-section" aria-hidden="true">
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-heading" />
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-subheading" />
+          <div className="landing-skeleton-services">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="landing-skeleton-service">
+                <LandingSkeletonBlock className="landing-skeleton-service-icon" />
+                <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-service-name" />
+                <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-service-description" />
+                <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-price" />
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="landing-skeleton-section" aria-hidden="true">
+          <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-heading" />
+          <div className="landing-skeleton-availability">
+            <div className="landing-skeleton-panel">
+              <div className="landing-skeleton-filters">
+                {Array.from({ length: 3 }, (_, index) => <LandingSkeletonBlock className="landing-skeleton-input" key={index} />)}
+              </div>
+              <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-month" />
+              <div className="landing-skeleton-weekdays">
+                {Array.from({ length: 7 }, (_, index) => <LandingSkeletonBlock className="landing-skeleton-weekday" key={index} />)}
+              </div>
+              <LandingCalendarSkeleton />
+            </div>
+            <div className="landing-skeleton-panel landing-skeleton-times">
+              <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-service-name" />
+              <LandingSkeletonBlock className="landing-skeleton-line landing-skeleton-subheading" />
+              <div className="landing-skeleton-time-list">
+                {Array.from({ length: 3 }, (_, index) => <LandingSkeletonBlock className="landing-skeleton-time-chip" key={index} />)}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function LandingPublica() {
   const { slug } = useParams();
   const { alert: mostrarAlerta, prompt: mostrarPrompt } = useAppDialog();
@@ -638,15 +715,7 @@ function LandingPublica() {
   };
 
   if (cargando) {
-    return (
-      <div className="landing-publica-cargando">
-        <div className="landing-publica-spinner" />
-
-        <p>
-          Cargando...
-        </p>
-      </div>
-    );
+    return <LandingPublicaSkeleton />;
   }
 
   if (
@@ -1195,13 +1264,9 @@ function LandingPublica() {
                 </div>
 
                 {cargandoDisponibilidad ? (
-                  <div className="landing-calendar-loading">
-                    <div className="landing-publica-spinner" />
-
-                    <span>
-                      Consultando
-                      horarios...
-                    </span>
+                  <div role="status" aria-label="Consultando horarios disponibles">
+                    <span className="landing-skeleton-sr-only">Consultando horarios disponibles...</span>
+                    <LandingCalendarSkeleton />
                   </div>
                 ) : (
                   <div className="landing-calendar-grid">
