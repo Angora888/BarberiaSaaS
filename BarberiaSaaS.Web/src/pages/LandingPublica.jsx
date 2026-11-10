@@ -1670,7 +1670,7 @@ function LandingPublica() {
           </div>
         </footer>
       </main>
-      <nav className="landing-booking-progress" aria-label="Progreso de reserva">
+      {!estadoReserva.abierta && <nav className="landing-booking-progress" aria-label="Progreso de reserva">
         <div className="landing-progress-inner">
           {[
             { numero: 1, titulo: "Servicio", listo: Boolean(servicioId), destino: "landing-servicios" },
@@ -1684,7 +1684,7 @@ function LandingPublica() {
             </button>
           ))}
         </div>
-      </nav>
+      </nav>}
     </div>
   );
 }
