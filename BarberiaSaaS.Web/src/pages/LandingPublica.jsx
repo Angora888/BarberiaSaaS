@@ -54,6 +54,8 @@ function LandingPublica() {
 
   const [servicioId, setServicioId] =
     useState("");
+  const [busquedaServicio, setBusquedaServicio] = useState("");
+  const [estadoReserva, setEstadoReserva] = useState({ abierta: false, completada: false });
 
   const [
     profesionalId,
@@ -92,6 +94,12 @@ function LandingPublica() {
     fechaSeleccionada,
     setFechaSeleccionada
   ] = useState(null);
+
+  useEffect(() => {
+    const actualizar = (evento) => setEstadoReserva(evento.detail || { abierta: false, completada: false });
+    window.addEventListener("landing-reserva-progreso", actualizar);
+    return () => window.removeEventListener("landing-reserva-progreso", actualizar);
+  }, []);
 
   useEffect(() => {
     cargarLanding();
@@ -831,7 +839,7 @@ function LandingPublica() {
 
         {landing.servicios
           ?.length > 0 && (
-          <section className="landing-section">
+          <section className="landing-section" id="landing-servicios">
             <div className="landing-container">
               <div className="landing-section-heading">
                 <span>
@@ -850,8 +858,13 @@ function LandingPublica() {
                 </p>
               </div>
 
-              <div className="landing-services-grid">
-                {landing.servicios.map(
+              <div className="landing-service-tools">
+                <label htmlFor="landing-buscar-servicio">Buscar servicio</label>
+                <input id="landing-buscar-servicio" type="search" placeholder="Buscar por nombre o descripción..." value={busquedaServicio} onChange={(evento) => setBusquedaServicio(evento.target.value)} />
+                <span>Desliza para explorar <FaChevronRight aria-hidden="true" /></span>
+              </div>
+              <div className="landing-services-grid" role="region" aria-label="Servicios disponibles" tabIndex={0}>
+                {landing.servicios.filter((servicio) => `${servicio.nombre} ${servicio.descripcion || ""}`.toLocaleLowerCase().includes(busquedaServicio.trim().toLocaleLowerCase())).map(
                   (
                     servicio
                   ) => (
@@ -1657,6 +1670,21 @@ function LandingPublica() {
           </div>
         </footer>
       </main>
+      <nav className="landing-booking-progress" aria-label="Progreso de reserva">
+        <div className="landing-progress-inner">
+          {[
+            { numero: 1, titulo: "Servicio", listo: Boolean(servicioId), destino: "landing-servicios" },
+            { numero: 2, titulo: "Fecha", listo: Boolean(fechaSeleccionada), destino: "disponibilidad" },
+            { numero: 3, titulo: "Horario", listo: estadoReserva.abierta || estadoReserva.completada, destino: "disponibilidad" },
+            { numero: 4, titulo: "Solicitud", listo: estadoReserva.completada, destino: "disponibilidad" }
+          ].map((paso) => (
+            <button key={paso.numero} type="button" className={`landing-progress-step ${paso.listo ? "done" : ""}`} onClick={() => document.getElementById(paso.destino)?.scrollIntoView({ behavior: "smooth", block: "start" })} aria-label={`Paso ${paso.numero}: ${paso.titulo}${paso.listo ? ", completado" : ", pendiente"}`}>
+              <span className="landing-progress-number">{paso.listo ? "✓" : paso.numero}</span>
+              <span>{paso.titulo}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
