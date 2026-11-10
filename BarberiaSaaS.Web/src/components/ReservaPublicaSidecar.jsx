@@ -188,6 +188,10 @@ function ReservaPublicaSidecar() {
   const [error, setError] = useState("");
   const [exito, setExito] = useState(null);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("landing-reserva-progreso", { detail: { abierta: Boolean(reserva), completada: Boolean(exito) } }));
+  }, [reserva, exito]);
+
   const locale = landing
     ? `${landing?.branding?.idioma === "en" ? "en" : "es"}-${landing?.negocio?.paisCodigo || "CR"}`
     : "es-CR";
