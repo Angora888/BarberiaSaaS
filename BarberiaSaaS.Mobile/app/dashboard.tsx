@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import api from "@/src/services/api";import {dinero,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 import { cerrarSesion, obtenerUsuario, UsuarioSesion } from "@/src/services/session";
+import IosBottomNav from "@/src/components/IosBottomNav";
+import { brand, brandName, isMiAgendaIOS } from "@/src/theme/brand";
 
 type Cita = {
   id: number;
@@ -145,15 +147,15 @@ export default function DashboardScreen() {
 
   if (usuario?.rol === "Profesional") {
     return (
-      <SafeAreaView style={styles.page}>
+      <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.hello}>Hola, {usuario.nombre} 👋</Text>
+              <Text style={[styles.hello, isMiAgendaIOS && { color: brand.ink }]}>Hola, {usuario.nombre} 👋</Text>
               <Text style={styles.business}>{usuario.negocio}</Text>
             </View>
             <Pressable onPress={salir} hitSlop={12}>
-              <Text style={styles.logout}>Salir</Text>
+              <Text style={[styles.logout, isMiAgendaIOS && { color: brand.primary }]}>Salir</Text>
             </Pressable>
           </View>
 
@@ -167,23 +169,24 @@ export default function DashboardScreen() {
 
           <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}>
             <Text style={styles.agendaButtonText}>📅 Agenda</Text>
-            <Text style={styles.agendaArrow}>›</Text>
+            <Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text>
           </Pressable>
           <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}>
             <Text style={styles.agendaButtonText}>👥 Clientes</Text>
-            <Text style={styles.agendaArrow}>›</Text>
+            <Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text>
           </Pressable>
           <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}>
             <Text style={styles.agendaButtonText}>✨ Servicios</Text>
-            <Text style={styles.agendaArrow}>›</Text>
+            <Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text>
           </Pressable>
         </ScrollView>
+        <IosBottomNav active="dashboard" professional />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
+    <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -192,32 +195,32 @@ export default function DashboardScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Text style={styles.hello}>Hola, {usuario?.nombre ?? ""} 👋</Text>
+            <Text style={[styles.hello, isMiAgendaIOS && { color: brand.ink }]}>Hola, {usuario?.nombre ?? ""} 👋</Text>
             <Text style={styles.business}>{usuario?.negocio ?? "Barbería SaaS"}</Text>
           </View>
           <Pressable onPress={salir} hitSlop={12}>
-            <Text style={styles.logout}>Salir</Text>
+            <Text style={[styles.logout, isMiAgendaIOS && { color: brand.primary }]}>Salir</Text>
           </Pressable>
         </View>
 
-        <View style={styles.branchBox}><Text style={styles.branchLabel}>🏪 Sucursal</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchChoices}><Pressable style={[styles.branchChip,sucursalId===null&&styles.branchChipOn]} onPress={()=>setSucursalId(null)}><Text style={[styles.branchChipText,sucursalId===null&&styles.branchChipTextOn]}>Todas las sucursales</Text></Pressable>{sucursales.filter(x=>x.activa!==false).map(x=><Pressable key={x.id} style={[styles.branchChip,sucursalId===x.id&&styles.branchChipOn]} onPress={()=>setSucursalId(x.id)}><Text style={[styles.branchChipText,sucursalId===x.id&&styles.branchChipTextOn]}>{x.nombre}</Text></Pressable>)}</ScrollView></View>
-        {usuario?.rol!=="SuperAdmin"&&suscripcion?.trialActive?<View style={styles.trialCard}><Text style={styles.trialKicker}>BARBERÍA SAAS</Text><Text style={styles.trialTitle}>Días usando la App: {diasUso(fechaCreacion,regional)}</Text><Text style={styles.trialText}>Te quedan <Text style={styles.trialStrong}>{suscripcion?.trialDaysRemaining??0} días</Text> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</Text><Pressable style={styles.trialButton} onPress={()=>router.push("/mi-suscripcion")}><Text style={styles.trialButtonText}>💳 Activar suscripción</Text></Pressable></View>:null}
+        <View style={styles.branchBox}><Text style={styles.branchLabel}>🏪 Sucursal</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchChoices}><Pressable style={[styles.branchChip,sucursalId===null&&styles.branchChipOn,isMiAgendaIOS&&sucursalId===null&&{backgroundColor:brand.primary}]} onPress={()=>setSucursalId(null)}><Text style={[styles.branchChipText,sucursalId===null&&styles.branchChipTextOn]}>Todas las sucursales</Text></Pressable>{sucursales.filter(x=>x.activa!==false).map(x=><Pressable key={x.id} style={[styles.branchChip,sucursalId===x.id&&styles.branchChipOn,isMiAgendaIOS&&sucursalId===x.id&&{backgroundColor:brand.primary}]} onPress={()=>setSucursalId(x.id)}><Text style={[styles.branchChipText,sucursalId===x.id&&styles.branchChipTextOn]}>{x.nombre}</Text></Pressable>)}</ScrollView></View>
+        {usuario?.rol!=="SuperAdmin"&&suscripcion?.trialActive?<View style={styles.trialCard}><Text style={styles.trialKicker}>{brandName.toUpperCase()}</Text><Text style={styles.trialTitle}>Días usando la App: {diasUso(fechaCreacion,regional)}</Text><Text style={styles.trialText}>Te quedan <Text style={styles.trialStrong}>{suscripcion?.trialDaysRemaining??0} días</Text> de prueba gratuita. Puedes activar tu suscripción cuando quieras.</Text><Pressable style={styles.trialButton} onPress={()=>router.push("/mi-suscripcion")}><Text style={styles.trialButtonText}>💳 Activar suscripción</Text></Pressable></View>:null}
 
-        <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}><Text style={styles.agendaButtonText}>📅 Abrir agenda</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}><Text style={styles.agendaButtonText}>👥 Clientes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/profesionales")}><Text style={styles.agendaButtonText}>✂️ Profesionales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}><Text style={styles.agendaButtonText}>✨ Servicios</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/reportes")}><Text style={styles.agendaButtonText}>📊 Reportes</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/mi-suscripcion")}><Text style={styles.agendaButtonText}>💎 Mi suscripción</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/sucursales")}><Text style={styles.agendaButtonText}>🏢 Sucursales</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/inventario")}><Text style={styles.agendaButtonText}>📦 Inventario</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
-        <Pressable style={styles.clientsButton} onPress={() => router.push("/cuentas-por-cobrar")}><Text style={styles.agendaButtonText}>💰 Cuentas por cobrar</Text><Text style={styles.agendaArrow}>›</Text></Pressable>
+        <Pressable style={styles.agendaButton} onPress={() => router.push("/agenda")}><Text style={styles.agendaButtonText}>📅 Abrir agenda</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/clientes")}><Text style={styles.agendaButtonText}>👥 Clientes</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/ventas")}><Text style={styles.agendaButtonText}>💳 Ventas / Caja</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/profesionales")}><Text style={styles.agendaButtonText}>✂️ Profesionales</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/servicios")}><Text style={styles.agendaButtonText}>✨ Servicios</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/reportes")}><Text style={styles.agendaButtonText}>📊 Reportes</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/mi-suscripcion")}><Text style={styles.agendaButtonText}>💎 Mi suscripción</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/configuracion")}><Text style={styles.agendaButtonText}>⚙️ Configuración</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/sucursales")}><Text style={styles.agendaButtonText}>🏢 Sucursales</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/inventario")}><Text style={styles.agendaButtonText}>📦 Inventario</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
+        <Pressable style={styles.clientsButton} onPress={() => router.push("/cuentas-por-cobrar")}><Text style={styles.agendaButtonText}>💰 Cuentas por cobrar</Text><Text style={[styles.agendaArrow, isMiAgendaIOS && { color: brand.primary }]}>›</Text></Pressable>
 
         <View style={styles.titleRow}>
           <View>
-            <Text style={styles.heading}>Hoy</Text>
+            <Text style={[styles.heading, isMiAgendaIOS && { color: brand.ink }]}>Hoy</Text>
             <Text style={styles.date}>{formatearFecha(fechaHoy,regional)}</Text>
           </View>
           <View style={styles.livePill}><Text style={styles.liveText}>● En vivo</Text></View>
@@ -230,7 +233,7 @@ export default function DashboardScreen() {
           </View>
         ) : null}
 
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, isMiAgendaIOS && { backgroundColor: brand.hero }]}>
           <Text style={styles.heroLabel}>Ingresos recibidos hoy</Text>
           <Text style={styles.heroValue}>{dinero(resumen?.ingresosTotales,regional)}</Text>
           <Text style={styles.heroDetail}>{resumen?.caja?.cantidadCobros ?? 0} cobro(s) recibido(s)</Text>
@@ -275,6 +278,7 @@ export default function DashboardScreen() {
 
         <Text style={styles.pullHint}>Desliza hacia abajo para actualizar</Text>
       </ScrollView>
+      <IosBottomNav active="dashboard" />
     </SafeAreaView>
   );
 }
