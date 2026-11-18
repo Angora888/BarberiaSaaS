@@ -333,7 +333,7 @@ api.interceptors.response.use(
 
       const ruta = obtenerRuta(error.config);
 
-      if (ruta !== "/auth/login") {
+      if (ruta !== "/auth/login" && ruta !== "/auth/google-login") {
         window.location.href = "/login";
       }
     }
