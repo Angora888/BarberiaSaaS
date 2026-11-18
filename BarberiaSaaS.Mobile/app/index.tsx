@@ -1,12 +1,12 @@
 import { router } from "expo-router";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.card}>
-        <View style={styles.logo}><Text style={styles.logoText}>BS</Text></View>
-        <Text style={styles.title}>Barbería SaaS</Text>
+        <View style={styles.logo}><Text style={styles.logoText}>{Platform.OS === "ios" ? "MA" : "BS"}</Text></View>
+        <Text style={styles.title}>{Platform.OS === "ios" ? "Mi Agenda CR" : "Barbería SaaS"}</Text>
         <Text style={styles.subtitle}>Tu negocio, más simple.</Text>
         <Text style={styles.description}>
           Agenda, clientes, ventas y profesionales desde cualquier lugar.
