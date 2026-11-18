@@ -107,7 +107,7 @@ function Prueba() {
       cancelado = true;
       existing?.removeEventListener("load", mostrarBoton);
     };
-  }, [registro]);
+  }, [registro, googleIdentidad]);
 
   const manejarCambio = (e) => {
     const { name, value } = e.target;
