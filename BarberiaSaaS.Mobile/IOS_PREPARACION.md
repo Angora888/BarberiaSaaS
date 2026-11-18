@@ -2,6 +2,16 @@
 
 Se reutiliza **BarberiaSaaS.Mobile** (Expo SDK 57), el backend .NET y los datos de Neon. Android conserva `com.barberiasaas.mobile` y la marca actual; iOS usa `com.miagendacr.app` y el nombre visible **Mi Agenda CR**.
 
+
+## Identidad Mi Agenda CR iOS (primera fase)
+
+- Tema aislado en `src/theme/brand.ts`: iOS rosa premium, Android conserva la apariencia actual.
+- Bienvenida, inicio de sesión, recuperación, dashboard y agenda adaptados a la marca iOS.
+- Navegación inferior iOS en Inicio, Agenda, Clientes y Configuración (con control de acceso del rol profesional).
+- Los diseños editables del icono y del splash están en `assets/branding/miagenda-ios-icon.svg` y `assets/branding/miagenda-ios-splash.svg`.
+- **Pendiente:** exportar y agregar al repositorio PNG para icono iOS (1024×1024 sin transparencia) y splash, configurar `ios.icon` y `expo-splash-screen`, hacer una build nativa y validar en iPhone. Los SVG son fuentes de diseño, no assets de producción configurados.
+- Workflow `Validate Expo mobile` ejecuta instalación, typecheck y consulta de configuración Expo ante cambios del móvil. No sustituye una compilación nativa ni una prueba de dispositivos.
+
 ## Sign in with Apple
 
 - iOS configura `usesAppleSignIn: true` y el plugin `expo-apple-authentication` (SDK 57).
