@@ -17,6 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<AppleTokenValidator>();
 builder.Services.AddHttpClient<IPayPalService, PayPalService>();
 builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 builder.Services.AddHttpClient<IWhatsAppService, MetaWhatsAppService>();
