@@ -5,6 +5,8 @@ import api from "@/src/services/api";
 import AppleSignIn from "@/src/components/AppleSignIn";
 import { guardarSesion } from "@/src/services/session";
 import { registrarPushNotifications } from "@/src/services/push";
+import BrandEmblem from "@/src/components/BrandEmblem";
+import { brand, brandName, isMiAgendaIOS } from "@/src/theme/brand";
 
 export default function LoginScreen() {
   const [email,setEmail]=useState("");
@@ -23,28 +25,29 @@ export default function LoginScreen() {
       } catch (pushError) {
         console.warn("No fue posible registrar push:", pushError);
       }
-      router.replace("/dashboard");
+      router.replace(data.usuario?.rol === "Profesional" ? "/agenda" : "/dashboard");
     }catch(err:any){
       setError(err?.response?.data?.mensaje ?? "No fue posible iniciar sesión.");
     }finally{setLoading(false);}
   };
 
   return (
-    <SafeAreaView style={styles.page}>
+    <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
       <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":undefined}>
-        <View style={styles.card}>
-          <View style={styles.logo}><Text style={styles.logoText}>{Platform.OS === "ios" ? "MA" : "BS"}</Text></View>
-          <Text style={styles.title}>{Platform.OS === "ios" ? "Mi Agenda CR" : "Barbería SaaS"}</Text>
-          <Text style={styles.subtitle}>Gestión para barberías, salones y centros de belleza</Text>
+        <View style={[styles.card, isMiAgendaIOS && { borderWidth: 1, borderColor: brand.stroke }]}>
+          <BrandEmblem size={76} />
+          <Text style={[styles.title, isMiAgendaIOS && { color: brand.ink }]}>{brandName}</Text>
+          <Text style={styles.subtitle}>{isMiAgendaIOS ? "La agenda de tu negocio, siempre contigo." : "Gestión para barberías, salones y centros de belleza"}</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.label}>Correo electrónico</Text>
-          <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder="correo@ejemplo.com"/>
+          <TextInput style={[styles.input, isMiAgendaIOS && { borderColor: brand.stroke }]} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder="correo@ejemplo.com"/>
           <Text style={styles.label}>Contraseña</Text>
           <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" placeholder="••••••••"/>
-          <Pressable style={styles.forgot} onPress={()=>router.push("/recuperar-password")}><Text style={styles.link}>¿Olvidaste tu contraseña?</Text></Pressable>
-          <Pressable style={[styles.button,loading&&styles.disabled]} onPress={login} disabled={loading}>
+          <Pressable style={styles.forgot} onPress={()=>router.push("/recuperar-password")}><Text style={[styles.link, isMiAgendaIOS && { color: brand.primary }]}>¿Olvidaste tu contraseña?</Text></Pressable>
+          <Pressable style={[styles.button, isMiAgendaIOS && { backgroundColor: brand.primary }, loading&&styles.disabled]} onPress={login} disabled={loading}>
             {loading?<ActivityIndicator color="#fff"/>:<Text style={styles.buttonText}>Iniciar sesión</Text>}
           </Pressable>
+          {isMiAgendaIOS && <Text style={styles.dividerText}>o continuá con</Text>}
           <AppleSignIn mode="login" onSuccess={(role) => router.replace(role === "Profesional" ? "/agenda" : "/dashboard")} />
         </View>
       </KeyboardAvoidingView>
@@ -63,5 +66,6 @@ const styles=StyleSheet.create({
   forgot:{alignSelf:"flex-end",paddingVertical:16},link:{color:"#2563eb",fontSize:14},
   button:{height:56,borderRadius:14,backgroundColor:"#1f2937",alignItems:"center",justifyContent:"center"},
   disabled:{opacity:.7},buttonText:{color:"#fff",fontSize:16,fontWeight:"800"},
+  dividerText:{color:"#846575",fontSize:12,textAlign:"center",marginTop:18,fontWeight:"700"},
   error:{backgroundColor:"#fef2f2",color:"#b91c1c",borderRadius:12,padding:12,marginBottom:8}
 });
