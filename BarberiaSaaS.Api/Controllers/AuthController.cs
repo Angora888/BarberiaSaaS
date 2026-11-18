@@ -8,6 +8,7 @@ using BarberiaSaaS.Api.Data;
 using BarberiaSaaS.Api.DTOs;
 using BarberiaSaaS.Api.Models;
 using BarberiaSaaS.Api.Services;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -419,6 +420,83 @@ namespace BarberiaSaaS.Api.Controllers
                 }
             });
         }
+
+        // Google Identity Services (web): solo cuentas existentes y confirmadas.
+        // Nunca aceptamos el email desde el navegador: se extrae del ID token verificado.
+        [HttpPost("google-login")]
+        [EnableRateLimiting("RegistroPublico")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+        {
+            var clientId = _configuration["GoogleAuth:ClientId"];
+            if (string.IsNullOrWhiteSpace(clientId))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                    new { mensaje = "El inicio de sesión con Google aún no está configurado." });
+
+            if (string.IsNullOrWhiteSpace(request?.Credential))
+                return BadRequest(new { mensaje = "No se recibió la credencial de Google." });
+
+            GoogleJsonWebSignature.Payload google;
+            try
+            {
+                google = await GoogleJsonWebSignature.ValidateAsync(
+                    request.Credential,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { clientId }
+                    });
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { mensaje = "No se pudo verificar la cuenta de Google." });
+            }
+
+            if (!google.EmailVerified || string.IsNullOrWhiteSpace(google.Email))
+                return Unauthorized(new { mensaje = "Google no confirmó tu correo electrónico." });
+
+            var email = google.Email.Trim().ToLowerInvariant();
+            var usuario = await _context.Usuarios
+                .Include(x => x.Tenant)
+                .Include(x => x.Sucursal)
+                .FirstOrDefaultAsync(x => x.Email.ToLower() == email && x.Activo);
+
+            if (usuario == null)
+                return Unauthorized(new {
+                    mensaje = "Este correo aún no tiene acceso. Primero registrá tu negocio o solicitá una invitación."
+                });
+
+            if (!usuario.Tenant.EmailConfirmado)
+                return Unauthorized(new {
+                    mensaje = "Debes confirmar tu correo electrónico antes de iniciar sesión.",
+                    requiereConfirmacion = true
+                });
+
+            if (!usuario.Tenant.Activo)
+                return Unauthorized(new { mensaje = "El negocio se encuentra inactivo." });
+
+            var token = GenerarToken(usuario);
+            usuario.UltimoAcceso = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                token,
+                usuario = new
+                {
+                    usuario.Id,
+                    usuario.Nombre,
+                    usuario.Apellidos,
+                    usuario.Email,
+                    usuario.Rol,
+                    usuario.TenantId,
+                    usuario.SucursalId,
+                    usuario.ProfesionalId,
+                    negocio = usuario.Tenant.Nombre,
+                    sucursal = usuario.Sucursal?.Nombre
+                }
+            });
+        }
+
+        public sealed record GoogleLoginRequest(string Credential);
 
         // =========================================================
         // RECUPERAR CONTRASEÑA
