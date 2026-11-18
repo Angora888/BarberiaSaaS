@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "@/src/services/api";
 import AppleSignIn from "@/src/components/AppleSignIn";
 import { guardarSesion } from "@/src/services/session";
@@ -33,7 +33,8 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
-      <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":undefined}>
+      <KeyboardAvoidingView style={{ width: "100%" }} behavior={Platform.OS==="ios"?"padding":undefined}>
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingVertical: isMiAgendaIOS ? 18 : 0 }}> 
         <View style={[styles.card, isMiAgendaIOS && { borderWidth: 1, borderColor: brand.stroke }]}>
           <BrandEmblem size={76} />
           <Text style={[styles.title, isMiAgendaIOS && { color: brand.ink }]}>{brandName}</Text>
@@ -42,7 +43,7 @@ export default function LoginScreen() {
           <Text style={styles.label}>Correo electrónico</Text>
           <TextInput style={[styles.input, isMiAgendaIOS && { borderColor: brand.stroke }]} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder="correo@ejemplo.com"/>
           <Text style={styles.label}>Contraseña</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" placeholder="••••••••"/>
+          <TextInput style={[styles.input, isMiAgendaIOS && { borderColor: brand.stroke }]} value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" placeholder="••••••••"/>
           <Pressable style={styles.forgot} onPress={()=>router.push("/recuperar-password")}><Text style={[styles.link, isMiAgendaIOS && { color: brand.primary }]}>¿Olvidaste tu contraseña?</Text></Pressable>
           <Pressable style={[styles.button, isMiAgendaIOS && { backgroundColor: brand.primary }, loading&&styles.disabled]} onPress={login} disabled={loading}>
             {loading?<ActivityIndicator color="#fff"/>:<Text style={styles.buttonText}>Iniciar sesión</Text>}
@@ -50,6 +51,7 @@ export default function LoginScreen() {
           {isMiAgendaIOS && <Text style={styles.dividerText}>o continuá con</Text>}
           <AppleSignIn mode="login" onSuccess={(role) => router.replace(role === "Profesional" ? "/agenda" : "/dashboard")} />
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
