@@ -1,20 +1,22 @@
 import { router } from "expo-router";
-import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import BrandEmblem from "@/src/components/BrandEmblem";
+import { brand, brandName, isMiAgendaIOS } from "@/src/theme/brand";
 
 export default function WelcomeScreen() {
   return (
-    <SafeAreaView style={styles.page}>
-      <View style={styles.card}>
-        <View style={styles.logo}><Text style={styles.logoText}>{Platform.OS === "ios" ? "MA" : "BS"}</Text></View>
-        <Text style={styles.title}>{Platform.OS === "ios" ? "Mi Agenda CR" : "Barbería SaaS"}</Text>
-        <Text style={styles.subtitle}>Tu negocio, más simple.</Text>
+    <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
+      <View style={[styles.card, isMiAgendaIOS && { borderWidth: 1, borderColor: brand.stroke }]}>
+        <BrandEmblem size={82} />
+        <Text style={[styles.title, isMiAgendaIOS && { color: brand.ink }]}>{brandName}</Text>
+        <Text style={styles.subtitle}>{isMiAgendaIOS ? "Tu belleza, tu tiempo, tu agenda." : "Tu negocio, más simple."}</Text>
         <Text style={styles.description}>
           Agenda, clientes, ventas y profesionales desde cualquier lugar.
         </Text>
-        <Pressable style={styles.primary} onPress={() => router.push("/login")}>
-          <Text style={styles.primaryText}>INICIAR SESIÓN</Text>
+        <Pressable style={[styles.primary, isMiAgendaIOS && { backgroundColor: brand.primary }]} onPress={() => router.push("/login")}>
+          <Text style={styles.primaryText}>{isMiAgendaIOS ? "EMPEZAR AHORA" : "INICIAR SESIÓN"}</Text>
         </Pressable>
-        <Text style={styles.trial}>Gestión para barberías, salones y centros de belleza</Text>
+        <Text style={styles.trial}>{isMiAgendaIOS ? "Belleza organizada, donde estés ✨" : "Gestión para barberías, salones y centros de belleza"}</Text>
       </View>
     </SafeAreaView>
   );
