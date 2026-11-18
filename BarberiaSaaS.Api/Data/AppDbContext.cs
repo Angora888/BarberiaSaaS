@@ -19,6 +19,7 @@ namespace BarberiaSaaS.Api.Data
         public DbSet<Sucursal> Sucursales => Set<Sucursal>();
 
         public DbSet<Usuario> Usuarios => Set<Usuario>();
+        public DbSet<AppleIdentity> AppleIdentities => Set<AppleIdentity>();
 
         public DbSet<PushToken> PushTokens => Set<PushToken>();
 
@@ -122,6 +123,16 @@ namespace BarberiaSaaS.Api.Data
                 entity.HasOne(x => x.Tenant)
                     .WithMany(x => x.Sucursales)
                     .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<AppleIdentity>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Subject).IsRequired().HasMaxLength(255);
+                entity.HasIndex(x => x.Subject).IsUnique();
+                entity.HasIndex(x => x.UsuarioId).IsUnique();
+                entity.HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
