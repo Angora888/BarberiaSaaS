@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1242" height="2688" viewBox="0 0 1242 2688">
+  <rect width="1242" height="2688" fill="#FFF7FA"/>
+  <circle cx="1085" cy="390" r="320" fill="#FCE7F0"/>
+  <circle cx="121" cy="2344" r="440" fill="#FDEAF2"/>
+  <g transform="translate(377 950) scale(.477)">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E54890"/><stop offset="1" stop-color="#A71E59"/></linearGradient></defs>
+    <rect width="1024" height="1024" rx="228" fill="url(#g)"/>
+    <rect x="216" y="220" width="592" height="606" rx="112" fill="#FFFFFF"/>
+    <rect x="216" y="220" width="592" height="182" rx="112" fill="#FDE8F1"/>
+    <path d="M216 351h592v45H216z" fill="#FDE8F1"/>
+    <path d="M364 191v108M660 191v108" stroke="#B9276A" stroke-width="54" stroke-linecap="round"/>
+    <rect x="306" y="464" width="174" height="106" rx="30" fill="#F7D1E3"/>
+    <rect x="546" y="464" width="174" height="106" rx="30" fill="#F7D1E3"/>
+    <rect x="306" y="628" width="174" height="106" rx="30" fill="#F7D1E3"/>
+    <path d="m572 679 49 51 98-111" stroke="#B9276A" stroke-width="37" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <text x="621" y="1545" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="bold" fill="#5E1D40">Mi Agenda CR</text>
+  <text x="621" y="1625" text-anchor="middle" font-family="Arial,sans-serif" font-size="39" fill="#967083">Tu belleza, tu tiempo, tu agenda.</text>
+</svg>
