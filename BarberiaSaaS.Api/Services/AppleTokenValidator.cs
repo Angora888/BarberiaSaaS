@@ -25,7 +25,7 @@ public sealed class AppleTokenValidator
         if (string.IsNullOrWhiteSpace(identityToken) || identityToken.Length > 12000)
             return null;
 
-        var audience = _configuration["AppleAuth:BundleId"];
+        var audience = _configuration["AppleAuth:BundleId"] ?? "com.miagendacr.app";
         if (string.IsNullOrWhiteSpace(audience))
             throw new InvalidOperationException("AppleAuth:BundleId no está configurado.");
 
