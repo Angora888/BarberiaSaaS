@@ -1,7 +1,7 @@
 import { Stack, router, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
-import { AppState, Platform } from "react-native";
+import { AppState } from "react-native";
 import { useEffect } from "react";
 import {
   escucharCambiosTokenPush,
@@ -105,7 +105,7 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" backgroundColor={Platform.OS === "ios" ? "#FFF7FA" : undefined} />
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
     </>
   );
