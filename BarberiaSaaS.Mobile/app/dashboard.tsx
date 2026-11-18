@@ -148,8 +148,9 @@ export default function DashboardScreen() {
   if (usuario?.rol === "Profesional") {
     return (
       <SafeAreaView style={[styles.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
+        <ScrollView contentContainerStyle={[styles.content, isMiAgendaIOS && { paddingBottom: 35 }]}>
+          {isMiAgendaIOS && <Text style={{ color: brand.primary, fontWeight: "900", letterSpacing: 1.3, fontSize: 11, marginBottom: 10 }}>MI AGENDA CR · TU NEGOCIO</Text>}
+        <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={[styles.hello, isMiAgendaIOS && { color: brand.ink }]}>Hola, {usuario.nombre} 👋</Text>
               <Text style={styles.business}>{usuario.negocio}</Text>
