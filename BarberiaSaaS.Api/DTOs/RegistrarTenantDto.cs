@@ -22,6 +22,9 @@ namespace BarberiaSaaS.Api.DTOs
 
         public string Password { get; set; } = string.Empty;
 
+        // ID token de Google, opcional para registro sin contraseña.
+        public string? GoogleCredential { get; set; }
+
         // Token generado por Cloudflare Turnstile en el formulario público.
         // El backend siempre lo valida con Cloudflare antes de crear el negocio.
         public string TurnstileToken { get; set; } = string.Empty;
