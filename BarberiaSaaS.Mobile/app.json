@@ -9,7 +9,13 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "2",
-      "bundleIdentifier": "com.barberiasaas.mobile"
+      "bundleIdentifier": "com.miagendacr.app",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "CFBundleDisplayName": "Mi Agenda CR",
+        "NSContactsUsageDescription": "Permite seleccionar contactos para registrar clientes en Mi Agenda CR.",
+        "NSPhotoLibraryUsageDescription": "Permite seleccionar imágenes para tu negocio en Mi Agenda CR."
+      }
     },
     "android": {
       "package": "com.barberiasaas.mobile",
@@ -19,6 +25,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
       [
         "expo-contacts",
         {
