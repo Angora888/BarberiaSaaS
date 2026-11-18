@@ -45,7 +45,7 @@ export default function LoginScreen() {
           <Pressable style={[styles.button,loading&&styles.disabled]} onPress={login} disabled={loading}>
             {loading?<ActivityIndicator color="#fff"/>:<Text style={styles.buttonText}>Iniciar sesión</Text>}
           </Pressable>
-          <AppleSignIn mode="login" onSuccess={() => router.replace("/dashboard")} />
+          <AppleSignIn mode="login" onSuccess={(role) => router.replace(role === "Profesional" ? "/agenda" : "/dashboard")} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
