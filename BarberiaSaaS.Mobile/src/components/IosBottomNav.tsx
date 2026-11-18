@@ -14,7 +14,7 @@ const items: { key: Tab; emoji: string; label: string; path: "/dashboard" | "/ag
 export default function IosBottomNav({ active, professional = false }: { active: Tab; professional?: boolean }) {
   if (!isMiAgendaIOS) return null;
   return (
-    <View style={styles.bar} accessibilityRole="tablist">
+    <View style={styles.bar}>
       {items.filter(item => !professional || item.key !== "configuracion").map(item => (
         <Pressable
           key={item.key}
