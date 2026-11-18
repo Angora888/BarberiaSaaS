@@ -3,6 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Linking, Modal, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "@/src/services/api";
+import IosBottomNav from "@/src/components/IosBottomNav";
+import {brand,isMiAgendaIOS} from "@/src/theme/brand";
+import {obtenerUsuario} from "@/src/services/session";
 import { fechaCorta, horaCorta, obtenerRegional, REGIONAL_DEFAULT, Regional } from "@/src/services/regional";
 
 type Cliente={id:number;nombre:string;apellidos?:string;telefono?:string;email?:string;deuda?:number};
@@ -12,6 +15,8 @@ type Dia={fecha:string;profesionales:{profesionalId:number;horas:string[]}[]};
 
 export default function ClientesScreen(){
  const insets=useSafeAreaInsets();
+ const [esProfesional,setEsProfesional]=useState(false);
+ useEffect(()=>{obtenerUsuario().then(u=>setEsProfesional(u?.rol==="Profesional")).catch(()=>{});},[]);
  const [regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const [clientes,setClientes]=useState<Cliente[]>([]),[servicios,setServicios]=useState<Servicio[]>([]),[profesionales,setProfesionales]=useState<Profesional[]>([]);
  const [q,setQ]=useState(""),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
@@ -23,14 +28,15 @@ export default function ClientesScreen(){
  const total=(Number(horas)||0)*60+(Number(minutos)||0);
  const enviar=async()=>{const cliente=clientes.find(x=>x.id===clienteId),servicio=servicios.find(x=>x.id===servicioId),prof=profesionales.find(x=>x.id===profesionalId);if(!cliente)return setError("Selecciona un cliente.");if(!cliente.telefono)return setError("El cliente no tiene teléfono registrado.");if(!servicio)return setError("Selecciona un servicio.");if(total<=0)return setError("Selecciona una duración mayor a cero.");try{setEnviando(true);setError("");const r=await api.post("/Disponibilidad/semana-siguiente",{servicioId,duracionMinutos:total,profesionalId:profesionalId??null});const msg=mensaje(r.data,cliente,servicio,prof,regional);const tel=String(cliente.telefono).replace(/\D/g,"").replace(/^00/,"");if(!tel)throw new Error("Teléfono inválido");setModal(false);await Linking.openURL(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`)}catch(e:any){setError(e?.response?.data?.mensaje??e?.response?.data?.title??"No fue posible consultar la disponibilidad.");}finally{setEnviando(false)}};
  if(loading)return <SafeAreaView style={s.center}><ActivityIndicator size="large"/><Text style={s.muted}>Cargando clientes...</Text></SafeAreaView>;
- return <SafeAreaView style={s.page}><ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refresh} onRefresh={()=>cargar(true)}/>}>
+ return <SafeAreaView style={[s.page,isMiAgendaIOS&&{backgroundColor:brand.canvas}]}><ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refresh} onRefresh={()=>cargar(true)}/>}>
   <View style={s.header}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Volver</Text></Pressable><Pressable onPress={()=>router.push("/nuevo-cliente")} style={s.newBtn}><Text style={s.newText}>＋ Nuevo</Text></Pressable></View>
   <Text style={s.title}>Clientes</Text><Text style={s.sub}>{clientes.length} cliente(s) activo(s)</Text>
   <TextInput value={q} onChangeText={setQ} placeholder="Buscar por nombre, teléfono o email" style={s.input} autoCapitalize="none"/>
   {error?<Text style={s.error}>{error}</Text>:null}
   <View style={s.card}>{lista.length?lista.map((c,i)=><Pressable key={c.id} onPress={()=>router.push(`/cliente/${c.id}`)} style={[s.row,i===lista.length-1&&s.last]}><View style={s.avatar}><Text style={s.avatarText}>{(c.nombre?.[0]??"?").toUpperCase()}</Text></View><View style={s.body}><Text style={s.name}>{[c.nombre,c.apellidos].filter(Boolean).join(" ")}</Text><Text style={s.detail}>{c.telefono||c.email||"Sin datos de contacto"}</Text>{Number(c.deuda)>0?<Text style={s.debt}>Saldo pendiente: {money(c.deuda)}</Text>:null}</View><Text style={s.chevron}>›</Text></Pressable>):<Text style={s.empty}>No encontramos clientes.</Text>}</View>
  </ScrollView>
- <View style={[s.availabilityBar,{paddingBottom:Math.max(insets.bottom,12)}]}><Pressable style={s.waBtn} onPress={()=>{setError("");setClienteId(undefined);setServicioId(undefined);setProfesionalId(undefined);setHoras("1");setMinutos("0");setModal(true)}}><Text style={s.waText}>💬 Enviar disponibilidad</Text></Pressable></View>
+ <View style={[s.availabilityBar,{paddingBottom:isMiAgendaIOS?8:Math.max(insets.bottom,12)}]}><Pressable style={s.waBtn} onPress={()=>{setError("");setClienteId(undefined);setServicioId(undefined);setProfesionalId(undefined);setHoras("1");setMinutos("0");setModal(true)}}><Text style={s.waText}>💬 Enviar disponibilidad</Text></Pressable></View>
+ <IosBottomNav active="clientes" professional={esProfesional} />
  <Modal visible={modal} animationType="slide" presentationStyle="pageSheet" onRequestClose={()=>setModal(false)}><SafeAreaView style={s.modalPage}><ScrollView contentContainerStyle={s.modalContent}><View style={s.modalHead}><Text style={s.modalTitle}>Enviar disponibilidad</Text><Pressable onPress={()=>setModal(false)}><Text style={s.close}>✕</Text></Pressable></View><Text style={s.muted}>Consulta los próximos 15 días y abre WhatsApp con los horarios disponibles.</Text>
  <Text style={s.label}>Cliente *</Text><View style={s.choices}>{clientes.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")).map(x=><Choice key={x.id} selected={clienteId===x.id} text={`${x.nombre} ${x.apellidos??""}${x.telefono?` · ${x.telefono}`:" · sin teléfono"}`} onPress={()=>setClienteId(x.id)}/>)}</View>
  <Text style={s.label}>Servicio *</Text><View style={s.choices}>{servicios.map(x=><Choice key={x.id} selected={servicioId===x.id} text={x.nombre} onPress={()=>{setServicioId(x.id);setProfesionalId(undefined)}}/>)}</View>
