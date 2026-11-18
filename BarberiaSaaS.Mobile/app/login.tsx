@@ -2,6 +2,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "@/src/services/api";
+import AppleSignIn from "@/src/components/AppleSignIn";
 import { guardarSesion } from "@/src/services/session";
 import { registrarPushNotifications } from "@/src/services/push";
 
@@ -32,8 +33,8 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.page}>
       <KeyboardAvoidingView behavior={Platform.OS==="ios"?"padding":undefined}>
         <View style={styles.card}>
-          <View style={styles.logo}><Text style={styles.logoText}>BS</Text></View>
-          <Text style={styles.title}>Barbería SaaS</Text>
+          <View style={styles.logo}><Text style={styles.logoText}>{Platform.OS === "ios" ? "MA" : "BS"}</Text></View>
+          <Text style={styles.title}>{Platform.OS === "ios" ? "Mi Agenda CR" : "Barbería SaaS"}</Text>
           <Text style={styles.subtitle}>Gestión para barberías, salones y centros de belleza</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.label}>Correo electrónico</Text>
@@ -44,6 +45,7 @@ export default function LoginScreen() {
           <Pressable style={[styles.button,loading&&styles.disabled]} onPress={login} disabled={loading}>
             {loading?<ActivityIndicator color="#fff"/>:<Text style={styles.buttonText}>Iniciar sesión</Text>}
           </Pressable>
+          <AppleSignIn mode="login" onSuccess={() => router.replace("/dashboard")} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
