@@ -404,7 +404,13 @@ function Login() {
               />
             </div>
 
-            <div className="text-end mb-4"><Link to="/olvide-password" className="text-decoration-none login-forgot">¿Olvidaste tu contraseña?</Link></div>
+            <div className="text-end mb-2">
+              <Link to="/olvide-password" className="text-decoration-none login-forgot">¿Olvidaste tu contraseña?</Link>
+            </div>
+            <div className="text-end mb-4">
+              <span className="text-secondary">¿Todavía no tienes una cuenta? </span>
+              <Link to="/prueba" className="text-decoration-none login-forgot">Regístrate</Link>
+            </div>
 
             <button
               type="submit"
