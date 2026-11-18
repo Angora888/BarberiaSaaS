@@ -22,6 +22,36 @@ namespace BarberiaSaaS.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.AppleIdentity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaVinculacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Subject")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("AppleIdentities");
+                });
+
             modelBuilder.Entity("BarberiaSaaS.Api.Models.AbonoCuentaPorCobrar", b =>
                 {
                     b.Property<int>("Id")
@@ -1065,6 +1095,17 @@ namespace BarberiaSaaS.Migrations
                     b.HasIndex("TenantId", "VentaId");
 
                     b.ToTable("VentaDetalles");
+                });
+
+            modelBuilder.Entity("BarberiaSaaS.Api.Models.AppleIdentity", b =>
+                {
+                    b.HasOne("BarberiaSaaS.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("BarberiaSaaS.Api.Models.AbonoCuentaPorCobrar", b =>
