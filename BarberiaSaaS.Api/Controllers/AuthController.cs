@@ -46,15 +46,40 @@ namespace BarberiaSaaS.Api.Controllers
         public async Task<IActionResult> RegistrarNegocio(
             RegistrarTenantDto request)
         {
+            var registroGoogle = !string.IsNullOrWhiteSpace(request.GoogleCredential);
             if (string.IsNullOrWhiteSpace(request.NombreNegocio) ||
                 string.IsNullOrWhiteSpace(request.NombrePropietario) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Password))
+                (!registroGoogle && (string.IsNullOrWhiteSpace(request.Email) ||
+                                     string.IsNullOrWhiteSpace(request.Password))))
             {
                 return BadRequest(new
                 {
-                    mensaje = "Nombre del negocio, propietario, email y contraseña son requeridos."
+                    mensaje = "Completa los datos requeridos para registrar tu negocio."
                 });
+            }
+
+            GoogleJsonWebSignature.Payload? identidadGoogle = null;
+            if (registroGoogle)
+            {
+                var clientId = _configuration["GoogleAuth:ClientId"];
+                if (string.IsNullOrWhiteSpace(clientId))
+                    return StatusCode(503, new { mensaje = "El registro con Google no está configurado." });
+
+                try
+                {
+                    identidadGoogle = await GoogleJsonWebSignature.ValidateAsync(
+                        request.GoogleCredential!,
+                        new GoogleJsonWebSignature.ValidationSettings {
+                            Audience = new[] { clientId }
+                        });
+                }
+                catch (Exception)
+                {
+                    return Unauthorized(new { mensaje = "La sesión de Google expiró o no es válida. Conectate nuevamente." });
+                }
+
+                if (!identidadGoogle.EmailVerified || string.IsNullOrWhiteSpace(identidadGoogle.Email))
+                    return Unauthorized(new { mensaje = "Google no confirmó el correo de esta cuenta." });
             }
 
             if (string.IsNullOrWhiteSpace(request.TurnstileToken))
@@ -73,7 +98,8 @@ namespace BarberiaSaaS.Api.Controllers
                 });
             }
 
-            var email = request.Email
+            // Nunca confiar en el correo enviado por el navegador si usa Google.
+            var email = (registroGoogle ? identidadGoogle!.Email : request.Email)
                 .Trim()
                 .ToLowerInvariant();
 
@@ -135,9 +161,9 @@ namespace BarberiaSaaS.Api.Controllers
                     PaisCodigo = pais.Codigo,
                     Telefono = telefonoE164,
                     Email = email,
-                    Activo = false,
-                    EmailConfirmado = false,
-                    FechaActivacion = null,
+                    Activo = registroGoogle,
+                    EmailConfirmado = registroGoogle,
+                    FechaActivacion = registroGoogle ? ahora : null,
                     FechaCreacion = ahora
                 };
 
@@ -197,8 +223,9 @@ namespace BarberiaSaaS.Api.Controllers
                     Apellidos = request.ApellidosPropietario?.Trim()
                         ?? string.Empty,
                     Email = email,
+                    // Un usuario creado con Google no debe tener contraseña local conocida.
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(
-                        request.Password),
+                        registroGoogle ? Convert.ToHexString(RandomNumberGenerator.GetBytes(32)) : request.Password),
                     Rol = RolesUsuario.Propietario,
                     Activo = true,
                     FechaCreacion = ahora
@@ -206,6 +233,19 @@ namespace BarberiaSaaS.Api.Controllers
 
                 _context.Usuarios.Add(usuario);
                 await _context.SaveChangesAsync();
+
+                if (registroGoogle)
+                {
+                    // Google confirmó el correo. La prueba empieza hoy, sin correo adicional.
+                    await transaction.CommitAsync();
+                    return Ok(new
+                    {
+                        mensaje = "Negocio creado con Google. Ya podés iniciar sesión.",
+                        requiereConfirmacion = false,
+                        email,
+                        negocio = tenant.Nombre
+                    });
+                }
 
                 // =====================================================
                 // TOKEN DE CONFIRMACIÓN - SOLO GUARDAMOS EL HASH
