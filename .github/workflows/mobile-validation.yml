@@ -29,6 +29,34 @@ jobs:
       - name: TypeScript check
         working-directory: BarberiaSaaS.Mobile
         run: npm run typecheck
+      - name: Validate iOS PNG resources
+        working-directory: BarberiaSaaS.Mobile
+        run: |
+          python3 - <<'PY'
+          import struct, zlib
+          from pathlib import Path
+          for name, size, expect_alpha in [
+              ("assets/branding/miagenda-ios-icon.png", (1024, 1024), False),
+              ("assets/branding/miagenda-ios-splash-icon.png", (512, 512), True),
+          ]:
+              payload = Path(name).read_bytes()
+              assert payload[:8] == b"\x89PNG\r\n\x1a\n", name
+              pos, idat, transparency = 8, bytearray(), False
+              while pos < len(payload):
+                  length = struct.unpack_from(">I", payload, pos)[0]
+                  kind = payload[pos+4:pos+8]
+                  data = payload[pos+8:pos+8+length]
+                  checksum = struct.unpack_from(">I", payload, pos+8+length)[0]
+                  assert zlib.crc32(kind + data) & 0xffffffff == checksum, name
+                  if kind == b"IHDR":
+                      assert struct.unpack_from(">II", data, 0) == size, name
+                  if kind == b"IDAT": idat.extend(data)
+                  if kind == b"tRNS": transparency = True
+                  pos += 12 + length
+              assert len(zlib.decompress(bytes(idat))) > 0, name
+              assert transparency == expect_alpha, name
+              print("PNG OK:", name, size)
+          PY
       - name: Expo configuration check
         working-directory: BarberiaSaaS.Mobile
         run: npx expo config --type public
