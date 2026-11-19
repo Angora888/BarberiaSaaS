@@ -1,16 +1,19 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { brand, isMiAgendaIOS } from "@/src/theme/brand";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "@/src/services/api";import {dinero,fechaHora,obtenerRegional,REGIONAL_DEFAULT,Regional} from "@/src/services/regional";
 type Venta={id:number;cliente?:string;metodoPago?:string;total?:number;estado?:string;fecha?:string;cantidadProductos?:number};
 export default function VentasMobile(){
+ const insets = useSafeAreaInsets();
  const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT),[ventas,setVentas]=useState<Venta[]>([]),[q,setQ]=useState(""),[loading,setLoading]=useState(true),[refresh,setRefresh]=useState(false),[error,setError]=useState("");
  const cargar=useCallback(async(r=false)=>{r?setRefresh(true):setLoading(true);setError("");try{const x=await api.get("/Ventas",{params:{limite:100}});setVentas(Array.isArray(x.data)?x.data:[])}catch(e:any){setError(e?.response?.data?.mensaje??"No fue posible cargar las ventas.")}finally{setLoading(false);setRefresh(false)}},[]);
  useEffect(()=>{obtenerRegional().then(setRegional);cargar()},[cargar]);
  const lista=useMemo(()=>{const x=q.trim().toLowerCase();return !x?ventas:ventas.filter(v=>[`#${v.id}`,v.cliente,v.metodoPago,v.estado].filter(Boolean).join(" ").toLowerCase().includes(x))},[ventas,q]);
  const total=ventas.filter(v=>v.estado==="Completada").reduce((a,v)=>a+Number(v.total??0),0);
  if(loading)return <SafeAreaView style={s.center}><ActivityIndicator size="large"/><Text style={s.muted}>Cargando caja...</Text></SafeAreaView>;
- return <SafeAreaView style={s.page}><ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refresh} onRefresh={()=>cargar(true)}/>}>
+ return <SafeAreaView style={[s.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}><ScrollView contentContainerStyle={[s.content, isMiAgendaIOS && { paddingBottom: Math.max(56, insets.bottom + 32) }]} refreshControl={<RefreshControl refreshing={refresh} onRefresh={()=>cargar(true)}/>}>
   <View style={s.header}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Volver</Text></Pressable><Pressable onPress={()=>router.push("/nueva-venta")} style={s.newBtn}><Text style={s.newText}>＋ Nueva venta</Text></Pressable></View>
   <Text style={s.title}>Ventas / Caja</Text><Text style={s.sub}>Productos, cobros e historial reciente</Text>
   <View style={s.hero}><Text style={s.heroLabel}>Total de ventas cargadas</Text><Text style={s.heroValue}>{dinero(total,regional)}</Text><Text style={s.heroDetail}>{ventas.length} venta(s) reciente(s)</Text></View>
