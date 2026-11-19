@@ -47,3 +47,11 @@ Para aplicar migraciones EF Core de forma controlada, confirmar primero la versi
 ## Protección de producción
 
 Todos los cambios posteriores de la preparación de iOS deben ir a `feature/miagenda-ios`, nunca a `main`. La rama de funcionalidades es independiente; no crea APK/AAB de Android ni toca la base de datos por sí sola. El `bundleIdentifier` iOS es `com.miagendacr.app`, mientras Android conserva `com.barberiasaas.mobile`.
+
+## Revisión de pantallas en iPhone (sin compilación nativa)
+
+- Las pantallas `nueva-cita`, `nuevo-cliente`, `cita/[id]`, `profesionales`, `ventas` y `reportes` tienen espacio inferior calculado a partir del área segura de iOS, sin modificar ese espaciado en Android.
+- Los formularios admiten desplazamiento al tocar controles y deslizar para cerrar teclado; las listas conservan su scroll y refresco.
+- Colores iOS en fondos de pantallas revisadas y acentos principales de profesionales, ventas y reportes.
+- **Pendiente de prueba física:** interacción con teclado, notch/Dynamic Island, iPhone pequeño, orientación y tamaño de texto aumentado. Una validación TypeScript no confirma que la interfaz esté libre de cortes en dispositivos.
+- Pruebas manuales recomendadas: nueva cita con muchas opciones, búsqueda de profesionales, búsqueda de ventas, reportes con varias sucursales, detalle de una cita con acciones WhatsApp/cobro, crear y editar cliente con teclado visible.
