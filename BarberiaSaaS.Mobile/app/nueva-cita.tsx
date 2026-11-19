@@ -1,3 +1,5 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { brand, isMiAgendaIOS } from "@/src/theme/brand";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -12,6 +14,7 @@ type Sucursal={id:number;nombre:string};
 type DisponibilidadDia={fecha:string;diaSemana:number;profesionales:{profesionalId:number;profesionalNombre:string;horas:string[]}[]};
 
 export default function NuevaCita(){
+ const insets = useSafeAreaInsets();
  const[regional,setRegional]=useState<Regional>(REGIONAL_DEFAULT);
  const[usuario,setUsuario]=useState<UsuarioSesion|null>(null);const[clientes,setClientes]=useState<Item[]>([]);const[profesionales,setProfesionales]=useState<Item[]>([]);const[servicios,setServicios]=useState<Servicio[]>([]);const[sucursales,setSucursales]=useState<Sucursal[]>([]);
  const[clienteId,setClienteId]=useState<number>();const[profesionalId,setProfesionalId]=useState<number>();const[servicioId,setServicioId]=useState<number>();const[varianteId,setVarianteId]=useState<number>();const[sucursalId,setSucursalId]=useState<number>();
@@ -32,8 +35,8 @@ export default function NuevaCita(){
  setGuardando(true);try{await api.post("/Citas",{clienteId,sucursalId,profesionalId,servicioId,servicioVarianteId:varianteId??null,fechaInicio:`${fecha}T${hora}:00`,duracionMinutos:mins,notas:notas.trim()||null});router.replace("/agenda");}catch(e:any){setError(e?.response?.data?.mensaje??e?.response?.data?.title??"No fue posible crear la cita.");}finally{setGuardando(false);}};
 
  if(cargando)return <SafeAreaView style={s.loading}><ActivityIndicator size="large"/><Text style={s.muted}>Preparando nueva cita...</Text></SafeAreaView>;
- return <SafeAreaView style={s.page}><View style={s.top}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Agenda</Text></Pressable><Text style={s.title}>Nueva cita</Text><View style={{width:58}}/></View>
- <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+ return <SafeAreaView style={[s.page, isMiAgendaIOS && { backgroundColor: brand.canvas }]}><View style={s.top}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Agenda</Text></Pressable><Text style={s.title}>Nueva cita</Text><View style={{width:58}}/></View>
+ <ScrollView contentContainerStyle={[s.content, isMiAgendaIOS && { paddingBottom: Math.max(56, insets.bottom + 32) }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
  {error?<View style={s.error}><Text style={s.errorText}>{error}</Text></View>:null}
  <Section title="1. Cliente"><TextInput value={busqueda} onChangeText={setBusqueda} placeholder="Buscar cliente por nombre..." style={s.input}/><View style={s.choices}>{clientesFiltrados.map(c=><Choice key={c.id} selected={clienteId===c.id} text={nombre(c)} onPress={()=>setClienteId(c.id)}/>)}</View></Section>
  <Section title="2. Sucursal">{sucursales.map(x=><Choice key={x.id} selected={sucursalId===x.id} text={x.nombre} onPress={()=>setSucursalId(x.id)}/>)}</Section>
