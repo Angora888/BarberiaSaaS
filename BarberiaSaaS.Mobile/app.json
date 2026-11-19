@@ -15,7 +15,8 @@
         "CFBundleDisplayName": "Mi Agenda CR",
         "NSContactsUsageDescription": "Permite seleccionar contactos para registrar clientes en Mi Agenda CR.",
         "NSPhotoLibraryUsageDescription": "Permite seleccionar imágenes para tu negocio en Mi Agenda CR."
-      }
+      },
+      "icon": "./assets/branding/miagenda-ios-icon.png"
     },
     "android": {
       "package": "com.barberiasaas.mobile",
@@ -39,6 +40,17 @@
           "android": {
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "ios": {
+            "image": "./assets/branding/miagenda-ios-splash-icon.png",
+            "backgroundColor": "#FFF7FA",
+            "imageWidth": 220,
+            "resizeMode": "contain"
           }
         }
       ]
