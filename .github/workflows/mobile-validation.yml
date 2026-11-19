@@ -1,12 +1,12 @@
 name: Validate Expo mobile
 on:
   push:
-    branches: [main]
+    branches: [main, feature/miagenda-ios]
     paths:
       - "BarberiaSaaS.Mobile/**"
       - ".github/workflows/mobile-validation.yml"
   pull_request:
-    branches: [main]
+    branches: [main, feature/miagenda-ios]
     paths:
       - "BarberiaSaaS.Mobile/**"
   workflow_dispatch:
