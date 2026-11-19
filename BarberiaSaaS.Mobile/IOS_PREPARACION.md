@@ -9,7 +9,7 @@ Se reutiliza **BarberiaSaaS.Mobile** (Expo SDK 57), el backend .NET y los datos 
 - Bienvenida, inicio de sesión, recuperación, dashboard y agenda adaptados a la marca iOS.
 - Navegación inferior iOS en Inicio, Agenda, Clientes y Configuración (con control de acceso del rol profesional).
 - Los diseños editables del icono y del splash están en `assets/branding/miagenda-ios-icon.svg` y `assets/branding/miagenda-ios-splash.svg`.
-- **Pendiente:** exportar y agregar al repositorio PNG para icono iOS (1024×1024 sin transparencia) y splash, configurar `ios.icon` y `expo-splash-screen`, hacer una build nativa y validar en iPhone. Los SVG son fuentes de diseño, no assets de producción configurados.
+- Icono iOS PNG **1024×1024** y splash PNG transparente creados en `assets/branding`, configurados con `ios.icon` y el plugin `expo-splash-screen` solo para iOS. Faltan la compilación EAS y la revisión visual en un iPhone físico.
 - Workflow `Validate Expo mobile` ejecuta instalación, typecheck y consulta de configuración Expo ante cambios del móvil. No sustituye una compilación nativa ni una prueba de dispositivos.
 
 ## Sign in with Apple
@@ -43,3 +43,7 @@ npx eas-cli build --platform ios --profile production
 ```
 
 Para aplicar migraciones EF Core de forma controlada, confirmar primero la versión y el historial de la BD mediante `dotnet ef migrations list` y el procedimiento operativo del proyecto.
+
+## Protección de producción
+
+Todos los cambios posteriores de la preparación de iOS deben ir a `feature/miagenda-ios`, nunca a `main`. La rama de funcionalidades es independiente; no crea APK/AAB de Android ni toca la base de datos por sí sola. El `bundleIdentifier` iOS es `com.miagendacr.app`, mientras Android conserva `com.barberiasaas.mobile`.
