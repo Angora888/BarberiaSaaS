@@ -55,3 +55,13 @@ Todos los cambios posteriores de la preparación de iOS deben ir a `feature/miag
 - Colores iOS en fondos de pantallas revisadas y acentos principales de profesionales, ventas y reportes.
 - **Pendiente de prueba física:** interacción con teclado, notch/Dynamic Island, iPhone pequeño, orientación y tamaño de texto aumentado. Una validación TypeScript no confirma que la interfaz esté libre de cortes en dispositivos.
 - Pruebas manuales recomendadas: nueva cita con muchas opciones, búsqueda de profesionales, búsqueda de ventas, reportes con varias sucursales, detalle de una cita con acciones WhatsApp/cobro, crear y editar cliente con teclado visible.
+
+## Formularios de cobro, venta y profesionales (segunda fase)
+
+- `cobrar-cita/[id]`: área segura inferior, ScrollView compatible con teclado y colores de Mi Agenda CR para resumen y confirmación de cobro.
+- `nueva-venta`: área segura inferior, teclado desplazable, resumen de venta y selección de sucursal/cliente/método en rosa premium de iOS.
+- `profesional/nuevo`: crear y editar con teclado desplazable, selector de servicios y botón Guardar adaptados a iOS.
+- `profesional/[id]`: área segura inferior en el detalle del profesional, conservando consultas, horarios y enlaces.
+- Android sigue usando sus estilos y rutas existentes; los cambios visuales nuevos están condicionados a iOS.
+- Pruebas físicas pendientes: teclado numérico decimal, scroll hasta guardar, más de 10 productos, muchos servicios seleccionados, fotos del profesional, descuentos y cobros parciales. No ingresar ventas reales durante la validación.
+
